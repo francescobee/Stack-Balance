@@ -307,6 +307,32 @@ function handlePeerMessage(msg, conn) {
     case "draftResponse":
       if (mp.isHost) handleDraftResponse(msg, conn);
       break;
+
+    // ── S10: Host-mirror modals (quarter-end, market news, etc.) ──
+    case "quarterModalShow":
+      if (mp.isHost) return;
+      console.log("[mp] quarterModalShow received");
+      if (typeof showQuarterModal === "function") {
+        // Pass empty okrResults — client re-derives via o.check()
+        showQuarterModal(msg.breakdown, msg.dominanceBonuses, [], msg.budgetEvents);
+      }
+      break;
+    case "marketNewsShow":
+      if (mp.isHost) return;
+      console.log("[mp] marketNewsShow received:", msg.event?.name);
+      if (typeof showMarketNewsModal === "function") {
+        // No-op onComplete: client waits for host's closeMpModal broadcast
+        showMarketNewsModal(msg.event, () => {});
+      }
+      break;
+    case "closeMpModal":
+      if (mp.isHost) return;
+      console.log("[mp] closeMpModal received");
+      const modalRoot = document.getElementById("modalRoot");
+      if (modalRoot) modalRoot.innerHTML = "";
+      // Also remove any modal-bg appended directly to body (market news etc.)
+      document.querySelectorAll("body > .modal-bg").forEach(m => m.remove());
+      break;
   }
 }
 

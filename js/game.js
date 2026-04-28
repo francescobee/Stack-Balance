@@ -733,6 +733,21 @@ function endOfQuarter() {
   // S10: broadcast post-EOQ state so clients see all bonuses applied
   if (state.isMultiplayer) mpBroadcastState();
 
+  // S10 fix: broadcast Q-end modal data to clients so they see the same
+  // milestone screen. Without this, only the host saw the summary;
+  // clients stared at an empty board until the next state update.
+  // okrResults is an array of arrays of OKR objects (with .check fns) —
+  // not directly serializable. Clients re-derive completion from
+  // state.players[i].okrs[0].check at modal-open time (same data, no fn refs).
+  if (state.isMultiplayer && typeof mpBroadcast === "function") {
+    mpBroadcast({
+      type: "quarterModalShow",
+      breakdown,
+      dominanceBonuses,
+      budgetEvents,
+    });
+  }
+
   showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents);
 }
 
@@ -775,10 +790,21 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
       </table>
       ${budgetBanner}
       <h3 style="color:var(--accent); margin-top:18px">I tuoi OKR</h3>
-      ${state.players[0].okrs.map(o => {
-        const done = okrResults[0].includes(o);
-        return `<div class="okr ${done ? 'done' : ''}"><span class="okr-text">${o.text}</span><span class="okr-prog">${done ? `+${o.reward}K` : `—`}</span></div>`;
-      }).join("")}
+      ${(() => {
+        // S10 fix: use localSlotIdx (host=0, client=1/2/3). Re-derive
+        // completion via o.check() instead of okrResults[localIdx].includes(o)
+        // — clients receive okrResults via broadcast as IDs only, lookup
+        // via OKR_POOL gives same data but DIFFERENT object references,
+        // breaking .includes(). Calling o.check() works regardless.
+        const localIdx = state.localSlotIdx ?? 0;
+        const localPlayer = state.players[localIdx];
+        const myOkrs = localPlayer?.okrs || [];
+        return myOkrs.map(o => {
+          let done = false;
+          try { done = o.check(localPlayer, state.quarter); } catch (e) {}
+          return `<div class="okr ${done ? 'done' : ''}"><span class="okr-text">${o.text}</span><span class="okr-prog">${done ? `+${o.reward}K` : `—`}</span></div>`;
+        }).join("");
+      })()}
       <div class="actions">
         ${isLastQ
           ? `<button class="primary" id="endGameBtn">Vedi risultato finale →</button>`
@@ -797,6 +823,10 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
   }
   if (state.quarter < NUM_QUARTERS) {
     document.getElementById("nextQuarterBtn").onclick = () => {
+      // S10: tell clients to close their Q-end modal
+      if (state.isMultiplayer && typeof mpBroadcast === "function") {
+        mpBroadcast({ type: "closeMpModal" });
+      }
       document.getElementById("modalRoot").innerHTML = "";
       state.quarter++;
       // S4.1: market event picked between Q1→Q2 and Q2→Q3
@@ -820,6 +850,10 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
     };
   } else {
     document.getElementById("endGameBtn").onclick = () => {
+      // S10: tell clients to close their Q3-end modal
+      if (state.isMultiplayer && typeof mpBroadcast === "function") {
+        mpBroadcast({ type: "closeMpModal" });
+      }
       document.getElementById("modalRoot").innerHTML = "";
       // S4.2: Investor Pitch sequence before final end-game modal
       showInvestorPitch(() => endGame());
@@ -844,7 +878,27 @@ function pickAndShowMarketEvent(onComplete) {
   }
   log(`📰 Market Event: ${event.name}`, "event");
 
-  showMarketNewsModal(event, onComplete);
+  // S10: broadcast post-onActivate state, then trigger market news modal on clients
+  if (state.isMultiplayer) {
+    mpBroadcastState();
+    if (typeof mpBroadcast === "function") {
+      mpBroadcast({
+        type: "marketNewsShow",
+        event: {
+          id: event.id, name: event.name, icon: event.icon,
+          description: event.description, bonus: event.bonus, malus: event.malus,
+        },
+      });
+    }
+  }
+
+  showMarketNewsModal(event, () => {
+    // S10: tell clients to close their market news modal
+    if (state.isMultiplayer && typeof mpBroadcast === "function") {
+      mpBroadcast({ type: "closeMpModal" });
+    }
+    if (typeof onComplete === "function") onComplete();
+  });
 }
 
 // S4.2 + S9.5.b: Final Investor Pitch sequence before end-game.

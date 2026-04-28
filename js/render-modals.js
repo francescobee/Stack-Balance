@@ -198,6 +198,16 @@ function showMarketNewsModal(event, onComplete) {
   `;
   root.appendChild(modal);
   document.body.appendChild(root);
+
+  // S10: mp client variant — replace "Continua" with waiting indicator;
+  // host's "closeMpModal" broadcast removes this on advance.
+  const isMpClient = state?.isMultiplayer && typeof mp !== "undefined" && mp.active && !mp.isHost;
+  if (isMpClient) {
+    const actionsArea = modal.querySelector(".actions");
+    if (actionsArea) actionsArea.innerHTML = `<div class="mp-waiting">⏳ In attesa che l'host avanzi...</div>`;
+    return;
+  }
+
   modal.querySelector("#ackEventBtn").onclick = () => {
     root.remove();
     if (typeof onComplete === "function") onComplete();
