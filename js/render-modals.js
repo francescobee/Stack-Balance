@@ -122,13 +122,19 @@ function showVisionDraftModal({ options, onPick }) {
 }
 
 // ---------- OKR DRAFT MODAL (S2.1) ----------
+// S10 fix: use state.localSlotIdx for the local POV player. In single-player
+// localSlotIdx=0, so state.players[0] (the original hardcoded path). In
+// multiplayer, clients have localSlotIdx=1/2/3 and need to draft for THEIR
+// own slot — not the host's.
 function showOKRDraftModal(onComplete) {
-  const human = state.players[0];
-  const options = human.okrOptions || [];
+  const localIdx = state.localSlotIdx ?? 0;
+  const human = state.players[localIdx];
+  const options = (human && human.okrOptions) || [];
   const ql = QUARTER_LABELS[state.quarter - 1];
 
   // Edge case: no options (shouldn't happen with pool size 14)
   if (options.length === 0) {
+    console.warn("[OKR draft] no options for slot", localIdx, "— skipping modal");
     if (typeof onComplete === "function") onComplete();
     return;
   }

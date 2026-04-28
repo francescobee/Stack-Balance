@@ -88,17 +88,35 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
     localSlotIdx,
     isMultiplayer: true,           // S10 flag
   };
-  // Vision draft: all humans in parallel + AI auto-pick
-  mpDraftVisionsForAll().then(() => {
-    applyStartingModifiers();
-    startQuarter();
-    // OKR draft: all humans in parallel + AI auto-pick (already done in startQuarter for AI)
-    mpDraftOkrsForAll().then(() => {
+  // Vision draft: all humans in parallel + AI auto-pick.
+  // S10 fix: wrap the chain in explicit error handlers — silent promise
+  // rejections were causing "stuck after Vision pick" hangs (no visible error,
+  // just a frozen UI). Now any throw surfaces as a console error + toast.
+  console.log("[mp] startGameMultiplayer: drafting visions for", state.players.length, "players");
+  mpDraftVisionsForAll()
+    .then(() => {
+      console.log("[mp] visions complete. Applying starting modifiers + startQuarter.");
+      applyStartingModifiers();
+      startQuarter();
+      console.log("[mp] startQuarter complete. Drafting OKRs.");
+      return mpDraftOkrsForAll();
+    })
+    .then(() => {
+      console.log("[mp] OKRs complete. Rendering + processNextPick.");
       render();
       mpBroadcastState();
       processNextPick();
+    })
+    .catch((err) => {
+      console.error("[mp] startGameMultiplayer chain failed:", err);
+      if (typeof showToast === "function") {
+        showToast({
+          who: "ERRORE PARTITA",
+          what: "Setup fallito: " + (err?.message || err),
+          kind: "discard",
+        });
+      }
     });
-  });
 }
 
 // S2.3 + S5.1: orchestrate the Vision draft for all players

@@ -345,7 +345,6 @@ function serializeState(s) {
     counterMarketingPending: (s.counterMarketingPending || []).length, // count only
     deferredReveals: [],  // Block & React disabled in MP, ignore
     aiHighlight: s.aiHighlight,
-    activePicker: s.activePicker,
     justPlayedCardId: s.justPlayedCardId,
     aiJustPlayed: s.aiJustPlayed,
     prevResources: s.prevResources,
@@ -530,92 +529,128 @@ function mpBroadcastState() {
 
 // HOST: orchestrate Vision draft for all human slots in parallel.
 // AI slots auto-pick via chooseAIVision. Returns Promise that resolves
-// when all drafts complete.
+// when all drafts complete. S10 fix: try/catch around setup + onPick so a
+// throw inside the modal callback doesn't silently freeze the .then() chain.
 function mpDraftVisionsForAll() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let pending = 0;
     const onOnePicked = () => {
       pending--;
       if (pending === 0) resolve();
     };
-    state.players.forEach((p, idx) => {
-      if (p.slotType === "ai") {
-        const aiPool = visionsForAI();
-        p.visionOptions = pickRandom(aiPool, Math.min(3, aiPool.length));
-        p.vision = chooseAIVision(idx, p.visionOptions);
-        return;
-      }
-      pending++;
-      p.visionOptions = pickRandom(VISION_POOL, 3);
-      if (p.slotType === "human-host") {
-        showVisionDraftModal({
-          options: p.visionOptions,
-          onPick: (vision) => {
-            p.vision = vision;
-            mpBroadcastState();
-            onOnePicked();
-          },
-        });
-      } else {
-        // human-remote
-        const visionIds = p.visionOptions.map(v => v.id);
-        mpSendToPeer(p.peerId, {
-          type: "draftRequest",
-          kind: "vision",
-          visionIds,
-        });
-        mp.pendingDrafts[p.peerId] = (response) => {
-          p.vision = getVisionById(response.visionId);
-          mpBroadcastState();
-          onOnePicked();
-        };
-      }
-    });
-    if (pending === 0) resolve();
+    try {
+      state.players.forEach((p, idx) => {
+        if (p.slotType === "ai") {
+          const aiPool = visionsForAI();
+          p.visionOptions = pickRandom(aiPool, Math.min(3, aiPool.length));
+          p.vision = chooseAIVision(idx, p.visionOptions);
+          console.log("[mp] vision auto-picked for AI slot", idx, ":", p.vision?.id);
+          return;
+        }
+        pending++;
+        p.visionOptions = pickRandom(VISION_POOL, 3);
+        if (p.slotType === "human-host") {
+          showVisionDraftModal({
+            options: p.visionOptions,
+            onPick: (vision) => {
+              try {
+                p.vision = vision;
+                console.log("[mp] host picked vision:", vision?.id);
+                mpBroadcastState();
+                onOnePicked();
+              } catch (e) {
+                console.error("[mp] vision onPick callback failed:", e);
+                reject(e);
+              }
+            },
+          });
+        } else {
+          // human-remote
+          const visionIds = p.visionOptions.map(v => v.id);
+          mpSendToPeer(p.peerId, {
+            type: "draftRequest",
+            kind: "vision",
+            visionIds,
+          });
+          mp.pendingDrafts[p.peerId] = (response) => {
+            try {
+              p.vision = getVisionById(response.visionId);
+              mpBroadcastState();
+              onOnePicked();
+            } catch (e) {
+              console.error("[mp] vision draftResponse failed:", e);
+              reject(e);
+            }
+          };
+        }
+      });
+      if (pending === 0) resolve();
+    } catch (e) {
+      console.error("[mp] mpDraftVisionsForAll setup failed:", e);
+      reject(e);
+    }
   });
 }
 
 // HOST: orchestrate OKR draft for all human slots in parallel.
+// S10 fix: try/catch + reject so a throw doesn't silently freeze the chain.
 function mpDraftOkrsForAll() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let pending = 0;
     const onOnePicked = () => {
       pending--;
       if (pending === 0) resolve();
     };
-    state.players.forEach((p, idx) => {
-      if (p.slotType === "ai") {
-        // Already handled in startQuarter — okrOptions already drafted
-        // and chooseAIOKR called. Just verify p.okrs is set.
-        if (!p.okrs.length && p.okrOptions.length) {
-          p.okrs = [chooseAIOKR(idx, p.okrOptions)];
+    try {
+      state.players.forEach((p, idx) => {
+        if (p.slotType === "ai") {
+          // Already handled in startQuarter — okrOptions already drafted
+          // and chooseAIOKR called. Just verify p.okrs is set.
+          if (!p.okrs.length && p.okrOptions.length) {
+            p.okrs = [chooseAIOKR(idx, p.okrOptions)];
+          }
+          return;
         }
-        return;
-      }
-      pending++;
-      if (p.slotType === "human-host") {
-        showOKRDraftModal(() => {
-          mpBroadcastState();
-          onOnePicked();
-        });
-      } else {
-        // human-remote
-        const okrIds = p.okrOptions.map(o => o.id);
-        mpSendToPeer(p.peerId, {
-          type: "draftRequest",
-          kind: "okr",
-          okrIds,
-        });
-        mp.pendingDrafts[p.peerId] = (response) => {
-          const chosen = OKR_POOL.find(o => o.id === response.okrId);
-          if (chosen) p.okrs = [chosen];
-          p.okrOptions = [];
-          mpBroadcastState();
-          onOnePicked();
-        };
-      }
-    });
-    if (pending === 0) resolve();
+        pending++;
+        if (p.slotType === "human-host") {
+          console.log("[mp] showing OKR draft modal for host (slot", idx, ")");
+          showOKRDraftModal(() => {
+            try {
+              console.log("[mp] host picked OKR:", p.okrs?.[0]?.id);
+              mpBroadcastState();
+              onOnePicked();
+            } catch (e) {
+              console.error("[mp] OKR onComplete callback failed:", e);
+              reject(e);
+            }
+          });
+        } else {
+          // human-remote
+          const okrIds = p.okrOptions.map(o => o.id);
+          mpSendToPeer(p.peerId, {
+            type: "draftRequest",
+            kind: "okr",
+            okrIds,
+          });
+          mp.pendingDrafts[p.peerId] = (response) => {
+            try {
+              const chosen = OKR_POOL.find(o => o.id === response.okrId);
+              if (chosen) p.okrs = [chosen];
+              p.okrOptions = [];
+              mpBroadcastState();
+              onOnePicked();
+            } catch (e) {
+              console.error("[mp] OKR draftResponse failed:", e);
+              reject(e);
+            }
+          };
+        }
+      });
+      if (pending === 0) resolve();
+    } catch (e) {
+      console.error("[mp] mpDraftOkrsForAll setup failed:", e);
+      reject(e);
+    }
   });
 }
 
