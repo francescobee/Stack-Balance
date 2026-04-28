@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stack &amp; Balance — Quarterly Rivals</title>
+
+  <!-- Editorial typography: Fraunces (display) · Newsreader (body) · JetBrains Mono (numbers) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..900,30..100&family=Newsreader:opsz,wght,ital@6..72,400..700,0;6..72,400..700,1&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/board.css" />
+  <link rel="stylesheet" href="styles/player.css" />
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/visions.js"></script>
+  <script src="js/scenarios.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/user.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/achievements.js"></script>
+  <script src="js/balance.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/rules.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/game.js"></script>
+
+  <!-- Render layer: split into sub-modules in S8.1.
+       Order doesn't matter between sub-modules (all globals),
+       but render.js MUST come last because it's the orchestrator. -->
+  <script src="js/render-pyramid.js"></script>
+  <script src="js/render-tableau.js"></script>
+  <script src="js/render-sidebar.js"></script>
+  <script src="js/render-masthead.js"></script>
+  <script src="js/render-modals.js"></script>
+  <script src="js/render-profile.js"></script>
+  <script src="js/render.js"></script>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stack &amp; Balance — Test Harness</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 980px; margin: 32px auto; padding: 0 24px;
+      color: #2a2620; background: #faf6ef;
+      line-height: 1.5;
+    }
+    h1 { margin: 0 0 4px; font-size: 28px; font-weight: 700; }
+    .subtitle { color: #7a6f60; margin: 0 0 18px; font-size: 14px; }
+
+    button {
+      background: #2a2620; color: #faf6ef;
+      border: none; padding: 10px 22px; font-size: 14px;
+      border-radius: 4px; cursor: pointer; margin-right: 10px;
+    }
+    button:hover { background: #4a4035; }
+
+    .banner {
+      padding: 16px 20px; border-radius: 6px; margin: 18px 0;
+      font-size: 16px; line-height: 1.4;
+    }
+    .banner.ok   { background: #d4ead4; color: #1f5b1f; border-left: 5px solid #2a8c2a; }
+    .banner.fail { background: #f4d4d4; color: #6b1f1f; border-left: 5px solid #8c2a2a; }
+
+    section.group {
+      background: #fffaf0; padding: 14px 18px; margin: 12px 0;
+      border-left: 3px solid #2a2620; border-radius: 4px;
+    }
+    section.group.has-fail { border-left-color: #8c2a2a; background: #fff6f0; }
+    section.group h3 {
+      margin: 0 0 8px; font-size: 15px;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      color: #2a2620;
+    }
+    ul { list-style: none; margin: 0; padding: 0; }
+    li {
+      padding: 4px 0; font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 13px;
+    }
+    li.pass { color: #1f5b1f; }
+    li.fail { color: #6b1f1f; font-weight: 600; }
+    li pre {
+      margin: 4px 0 8px 24px; padding: 8px 10px;
+      background: #fde6e6; color: #4a1f1f;
+      border-radius: 3px; font-size: 12px;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    .meta {
+      font-size: 12px; color: #7a6f60; margin-top: 24px;
+      border-top: 1px solid #e0d8c8; padding-top: 12px;
+    }
+    code { background: #ede2c8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Stack &amp; Balance — Test Harness</h1>
+  <p class="subtitle">
+    Smoke tests sulle funzioni pure di <code>js/rules.js</code>.
+    Nessuna libreria. Apri questa pagina in un browser e clicca <em>Run Tests</em>
+    (o vengono eseguiti automaticamente al caricamento).
+  </p>
+
+  <button onclick="runAllTests()">▶ Run Tests</button>
+  <button onclick="document.getElementById('report').innerHTML=''">Clear</button>
+
+  <div id="report"></div>
+
+  <p class="meta">
+    Aggiungere nuovi test: scrivi <code>describe("Group", () =&gt; { it("name", () =&gt; assert(...)) })</code>
+    in <code>tests/test-rules.js</code> (o crea un nuovo <code>tests/test-*.js</code> e
+    aggiungilo allo script-tag list qui sotto). Tutte le globali del gioco
+    (<code>BALANCE</code>, <code>state</code>, <code>computeAwards</code>, …) sono accessibili.
+  </p>
+
+  <!-- Production code: same load order as index.html (minus render-* and main.js,
+       which would mount the actual game UI). We need the game logic, not the chrome. -->
+  <script src="../js/data.js"></script>
+  <script src="../js/visions.js"></script>
+  <script src="../js/scenarios.js"></script>
+  <script src="../js/util.js"></script>
+  <script src="../js/balance.js"></script>
+  <script src="../js/state.js"></script>
+  <script src="../js/rules.js"></script>
+  <script src="../js/ai.js"></script>
+
+  <!-- Test runner + suites -->
+  <script src="runner.js"></script>
+  <script src="test-rules.js"></script>
+
+  <!-- Auto-run on load for fast feedback -->
+  <script>
+    window.addEventListener("DOMContentLoaded", () => runAllTests());
+  </script>
+</body>
+</html>

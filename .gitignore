@@ -1,0 +1,29 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Throwaway test scaffolding (we have tests/run-headless.js as the permanent one)
+tests/.headless-check.js
+tests/.tmp-*
+
+# Node (in case we ever add CI deps)
+node_modules/
+package-lock.json
+yarn.lock
+npm-debug.log*
+
+# Logs
+*.log
+
+# Claude Code session files
+.claude.json
+.claude.json.backup
+.claude/
