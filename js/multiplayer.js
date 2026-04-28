@@ -352,6 +352,11 @@ function serializeState(s) {
     gameOver: !!s.gameOver,
     difficulty: s.difficulty,
     // localSlotIdx is NOT serialized — each client sets its own
+    // S10 fix: isMultiplayer MUST be preserved across stateUpdate, otherwise
+    // clients receive state without it and humanPickCard treats them as
+    // single-player → they apply picks locally, never notify host, state
+    // diverges. Symptom: guest sees pickIndex advancing but host doesn't.
+    isMultiplayer: !!s.isMultiplayer,
   };
 }
 
@@ -458,6 +463,11 @@ function handleClientGameStart(msg) {
 // (mirrors the host's celebrateChanges behavior so each client gets feedback).
 function handleStateUpdate(serialized) {
   const localSlot = state?.localSlotIdx ?? 0;
+  // S10 fix: capture isMultiplayer BEFORE replacing state. Even though
+  // serializeState now includes it, we belt+suspenders preserve it here:
+  // if the host ever broadcasts without setting it, the client must NOT
+  // fall back to single-player mode (would cause divergent state).
+  const wasMultiplayer = state?.isMultiplayer ?? true;
   // Snapshot pre-update for local-POV celebration detection
   let celebBefore = null, debtBefore = 0;
   if (state?.players?.[localSlot] && typeof snapshotCelebrationState === "function") {
@@ -469,6 +479,7 @@ function handleStateUpdate(serialized) {
   // Apply update
   state = deserializeState(serialized);
   state.localSlotIdx = localSlot;  // preserve POV
+  state.isMultiplayer = wasMultiplayer || !!serialized.isMultiplayer;
   // Fire celebrations for the local POV player
   if (celebBefore && state.players?.[localSlot] && typeof celebrateChanges === "function") {
     try {
