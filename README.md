@@ -64,6 +64,7 @@ test/
 │   ├── rules.js              # adjustedCost, applyEffect, computeAwards, pyramid
 │   ├── ai.js                 # AI_PERSONAS + decideAIPickFromPyramid + lookahead
 │   ├── game.js               # startGame, processNextPick, endOfQuarter, modals
+│   ├── multiplayer.js        # P2P multiplayer via PeerJS (Phase 10)
 │   │
 │   ├── render.js             # ⭐ orchestrator: render(), renderSplash, escapeHtml
 │   ├── render-pyramid.js     # board: renderPyramidCard, renderPyramid       (S8.1)
@@ -95,6 +96,44 @@ L'ordine *conta* per `balance.js` (deve precedere chi lo usa: state/rules/ai/gam
 e `util.js` (deve precedere ogni `render-*.js` per `el()`/`showToast`). Tra i
 sub-moduli `render-*` l'ordine è libero (sono tutte function declarations
 globali invocate runtime).
+
+---
+
+## 🌐 Multiplayer P2P
+
+Il gioco supporta multiplayer fino a 4 player via **WebRTC peer-to-peer**.
+Niente server da gestire: il signaling è gratis tramite [PeerJS Cloud](https://peerjs.com/),
+i dati di gioco fluiscono direttamente tra browser. Funziona out-of-the-box
+su GitHub Pages.
+
+### Come giocare in multiplayer
+
+1. **Host**: dalla splash, click **"🌐 Multiplayer"** → **"Crea partita"**
+2. Condividi il **room code** (4 caratteri, es. `ABCD`) o il link copiato
+   con i tuoi amici
+3. **Client**: dalla splash → **"Multiplayer"** → **"Unisciti"** + codice +
+   nome
+4. Il host vede i player che si connettono. **Posti vuoti = AI** (non c'è
+   bisogno di tutti e 4 i posti pieni)
+5. Il host clicca **"Avvia partita →"** quando pronto
+6. Ogni player draftano **Vision** e **OKR** in modo indipendente, poi il
+   gioco procede normalmente con snake draft
+
+### Limitazioni MVP
+
+- 🚫 **Block & React disabled** in multiplayer (single-player conserva)
+- 🚫 **Host disconnect** = game over (no host migration)
+- 🚫 **Disconnect = AI replacement** (no reconnect)
+- 🚫 No spectator mode, no voice chat, no persistence
+- ⚠️ Qualche network corporate/mobile può avere problemi di NAT traversal
+
+### Setup deterministico (per dev)
+
+```js
+// In console:
+localStorage.setItem("dev.forceVision", "tech_first");
+// Bypassa il modal Vision draft — utile per S9.8 playtest
+```
 
 ---
 

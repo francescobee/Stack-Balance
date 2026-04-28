@@ -32,6 +32,7 @@ function startGame(scenarioId = "standard", isDaily = false) {
     scenario: getScenarioById(scenarioId), // S6.1: game-wide ruleset
     isDaily,                       // S6.3: true if Daily Run mode
     dominanceSweepsByPlayer: {},   // S6.2: tracker for "Dominator" achievement
+    localSlotIdx: 0,               // S10: which slot is this client (0 in single-player)
   };
   // S2.3: Vision draft happens BEFORE the first quarter (game-start identity).
   // After the human picks (and AI auto-pick), starting modifiers apply,
@@ -41,6 +42,60 @@ function startGame(scenarioId = "standard", isDaily = false) {
     startQuarter();
     showOKRDraftModal(() => {
       render();
+      processNextPick();
+    });
+  });
+}
+
+// ============================================================
+// S10: MULTIPLAYER GAME START
+// ============================================================
+// Called by mpStartMultiplayerGame (host only). Sets up state with
+// the resolved slot config (humans + AI fillers), then runs draft for
+// all human slots in parallel via mpDraftVisionsForAll/mpDraftOkrsForAll.
+function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
+  clearRngSeed();  // S10: random seed per multiplayer game (no daily coupling)
+  // Build players array from slotConfig
+  const players = slotConfig.map((slot, idx) => {
+    const isHuman = slot.type !== "ai";
+    const p = newPlayer(slot.name, isHuman);
+    p.slotType = slot.type;
+    p.peerId = slot.peerId;
+    return p;
+  });
+  state = {
+    quarter: 1,
+    pickIndex: 0,
+    pickOrder: [],
+    pyramid: [],
+    players,
+    log: [],
+    phase: "human",
+    aiHighlight: null,
+    activePicker: 0,
+    justPlayedCardId: null,
+    aiJustPlayed: null,
+    prevResources: null,
+    seenTutorial: false,
+    gameOver: false,
+    counterMarketingPending: [],
+    deferredReveals: [],
+    activeEvent: null,
+    difficulty: mp.difficulty || "senior",
+    scenario: getScenarioById(scenarioId),
+    isDaily: false,
+    dominanceSweepsByPlayer: {},
+    localSlotIdx,
+    isMultiplayer: true,           // S10 flag
+  };
+  // Vision draft: all humans in parallel + AI auto-pick
+  mpDraftVisionsForAll().then(() => {
+    applyStartingModifiers();
+    startQuarter();
+    // OKR draft: all humans in parallel + AI auto-pick (already done in startQuarter for AI)
+    mpDraftOkrsForAll().then(() => {
+      render();
+      mpBroadcastState();
       processNextPick();
     });
   });
@@ -276,30 +331,38 @@ function celebrateChanges(player, before, opts = {}) {
 // ---------- TURN LOOP ----------
 async function processNextPick() {
   // S3.2: process due deferred reveals at start of each pick
-  flushDueDeferredReveals();
+  // S10: in multiplayer, Block & React is disabled — skip the deferred queue
+  if (!state.isMultiplayer) flushDueDeferredReveals();
 
   if (state.pickIndex >= state.pickOrder.length) {
     state.phase = "between";
     state.activePicker = null;
     render();
+    if (state.isMultiplayer) mpBroadcastState();
     await sleep(400);
     endOfQuarter();
     return;
   }
   const playerIdx = state.pickOrder[state.pickIndex];
   state.activePicker = playerIdx;
+  const player = state.players[playerIdx];
 
-  if (playerIdx === 0) {
+  // S10: any human slot (host or remote) → wait. Only AI runs auto.
+  const isAITurn = player.slotType === "ai" || !player.isHuman;
+  if (!isAITurn) {
     state.phase = "human";
     state.aiHighlight = null;
     render();
-    return; // wait for click
+    // Broadcast so remote clients see whose turn it is
+    if (state.isMultiplayer) mpBroadcastState();
+    return; // wait for click (local) or pick message (remote)
   }
 
   // AI's turn
   state.phase = "ai";
   state.aiHighlight = null;
   render();
+  if (state.isMultiplayer) mpBroadcastState();
   await sleep(450);
 
   const decision = decideAIPickFromPyramid(playerIdx);
@@ -325,8 +388,10 @@ async function processNextPick() {
     kind: "steal"
   });
 
-  // S3.2: human can block the AI's reveal
-  const blockResult = await offerBlockOpportunity(playerIdx, toReveal);
+  // S3.2: human can block the AI's reveal (S10: disabled in multiplayer)
+  const blockResult = state.isMultiplayer
+    ? { blocked: false }
+    : await offerBlockOpportunity(playerIdx, toReveal);
   if (toReveal && !blockResult.blocked) {
     toReveal.slot.faceUp = true;
     showToast({
@@ -338,10 +403,15 @@ async function processNextPick() {
   render();
   await sleep(550);
   state.aiJustPlayed = null;
-  state.prevResources = snapshotResources(state.players[0]);
-
-  // S7.1+S7.2: detect celebrations on human side (sabotage may have hit)
-  celebrateChanges(state.players[0], aiCelebBefore, { debtBefore: aiHumanDebtBefore });
+  // S10: in multiplayer, celebrations fire on each client via handleStateUpdate.
+  // Only run them locally (host POV) if single-player.
+  if (!state.isMultiplayer) {
+    state.prevResources = snapshotResources(state.players[0]);
+    celebrateChanges(state.players[0], aiCelebBefore, { debtBefore: aiHumanDebtBefore });
+  } else {
+    // Broadcast post-AI state so all clients can compute their own celebrations
+    mpBroadcastState();
+  }
 
   state.pickIndex++;
   processNextPick();
@@ -350,7 +420,24 @@ async function processNextPick() {
 async function humanPickCard(row, col, cardEl) {
   if (state.gameOver || state.phase !== "human") return;
   if (!isPickable(row, col)) return;
-  const player = state.players[0];
+
+  // S10: Multiplayer — non-host clients route their pick through the host
+  if (state.isMultiplayer && typeof mp !== "undefined" && mp.active && !mp.isHost) {
+    if (state.activePicker !== state.localSlotIdx) return; // not my turn
+    const previewSlot = state.pyramid[row][col];
+    if (!previewSlot || previewSlot.taken) return;
+    // Visual feedback (will be replaced by state update from host)
+    if (cardEl) cardEl.classList.add("flying");
+    unlockAudio?.();
+    if (typeof sndPick === "function") sndPick();
+    mpSendToHost({ type: "pick", row, col });
+    return;
+  }
+
+  // Single-player OR multiplayer host: apply locally
+  // S10: use localSlotIdx (= 0 in single-player, = 0 for host in multiplayer)
+  const playerIdx = state.localSlotIdx;
+  const player = state.players[playerIdx];
   const slot = state.pyramid[row][col];
   if (!slot || slot.taken) return;
   const card = slot.card;
@@ -375,7 +462,7 @@ async function humanPickCard(row, col, cardEl) {
   await sleep(560);
 
   state.prevResources = snapshotResources(player);
-  const { toReveal } = takeFromPyramid(0, row, col, willPlay ? "play" : "discard");
+  const { toReveal } = takeFromPyramid(playerIdx, row, col, willPlay ? "play" : "discard");
 
   // S7.1: chain celebration (post-play, the discount has been applied)
   if (willChain) {
@@ -394,8 +481,10 @@ async function humanPickCard(row, col, cardEl) {
     showToast({ who: "TU SCARTI", what: `<em>${card.name}</em> · +2 💰, +1 🐞`, kind: "discard" });
   }
 
-  // S3.2: AI can react/block the human's reveal
-  const blockResult = await offerBlockOpportunity(0, toReveal);
+  // S3.2: AI can react/block the human's reveal (S10: disabled in multiplayer)
+  const blockResult = state.isMultiplayer
+    ? { blocked: false }
+    : await offerBlockOpportunity(playerIdx, toReveal);
   if (toReveal && !blockResult.blocked) {
     toReveal.slot.faceUp = true;
     showToast({
@@ -413,6 +502,7 @@ async function humanPickCard(row, col, cardEl) {
   celebrateChanges(player, celebBefore, { debtBefore });
 
   state.pickIndex++;
+  if (state.isMultiplayer) mpBroadcastState();
   processNextPick();
 }
 
@@ -441,6 +531,8 @@ function flushDueDeferredReveals() {
 function offerBlockOpportunity(actingIdx, toReveal) {
   return new Promise((resolve) => {
     if (!toReveal) return resolve({ blocked: false });
+    // S10: Block & React disabled in multiplayer (MVP simplification)
+    if (state.isMultiplayer) return resolve({ blocked: false });
 
     if (actingIdx === 0) {
       // Human picked — AI may react (auto-decide)
@@ -603,6 +695,9 @@ function endOfQuarter() {
     });
   }
 
+  // S10: broadcast post-EOQ state so clients see all bonuses applied
+  if (state.isMultiplayer) mpBroadcastState();
+
   showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents);
 }
 
@@ -656,6 +751,15 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
       </div>
     </div></div>`;
   document.getElementById("modalRoot").innerHTML = html;
+  // S10: in multiplayer, only host can advance Q. Clients see modal but
+  // their button does nothing — host triggers next phase via state broadcast.
+  const isMpClient = state.isMultiplayer && typeof mp !== "undefined" && mp.active && !mp.isHost;
+  if (isMpClient) {
+    // Replace button area with a waiting message
+    const actionsArea = document.querySelector("#modalRoot .actions");
+    if (actionsArea) actionsArea.innerHTML = `<div class="mp-waiting">⏳ In attesa che l'host avanzi...</div>`;
+    return;
+  }
   if (state.quarter < NUM_QUARTERS) {
     document.getElementById("nextQuarterBtn").onclick = () => {
       document.getElementById("modalRoot").innerHTML = "";
@@ -663,10 +767,20 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
       // S4.1: market event picked between Q1→Q2 and Q2→Q3
       pickAndShowMarketEvent(() => {
         startQuarter();
-        showOKRDraftModal(() => {
-          render();
-          processNextPick();
-        });
+        if (state.isMultiplayer) {
+          // S10: parallel OKR draft for all humans + AI auto
+          mpBroadcastState();
+          mpDraftOkrsForAll().then(() => {
+            render();
+            mpBroadcastState();
+            processNextPick();
+          });
+        } else {
+          showOKRDraftModal(() => {
+            render();
+            processNextPick();
+          });
+        }
       });
     };
   } else {
@@ -728,6 +842,8 @@ function endGame() {
     p._debtPenalty = p.techDebt * BALANCE.DEBT.ENDGAME_PENALTY_MULT;
     p.vp = Math.max(0, p.vp - p._debtPenalty);
   });
+  // S10: broadcast final state to clients before showing modal
+  if (state.isMultiplayer) mpBroadcastState();
   const ranked = [...state.players].sort((a, b) => b.vp - a.vp);
   const winner = ranked[0];
   const youRank = ranked.indexOf(state.players[0]) + 1;

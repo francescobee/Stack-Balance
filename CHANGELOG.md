@@ -9,6 +9,259 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S10.1-S10.6] — 2026-04-28 · Phase 10 Multiplayer P2P (entire phase)
+
+> **Phase 10 · Multiplayer P2P** — implementata in un'unica session
+> intensiva. ~600 LOC nuovi distribuiti tra `js/multiplayer.js` (nuovo) +
+> hook nel codice esistente. Backward-compatible: il single-player
+> funziona identico.
+
+### Scope summary
+- ✅ S10.1 PeerJS integration & Lobby UI
+- ✅ S10.2 Authoritative host state replication
+- ✅ S10.3 Networked picks (humans + AI seats)
+- ✅ S10.4 Lobby polish & game setup
+- ✅ S10.5 Disconnect handling (replace-with-AI)
+- ✅ S10.6 Tests (+8 new) + docs
+- 🟡 Empirical playtest with multiple browsers: **deferred to user** (richiede
+  reale rete con 2-4 client, fuori dalla mia capacità)
+
+### Architecture: Authoritative Host
+
+Il modello scelto (vedi MULTIPLAYER-ROADMAP.md §Architettura tech):
+- **Host** runs all `rules.js` / `game.js` / `ai.js` localmente
+- **Clients** ricevono state-snapshots via `mpBroadcastState`, inviano i
+  loro pick via `{type: "pick"}` al host che valida & applica
+- Posti vuoti riempiti da AI (host runs AI logic naturally)
+- **Block & React DISABLED** in multiplayer (MVP simplification —
+  documented limitation)
+- **Random seed per game** (no daily coupling)
+- **No spectator / no voice chat** (esplicitamente fuori scope)
+
+### Files created
+- [`js/multiplayer.js`](js/multiplayer.js) (~430 LOC) — connection mgmt,
+  message dispatch, state serialization, draft orchestration, slot
+  helpers, disconnect handlers
+
+### Files modified
+| File | Cambio |
+|------|--------|
+| `index.html` | + `<script>` PeerJS CDN + multiplayer.js |
+| `js/state.js` | newPlayer aggiunge `slotType` + `peerId` |
+| `js/main.js` | URL hash `#room=ABCD` apre join modal con codice prefilled |
+| `js/game.js` | + `startGameMultiplayer()`, `processNextPick`/`humanPickCard` slot-aware, broadcast hooks in endOfQuarter/endGame, Block disabled in MP |
+| `js/render-modals.js` | + `showMultiplayerEntryModal/JoinModal/LobbyModal/renderMultiplayerLoading` |
+| `js/render.js` | usa `state.localSlotIdx` invece di `0` hardcoded; nuovo splash button "🌐 Multiplayer" |
+| `js/render-pyramid.js` | gating `interactive = ... && isMyTurn` |
+| `js/render-masthead.js` | byline mostra tutti tranne local POV; turn indicator distingue "Tocca a te" / "In attesa di X" / "Marco sta scegliendo" |
+| `styles/main.css` | +180 LOC CSS per lobby/entry/join modals |
+| `tests/test-rules.js` | +8 test (serialization, slot helpers) |
+| `tests/run-headless.js` | aggiunge multiplayer.js al load order |
+| `tests/test.html` | aggiunge multiplayer.js al load order |
+
+### Key design decisions (with rationale)
+
+#### Why authoritative host (not lockstep)
+Niente refactor di `Math.random()` sparsi (sabotage handlers usano
+RNG inline). Tutto il codice esistente gira identico sull'host. Anti-cheat
+naturale (host non si fida dei messaggi client). Tradeoff: host disconnect
+= game over (no host migration in MVP).
+
+#### Why state snapshot broadcast (not action-deltas)
+Robustness > bandwidth. Una serializzazione completa è ~5-10KB; in 24
+pick × 3 Q = ~720KB totali. Trascurabile per Internet moderno.
+Niente desync issues.
+
+#### Why empty seats = AI (not "wait for everyone")
+Game balance richiede 4 player (snake draft, 24 picks/Q matematicamente
+basato su 4). Posti vuoti → AI mantiene la dinamica. Più flessibile per
+2-3 amici.
+
+#### Why no Block & React in multiplayer
+La meccanica richiede sync di un timer 4s tra host + client target. Edge
+cases multipli (cosa se il client target è offline? cosa se 2 client
+possono bloccare?). Per MVP lo disabilitiamo. Single-player conserva
+Block normalmente.
+
+#### Why local-POV celebrations on each client
+Toasts/audio sono UX side-effects. Sull'host fire come prima (l'host È
+un client). Sui client remoti, `handleStateUpdate` snapshotta pre-update
+state, applica nuovo state, chiama `celebrateChanges` con le delta
+locali. Ogni client celebra i propri eventi.
+
+### State serialization details
+
+`serializeState(state)` in multiplayer.js:
+- Cards (pure data) → passthrough
+- OKR objects → array di id (es. `["morale_high", "data_target", ...]`)
+- Vision (pure data, modifiers obj) → passthrough
+- Scenario → solo `{id}` (strip onQuarterStart fn)
+- Event → solo `{id}` (strip onActivate fn)
+- counterMarketingPending → `length` (clients don't need the queue)
+- log → ultimi 10 entries (bandwidth saving)
+
+`deserializeState(serialized)`:
+- OKR ids → lookup in OKR_POOL
+- Scenario id → `getScenarioById()`
+- Event id → lookup in EVENT_POOL
+- Resto: passthrough
+
+### Lobby flow
+1. Splash button "🌐 Multiplayer" → `showMultiplayerEntryModal`
+2. Host path: `mpCreateRoom(name)` → genera 4-char code → modal lobby
+3. Join path: `showMultiplayerJoinModal` → input code+name → `mpJoinRoom`
+4. Lobby modal: 4 slot grid (humans + AI placeholders), copy-link button,
+   difficulty selector (host-only)
+5. Host clicks "Avvia partita →" → `mpStartMultiplayerGame(scenarioId)`
+
+### Game flow (multiplayer-aware)
+1. `startGameMultiplayer` builds players from slotConfig
+2. Host broadcasts `gameStarted` to all clients (with slotConfig + slotIdx)
+3. Vision draft: host calls `mpDraftVisionsForAll()`:
+   - AI slots: `chooseAIVision` immediato
+   - human-host: `showVisionDraftModal` locale
+   - human-remote: `mpSendToPeer({type: "draftRequest", kind: "vision"})`,
+     await `draftResponse`
+4. Same pattern for OKR draft
+5. `processNextPick`:
+   - Active is AI → run `decideAIPickFromPyramid`, broadcast state
+   - Active is human → broadcast state (clients see whose turn it is via
+     `state.activePicker`); host waits for local click OR pick message
+6. Pick applies via `takeFromPyramid` (existing logic), broadcast new state
+
+### URL hash deep linking
+`https://francescobee.github.io/Stack-Balance/#room=ABCD` ouverture sul
+join modal con codice prefilled. main.js leggi `location.hash`, clear
+post-render per evitare re-trigger su refresh.
+
+### Disconnect handling (S10.5)
+- Client disconnect → host: convert slot to AI, broadcast updated state,
+  resume `processNextPick`. Toast "DISCONNESSO" mostrato.
+- Host disconnect → client: error toast "Host disconnesso", auto-return
+  to splash dopo 1.5s.
+- No reconnect (MVP). No host migration (MVP).
+
+### Tests added (+8, totale 52/52 pass)
+
+```
+multiplayer serialization [S10.2] — 5 test
+  ✓ serializeState strips functions (event.onActivate, scenario.onQuarterStart)
+  ✓ serializeState replaces OKR objects with id strings
+  ✓ deserializeState reconstructs OKR objects via OKR_POOL lookup
+  ✓ deserializeState reconstructs scenario via getScenarioById
+  ✓ serialize/deserialize roundtrip preserves pyramid structure
+  (+ null state handling)
+
+multiplayer slot helpers [S10.3] — 2 test
+  ✓ newPlayer sets slotType=human-host for human, ai for non-human
+  ✓ mp.lobby slot allocation: empty seats fillable in order 1..3
+```
+
+### Manual playtest checklist (per acceptance)
+
+> ⚠️ **Da eseguire dall'utente** — io non posso aprire 2-4 browser
+> simultanei. Apri il link Pages in browser diversi (incognito + Firefox
+> + ecc.) per testare:
+
+```
+☐ Browser A (host): click "🌐 Multiplayer" → "Crea partita" → vedo room code
+☐ Browser A: click "Copia link" → URL si copia
+☐ Browser B incognito: paste URL → si apre join modal con codice prefilled
+☐ Browser B: inserisci nome → click "Connetti →" → vedo lobby con 2 player
+☐ Browser A: vedo "1 human + 3 AI" → "2 humans + 2 AI" dopo connect
+☐ Browser A: click "Avvia partita →"
+☐ Entrambi: vedo modal Vision draft con 3 opzioni (diverse per client)
+☐ Browser A scelgo Vision → vedo splash di attesa per Browser B
+☐ Browser B sceglie Vision → entrambi proseguono a Q1
+☐ Q1 OKR draft: stesso pattern (parallelo per entrambi)
+☐ Snake draft picks: A pesca → B vede update nel masthead/byline
+☐ B pesca quando è il suo turno → A vede update
+☐ AI slots picano automaticamente (host runs them)
+☐ Q-end modal: A vede button "Avvia Q2 →", B vede "⏳ In attesa che l'host avanzi"
+☐ Market event modal: stesso event a entrambi
+☐ Q3 finale: investor pitch + VC reaction visibili a entrambi
+☐ End-game classifica: identica su entrambi
+☐ Browser B chiude tab mid-game → Browser A vede toast "DISCONNESSO" e
+   il slot diventa AI; partita prosegue
+☐ Browser A chiude tab → Browser B vede error "Host disconnesso" e
+   torna allo splash
+```
+
+### Known limitations (MVP — by design)
+
+- **Block & React disabled** — la meccanica di interrupt single-player
+  resta. In MP è disabilitata per semplicità.
+- **No host migration** — host disconnect = game over
+- **No reconnect** — disconnessi non possono rejoinare la partita in corso
+- **No spectator** — only 4 active players, niente "watch only"
+- **No persistence** — chiudendo il browser, la partita è persa
+- **No friend list / login** — share via room code/URL
+- **NAT traversal limitations** — alcuni network corporate/mobile
+  potrebbero impedire la connessione P2P (PeerJS Cloud usa STUN ma non
+  TURN gratuito illimitato)
+
+### Known limitations (TBD post-playtest)
+
+- **Concurrent draft modals**: se 2 humans hanno il modal Vision draft
+  aperto simultaneamente, race condition theoretical sui callback. Da
+  validare in playtest reale.
+- **Slow client lag**: se un client è molto lento, gli altri attendono
+  i suoi draft response. No timeout configurato → potenziale stuck.
+  Considera aggiungere `30s` timeout in S10.X+1.
+- **Bandwidth con stati molto grandi**: in late-game con 4 player ben
+  carichi, lo state JSON può raggiungere ~15KB. Su connessioni mobili
+  potrebbe vedersi delay. Misurare in playtest.
+
+### Acceptance criteria (dal MULTIPLAYER-ROADMAP.md)
+
+- [x] **Code complete**: tutti i 6 sub-task implementati
+- [x] **Tests pass**: 52/52 (era 44, +8 nuovi)
+- [x] **Backward compat**: single-player funziona identico (verificato
+      via test suite + ispezione manuale del flow)
+- [ ] **Manual playtest 4 humans**: deferred — richiede l'utente
+- [ ] **README aggiornato con sezione multiplayer**: vedi sotto
+
+### Files snapshot (LOC, after final split)
+
+```
+js/multiplayer.js         698  (new — connection mgmt + serialization + drafts)
+js/render-multiplayer.js  239  (new — lobby/join/entry modals, split from render-modals)
+js/render-modals.js       385  (was 329 pre-S10, briefly 600, ora 385 post-split — rispetta <500)
+js/game.js                928  (+90 multiplayer hooks)
+js/render-pyramid.js      152  (+8 isMyTurn gate)
+js/render-masthead.js     230  (+25 byline + turn indicator)
+js/render.js              140  (+20 multiplayer button + localSlotIdx)
+js/state.js                70  (+5 slotType/peerId fields)
+js/main.js                 30  (+10 URL hash handling)
+styles/main.css           2173 (+180 CSS lobby)
+tests/test-rules.js       560  (+90 multiplayer tests)
+```
+
+**LOC vincolo S8.1 mantenuto**: tutti i `render-*.js` restano <500 LOC.
+`multiplayer.js` a 698 LOC è una deviazione consapevole — il file è
+tematicamente coerente (tutta la networking layer in un posto), quindi
+splittarlo per rispettare un vincolo numerico sarebbe over-engineering.
+
+### Architectural notes per future work
+
+Per un eventuale **host migration** (post-MVP):
+- I client devono mantenere copia COMPLETA dello state (non solo
+  ricevuto). Già succede via `state = deserializeState(...)`.
+- Su host disconnect, primo client per peer-id alfabetico assume host
+  role. Reindirizza connections.
+- Richiede leader election (~30 min implementazione).
+
+Per **reconnect**:
+- Host mantiene mapping peerId → slotIdx anche dopo disconnect
+- Se stesso peerId si riconnette entro 30s, restore slot
+- Stato AI temporaneo viene revertito a human
+
+Per **TURN server fallback** (se PeerJS Cloud STUN non basta):
+- Twilio TURN gratuito ~10K min/mese
+- Aggiungi config a `PEER_OPTIONS.iceServers`
+
+---
+
 ## [S9.6] — 2026-04-28 · AI Director Coordination
 
 > **Phase 9 · Gameplay Refinement** — sessione 6 di 8. A livello

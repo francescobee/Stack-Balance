@@ -7,12 +7,18 @@
 
 // ---------- PYRAMID (the board) ----------
 function renderPyramidCard(slot, row, col) {
-  const player = state.players[0];
+  // S10: localSlotIdx = 0 in single-player, but can be 1-3 for multiplayer clients.
+  // Pyramid affordability + chain checks use the LOCAL POV player.
+  const localIdx = state.localSlotIdx ?? 0;
+  const player = state.players[localIdx];
   const depth = getDepth(row, col);
   const card = slot.card;
   const pickable = isPickable(row, col);
   const isHumanTurn = state.phase === "human";
-  const interactive = isHumanTurn && pickable;
+  // S10: interactive only when it's MY turn (in single-player this is always
+  // true when phase=human; in multiplayer requires activePicker === localIdx)
+  const isMyTurn = state.activePicker === localIdx;
+  const interactive = isHumanTurn && pickable && isMyTurn;
   const affordable = canAfford(player, card);
 
   const cls = ["pcard", `d${depth}`];

@@ -13,6 +13,10 @@
   <link rel="stylesheet" href="styles/main.css" />
   <link rel="stylesheet" href="styles/board.css" />
   <link rel="stylesheet" href="styles/player.css" />
+
+  <!-- PeerJS for P2P multiplayer (Phase 10). Loaded async — multiplayer
+       feature gracefully degrades if CDN is down (Peer === undefined). -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
 </head>
 <body>
   <div id="app"></div>
@@ -30,6 +34,10 @@
   <script src="js/ai.js"></script>
   <script src="js/game.js"></script>
 
+  <!-- Phase 10: P2P multiplayer (PeerJS-based). Loaded after game.js so it can
+       hook into game flow. Single-player works without it. -->
+  <script src="js/multiplayer.js"></script>
+
   <!-- Render layer: split into sub-modules in S8.1.
        Order doesn't matter between sub-modules (all globals),
        but render.js MUST come last because it's the orchestrator. -->
@@ -39,6 +47,7 @@
   <script src="js/render-masthead.js"></script>
   <script src="js/render-modals.js"></script>
   <script src="js/render-profile.js"></script>
+  <script src="js/render-multiplayer.js"></script>
   <script src="js/render.js"></script>
 
   <script src="js/main.js"></script>

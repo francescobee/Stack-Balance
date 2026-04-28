@@ -352,6 +352,13 @@ function showBlockOverlay({ actingIdx, toReveal, onBlock, onTimeout }) {
   setTimeout(() => finish(onTimeout), ms);
 }
 
+// ---------- S10: MULTIPLAYER MODALI ----------
+// Estratti in `js/render-multiplayer.js` per rispettare il vincolo
+// S8.1 "<500 LOC per file" (post-S10 questo file era a 600 LOC).
+//   • showMultiplayerEntryModal, showMultiplayerJoinModal,
+//     showMultiplayerLobbyModal, renderMultiplayerLoading
+// Le funzioni sono globali, accessibili via window/global classic-script.
+
 // ---------- HELP MODAL ----------
 function showHelpModal() {
   const root = el("div", { class: "modal-bg", id: "helpBg",

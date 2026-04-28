@@ -47,12 +47,14 @@ function renderMasthead() {
   inner.appendChild(ed);
 
   const meta = el("div", { class: "meta" });
+  const localIdx = state.localSlotIdx ?? 0;
+  const localPlayer = state.players[localIdx];
   const us = el("div", { class: "users-stat" });
-  us.innerHTML = `<span class="label">Your MAU</span><span class="num">${state.players[0].vp}K</span>`;
+  us.innerHTML = `<span class="label">Your MAU</span><span class="num">${localPlayer.vp}K</span>`;
   meta.appendChild(us);
 
   // S2.3: Vision badge (your founder identity)
-  const vis = state.players[0]?.vision;
+  const vis = localPlayer?.vision;
   if (vis) {
     const visBadge = el("div", {
       class: "vision-badge",
@@ -146,7 +148,10 @@ function renderByline() {
   root.appendChild(el("div", { class: "byline-label" }, "Rivals"));
 
   const list = el("div", { class: "byline-list" });
-  for (let i = 1; i < NUM_PLAYERS; i++) {
+  // S10: show all players except local POV (was hard-coded to "1, 2, 3")
+  const localIdx = state.localSlotIdx ?? 0;
+  for (let i = 0; i < NUM_PLAYERS; i++) {
+    if (i === localIdx) continue;
     const p = state.players[i];
     const isActive = state.activePicker === i;
     const initial = p.name[0];
@@ -188,15 +193,26 @@ function renderByline() {
 
 // ---------- TURN INDICATOR ----------
 function makeTurnIndicator() {
+  const localIdx = state.localSlotIdx ?? 0;
   if (state.phase === "human") {
-    const e = el("span", { class: "turn-indicator your-turn" });
-    e.appendChild(el("span", { class: "dot" }));
-    e.appendChild(el("span", {}, "Tocca a te"));
+    const isMine = state.activePicker === localIdx;
+    if (isMine) {
+      const e = el("span", { class: "turn-indicator your-turn" });
+      e.appendChild(el("span", { class: "dot" }));
+      e.appendChild(el("span", {}, "Tocca a te"));
+      return e;
+    }
+    // S10: another human's turn
+    const p = state.players[state.activePicker];
+    const cleanName = (p?.name?.split(' (')[0] || p?.name || "?");
+    const e = el("span", { class: "turn-indicator" });
+    e.appendChild(el("span", { class: "spinner" }));
+    e.appendChild(el("span", {}, `In attesa di ${cleanName}…`));
     return e;
   }
   if (state.phase === "ai") {
     const p = state.players[state.activePicker];
-    const cleanName = (p.name.split(' (')[0] || p.name);
+    const cleanName = (p?.name?.split(' (')[0] || p?.name || "?");
     const e = el("span", { class: "turn-indicator" });
     e.appendChild(el("span", { class: "spinner" }));
     e.appendChild(el("span", {}, `${cleanName} sta scegliendo`));

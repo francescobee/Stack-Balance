@@ -7,10 +7,12 @@
 > **Source of truth gerarchia**:
 > 1. `CONTEXT.md` (questo file) — orientation, conventions, gotchas
 > 2. `ROADMAP.md` — piano build (Phases 1-8, ✅ chiuso)
-> 3. `GAMEPLAY-ROADMAP.md` — piano refinement post-launch (Phase 9, ⬜ aperto)
-> 4. `BALANCE-NOTES.md` — analisi numerica + playtest protocol (S9.2+)
-> 5. `CHANGELOG.md` — log dettagliato di ogni session implementata
-> 6. Codice in `js/`, `styles/` — implementazione
+> 3. `GAMEPLAY-ROADMAP.md` — piano refinement post-launch (Phase 9, 🟡 7/8)
+> 4. `MULTIPLAYER-ROADMAP.md` — Phase 10 P2P multiplayer (⬜ aperto)
+> 5. `BALANCE-NOTES.md` — analisi numerica + playtest protocol (S9.2+)
+> 6. `GIT-WORKFLOW.md` — git/GitHub workflow + Pages + CI
+> 7. `CHANGELOG.md` — log dettagliato di ogni session implementata
+> 8. Codice in `js/`, `styles/` — implementazione
 
 ---
 
@@ -511,6 +513,112 @@ Se vuoi cambiare *forma* al gioco invece di *aggiungere*:
 _Last updated: 2026-04-28 dopo S8.2 (test harness + README). 🎉 **Roadmap
 a 8 fasi: 100% completato.** Aggiorna questo doc quando le convenzioni o
 l'architettura cambiano in modo non-locale._
+
+## 🆕 Phase 10 additions (2026-04-28) — Multiplayer P2P
+
+### Architecture: Authoritative Host + WebRTC DataChannels
+- **`js/multiplayer.js`** (~430 LOC) — connection mgmt, message dispatch,
+  state serialization, draft orchestration, slot helpers, disconnect
+  handlers. Single global `mp` object holds all multiplayer state.
+- **PeerJS via CDN** — `https://unpkg.com/peerjs@1.5.4` loaded with
+  `defer`. Free public signaling server. Falls back gracefully if
+  `Peer === undefined` (graceful degradation, single-player still works).
+
+### Slot model
+- **`state.players[i].slotType`**: `"human-host"` | `"human-remote"` | `"ai"`
+- **`state.players[i].peerId`**: PeerJS id for human-remote slots only
+- **`state.localSlotIdx`**: which slot is "you" from THIS client's POV
+  (default 0 single-player, can be 0-3 in multiplayer)
+- **Renders use `state.localSlotIdx`** (was hardcoded `0` previously)
+- **Backward compat**: single-player auto-sets slot 0 = human-host, 1-3 = ai
+
+### Message types (host ↔ client)
+
+| Type | Direction | Purpose |
+|------|-----------|---------|
+| `join` | client → host | Initial announcement with player name |
+| `lobbyUpdate` | host → all | Lobby roster changed |
+| `lobbyFull` | host → client | Game already in progress / 4 players in |
+| `gameStarted` | host → all | Game begins, includes slotConfig + yourSlotIdx |
+| `stateUpdate` | host → all | Authoritative state snapshot |
+| `pick` | client → host | I picked a card (row, col) |
+| `pickRejected` | host → client | Pick was invalid (debug only) |
+| `draftRequest` | host → client | "Pick your Vision/OKR" with options |
+| `draftResponse` | client → host | "I picked X" |
+| `gameEnded` | host → all | Game terminated |
+
+### Game flow hooks in `game.js`
+
+- **`startGameMultiplayer(scenarioId, slotConfig, localSlotIdx)`** —
+  parallels `startGame` but builds players from slotConfig and uses
+  `mpDraftVisionsForAll` / `mpDraftOkrsForAll` (parallel multi-player draft)
+- **`processNextPick`**: detects `player.slotType === "ai"` to know whether
+  to run AI logic or wait for human input
+- **`humanPickCard`**: if multiplayer + not host → sends `{type:"pick"}` to
+  host instead of applying. Host applies and broadcasts.
+- **Block & React DISABLED in MP** — `offerBlockOpportunity` early-returns
+  `{blocked: false}` if `state.isMultiplayer`
+- **Broadcast hooks** at: end of `processNextPick`, end of `endOfQuarter`,
+  end of `endGame`, after Q transitions, after market events
+
+### State serialization — what gets stripped
+
+**Functions can't be serialized over the wire**, so we strip them from
+`state` using `serializeState()` and reconstruct via id-lookup using
+`deserializeState()`:
+
+| Field | Original | Serialized | Restored on client |
+|-------|----------|------------|-------------------|
+| `state.scenario` | full obj with `onQuarterStart` fn | `{id}` | `getScenarioById(id)` |
+| `state.activeEvent` | full obj with `onActivate` fn | `{id}` | `EVENT_POOL.find(...)` |
+| `state.players[i].okrs` | OKR objects with `check` fn | array of ids | `OKR_POOL.find(...)` |
+| `state.players[i].okrOptions` | same | array of ids | same |
+| `state.counterMarketingPending` | array of player refs | length only | empty array |
+| `state.deferredReveals` | block queue | empty (MP disables block) | empty array |
+| `state.log` | full array | last 10 only | as-is |
+| Cards / Vision / modifiers | pure data | passthrough | passthrough |
+
+### Critical gotchas added (S10)
+
+1. **`state.localSlotIdx` is per-client**, NEVER serialize it. The host's
+   `state.localSlotIdx` is 0; client's might be 1/2/3. We preserve
+   localSlotIdx in `handleStateUpdate` before applying the new state.
+
+2. **Functions inside `state` will silently break broadcast** — if you
+   add a new field to player/state with a function reference, update
+   `serializeState` to strip it (or use id-lookup pattern).
+
+3. **OKR mocks in tests must reference real `OKR_POOL` entries** — the
+   serialize/deserialize tests use real OKR ids (`OKR_POOL[0].id`) so the
+   lookup succeeds.
+
+4. **Render gating uses `state.localSlotIdx`**, not hardcoded `0`. If you
+   add new render code that says "the human player", use `state.players[state.localSlotIdx ?? 0]`.
+
+5. **Block & React in multiplayer is silently disabled** — the existing
+   block timer + DOM modal would need cross-client sync. MVP skips it.
+
+6. **`mpBroadcastState` is no-op if not host** — safe to call anywhere
+   in game.js without checking `mp.isHost` first.
+
+7. **Audio context unlock** in lobby: `unlockAudio?.()` is called inside
+   `humanPickCard` already. The first user click in lobby (e.g. "Crea
+   partita") provides the gesture browser needs to unlock audio.
+
+8. **`Peer === undefined` graceful degrade**: if PeerJS CDN fails to load,
+   the multiplayer button shows error toast instead of crashing.
+   Single-player flow unaffected.
+
+### Migration cheatsheet
+
+Quando devi modificare la game logic:
+- Aggiungi un nuovo type di message → add a `case` in `handlePeerMessage`
+- Aggiungi un nuovo field a `state` → considera se serializable; se sì,
+  passthrough; se no, strip in `serializeState` + lookup in deserialize
+- Aggiungi una nuova decision point in `game.js` per umano → controlla
+  che `state.activePicker === state.localSlotIdx` (è il suo turno)
+- Aggiungi una nuova UI modal che richiede risposta → usa il pattern
+  `mp.pendingDrafts[peerId] = callback` come `mpDraftVisionsForAll`
 
 ## 🆕 Phase 8 additions (2026-04-27 / 2026-04-28)
 

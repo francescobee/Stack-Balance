@@ -66,6 +66,7 @@ function load(rel) {
   "js/state.js",
   "js/rules.js",
   "js/ai.js",
+  "js/multiplayer.js",  // S10: serialization + slot helpers (PeerJS calls graceful no-op since `Peer` undefined)
   "tests/runner.js",
 ].forEach(load);
 

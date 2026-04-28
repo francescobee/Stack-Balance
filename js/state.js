@@ -24,6 +24,11 @@ function newPlayer(name, isHuman) {
   const init = BALANCE.PLAYER_INIT;
   return {
     name, isHuman,
+    // S10: multiplayer slot metadata. Default values per single-player
+    // semantics (slot 0 = human-host, 1-3 = ai). Overridden by multiplayer
+    // setup when game starts via mp.startMultiplayerGame().
+    slotType: isHuman ? "human-host" : "ai",  // "human-host" | "human-remote" | "ai"
+    peerId: null,                              // PeerJS id for "human-remote" only
     budget:   init.budget,
     tempo:    0,                  // set by startQuarter
     talento:  init.talento,

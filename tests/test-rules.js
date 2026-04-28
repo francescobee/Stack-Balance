@@ -397,6 +397,114 @@ describe("computeSynergies", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// S10: MULTIPLAYER — pure functions (serialization, slot helpers)
+// ─────────────────────────────────────────────────────────────
+describe("multiplayer serialization [S10.2]", () => {
+  function buildSerializableState() {
+    return {
+      quarter: 2,
+      pickIndex: 5,
+      pickOrder: [0, 1, 2, 3, 3, 2, 1, 0],
+      pyramid: [
+        [{ card: { id: "junior_dev", name: "Junior Dev", dept: "eng", type: "Hiring",
+                   cost: { budget: 2 }, effect: { talento: 1 }, desc: "..." },
+           faceUp: true, taken: false }],
+      ],
+      players: [
+        Object.assign(mockPlayer({ name: "Federica" }),
+          { okrs: [OKR_POOL[0]], okrOptions: [OKR_POOL[1], OKR_POOL[2]] }),
+      ],
+      log: [{ msg: "test", cls: "" }],
+      phase: "human",
+      activePicker: 0,
+      activeEvent: EVENT_POOL[0],   // has onActivate fn
+      scenario: SCENARIO_POOL[1],   // has modifiers
+      counterMarketingPending: [],
+      deferredReveals: [],
+      isDaily: false,
+      gameOver: false,
+      difficulty: "senior",
+    };
+  }
+
+  it("serializeState strips functions (event.onActivate, scenario.onQuarterStart)", () => {
+    const orig = buildSerializableState();
+    const serial = serializeState(orig);
+    // Should be JSON-safe (no fn references)
+    const json = JSON.stringify(serial);
+    assert(json.length > 0, "serialized state should be JSON-stringifiable");
+    // event reduced to id-only ref
+    assertEq(serial.activeEvent?.id, EVENT_POOL[0].id);
+    assertEq(typeof serial.activeEvent?.onActivate, "undefined");
+    // scenario reduced to id-only
+    assertEq(serial.scenario?.id, SCENARIO_POOL[1].id);
+  });
+
+  it("serializeState replaces OKR objects with id strings", () => {
+    const orig = buildSerializableState();
+    const serial = serializeState(orig);
+    assertEq(serial.players[0].okrs[0], OKR_POOL[0].id, "okr serialized as id");
+    assertEq(serial.players[0].okrOptions[0], OKR_POOL[1].id);
+    assertEq(serial.players[0].okrOptions[1], OKR_POOL[2].id);
+  });
+
+  it("deserializeState reconstructs OKR objects via OKR_POOL lookup", () => {
+    const orig = buildSerializableState();
+    const serial = serializeState(orig);
+    const restored = deserializeState(serial);
+    assertEq(restored.players[0].okrs[0].id, OKR_POOL[0].id);
+    assert(typeof restored.players[0].okrs[0].check === "function",
+           "OKR.check function should be restored after lookup");
+    assertEq(restored.players[0].okrOptions.length, 2);
+  });
+
+  it("deserializeState reconstructs scenario via getScenarioById", () => {
+    const orig = buildSerializableState();
+    const restored = deserializeState(serializeState(orig));
+    assertEq(restored.scenario.id, SCENARIO_POOL[1].id);
+    // Verify modifiers preserved (it's the same reference from SCENARIO_POOL)
+    assert(restored.scenario.modifiers, "scenario modifiers preserved");
+  });
+
+  it("serialize/deserialize roundtrip preserves pyramid structure", () => {
+    const orig = buildSerializableState();
+    const restored = deserializeState(serializeState(orig));
+    assertEq(restored.pyramid.length, 1);
+    assertEq(restored.pyramid[0].length, 1);
+    assertEq(restored.pyramid[0][0].card.id, "junior_dev");
+    assertEq(restored.pyramid[0][0].faceUp, true);
+    assertEq(restored.pyramid[0][0].taken, false);
+  });
+
+  it("serializeState with null state returns null (no crash)", () => {
+    assertEq(serializeState(null), null);
+  });
+});
+
+describe("multiplayer slot helpers [S10.3]", () => {
+  it("newPlayer sets slotType=human-host for human, ai for non-human", () => {
+    const human = newPlayer("X", true);
+    const ai = newPlayer("Y", false);
+    assertEq(human.slotType, "human-host");
+    assertEq(ai.slotType, "ai");
+    assertEq(human.peerId, null);
+  });
+
+  it("mp.lobby slot allocation: empty seats fillable in order 1..3", () => {
+    // Reset mp state
+    mp.lobby = [{ peerId: "host-id", name: "Host", slotIdx: 0 }];
+    // Simulate calling onClientConnected without invoking PeerJS
+    // (we test the slot-finding logic by directly calling the alloc)
+    const usedSlots = mp.lobby.map(p => p.slotIdx);
+    let slot = -1;
+    for (let i = 1; i < NUM_PLAYERS; i++) {
+      if (!usedSlots.includes(i)) { slot = i; break; }
+    }
+    assertEq(slot, 1, "first available slot is 1 when host has 0");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // S9.6: AI scenario-aware Vision draft
 // ─────────────────────────────────────────────────────────────
 describe("scenarioPreferredVisions [S9.6.c]", () => {

@@ -76,6 +76,19 @@ function renderSplash() {
     if (playedToday) dailyBtn.style.opacity = "0.55";
     actions.appendChild(dailyBtn);
 
+    // S10: Multiplayer button
+    actions.appendChild(el("button", {
+      class: "ghost",
+      title: "Gioca con amici via P2P (PeerJS)",
+      onclick: () => {
+        if (!getProfile()) {
+          showProfileSetup({ onComplete: () => showMultiplayerEntryModal() });
+        } else {
+          showMultiplayerEntryModal();
+        }
+      }
+    }, "🌐 Multiplayer"));
+
     actions.appendChild(el("button", {
       class: "ghost",
       onclick: showProfileSettings
@@ -101,15 +114,19 @@ function render() {
 
   const layout = el("div", { class: "layout" });
 
+  // S10: localSlotIdx selects the local POV player (0 in single-player, 0-3 in MP)
+  const localIdx = state.localSlotIdx ?? 0;
+  const localPlayer = state.players[localIdx];
+
   const mainCol = el("div", { class: "main-col" });
   mainCol.appendChild(renderPyramid());
-  mainCol.appendChild(renderTableau(state.players[0]));
+  mainCol.appendChild(renderTableau(localPlayer));
   layout.appendChild(mainCol);
 
   const sideCol = el("div", { class: "side-col" });
-  sideCol.appendChild(renderAssets(state.players[0]));
-  sideCol.appendChild(renderOKRs(state.players[0]));
-  sideCol.appendChild(renderAwardsForecast(state.players[0]));
+  sideCol.appendChild(renderAssets(localPlayer));
+  sideCol.appendChild(renderOKRs(localPlayer));
+  sideCol.appendChild(renderAwardsForecast(localPlayer));
   sideCol.appendChild(renderLog());
   layout.appendChild(sideCol);
 
