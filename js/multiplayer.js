@@ -430,11 +430,22 @@ function mpStartMultiplayerGame(scenarioId) {
 
 // CLIENT: receives gameStarted, sets up local state mirror
 function handleClientGameStart(msg) {
+  console.log("[mp] gameStarted received. yourSlotIdx =", msg.yourSlotIdx);
+  // S10 fix: close lobby modal explicitly. The modal is in document.body with
+  // z-index 100; subsequent draft modals appended later SHOULD layer on top
+  // via DOM order, but in some edge cases (file:// protocol, certain browsers)
+  // they get masked. Better to remove the lobby cleanly.
+  const lobbyModal = document.getElementById("mpLobbyBg");
+  if (lobbyModal) {
+    console.log("[mp] closing lobby modal on game start");
+    lobbyModal.remove();
+  }
   // We don't run game logic locally — we just need to know our slotIdx
   // and the scenario for the eventual stateUpdate
   state = state || {};
   state.localSlotIdx = msg.yourSlotIdx;
   state.difficulty = msg.difficulty;
+  state.isMultiplayer = true;
   // First state update will arrive shortly via "stateUpdate"
   // For now, render a "Loading..." placeholder
   if (typeof renderMultiplayerLoading === "function") {
@@ -654,13 +665,28 @@ function mpDraftOkrsForAll() {
   });
 }
 
-// CLIENT: receive draftRequest, show modal, send response
+// CLIENT: receive draftRequest, show modal, send response.
+// S10 fix: extra logging + lobby cleanup. Lobby modal might still be open
+// if gameStarted hasn't been processed yet (e.g., out-of-order delivery).
 function handleDraftRequest(msg) {
+  console.log("[mp] draftRequest received:", msg.kind, "options:",
+    msg.visionIds || msg.okrIds);
+  // Defensive: close lobby modal if it's still hanging around
+  const lobbyModal = document.getElementById("mpLobbyBg");
+  if (lobbyModal) {
+    console.warn("[mp] lobby modal still open at draftRequest — closing now");
+    lobbyModal.remove();
+  }
   if (msg.kind === "vision") {
     const options = msg.visionIds.map(id => getVisionById(id)).filter(Boolean);
+    if (options.length === 0) {
+      console.error("[mp] draftRequest vision: no valid options after id lookup");
+      return;
+    }
     showVisionDraftModal({
       options,
       onPick: (vision) => {
+        console.log("[mp] client picked vision:", vision?.id, "→ sending response");
         mpSendToHost({
           type: "draftResponse",
           kind: "vision",
@@ -671,18 +697,27 @@ function handleDraftRequest(msg) {
   } else if (msg.kind === "okr") {
     const options = msg.okrIds.map(id =>
       OKR_POOL.find(o => o.id === id)).filter(Boolean);
-    if (state && state.players && state.players[state.localSlotIdx]) {
-      state.players[state.localSlotIdx].okrOptions = options;
+    if (options.length === 0) {
+      console.error("[mp] draftRequest okr: no valid options after id lookup");
+      return;
     }
+    if (!state || !state.players || !state.players[state.localSlotIdx]) {
+      console.error("[mp] draftRequest okr: state.players not initialized yet — bailing");
+      return;
+    }
+    state.players[state.localSlotIdx].okrOptions = options;
     showOKRDraftModal(() => {
       const me = state.players[state.localSlotIdx];
-      const chosen = me.okrs[0];
+      const chosen = me?.okrs?.[0];
       if (chosen) {
+        console.log("[mp] client picked OKR:", chosen.id, "→ sending response");
         mpSendToHost({
           type: "draftResponse",
           kind: "okr",
           okrId: chosen.id,
         });
+      } else {
+        console.error("[mp] OKR modal closed but no okr was chosen");
       }
     });
   }
