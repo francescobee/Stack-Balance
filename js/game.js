@@ -98,12 +98,29 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
       console.log("[mp] visions complete. Applying starting modifiers + startQuarter.");
       applyStartingModifiers();
       startQuarter();
-      console.log("[mp] startQuarter complete. Drafting OKRs.");
+      console.log("[mp] startQuarter complete. Pre-render so host sees the board.");
+      // S10 host fix: render NOW so the host sees the game UI under the
+      // upcoming OKR modal. Without this, the host stays on splash background
+      // until OKR is picked. Also defensively clean up any leftover modal-bg.
+      render();
+      mpBroadcastState();
+      console.log("[mp] Drafting OKRs.");
       return mpDraftOkrsForAll();
     })
     .then(() => {
       console.log("[mp] OKRs complete. Rendering + processNextPick.");
+      // Defensive: remove any stale modal-bg residue (e.g. lobby that wasn't
+      // properly closed)
+      document.querySelectorAll(".modal-bg").forEach(m => {
+        const id = m.id || "";
+        if (id === "mpLobbyBg" || id === "mpEntryBg") {
+          console.warn("[mp] removing stale modal:", id);
+          m.remove();
+        }
+      });
       render();
+      console.log("[mp] post-OKR render complete. App content length:",
+        document.getElementById("app")?.innerHTML?.length || 0);
       mpBroadcastState();
       processNextPick();
     })
