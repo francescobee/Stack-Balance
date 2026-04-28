@@ -1157,29 +1157,45 @@ body.reduced-motion .vc-reveal.revealed {
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
   margin: 14px 0 18px;
 }
-.mp-option-card {
+/* `.modal` prefix bumps specificity to (0,3,0), beating `button:hover` (0,2,1)
+   and `button:focus` (0,1,1). Without it, the global `button {}` styles
+   (text-transform uppercase + ink bg on hover/focus) hijack the card. The
+   first button in a modal also auto-receives :focus on open — so we must
+   override :focus too. Same pattern applied previously to .vision-option-card
+   / .okr-option-card / .scenario-option-card. */
+.modal .mp-option-card {
   background: var(--paper); border: 1.5px solid var(--rule);
   border-radius: 6px; padding: 16px 14px; text-align: left;
-  cursor: pointer; transition: border-color 0.15s, transform 0.1s;
+  cursor: pointer; transition: border-color 0.15s, transform 0.1s, background 0.15s;
   display: flex; flex-direction: column; gap: 6px;
   font-family: inherit; color: var(--ink);
+  text-transform: none;          /* override global button uppercase */
+  letter-spacing: normal;        /* override global button letter-spacing */
 }
-.mp-option-card:hover {
+.modal .mp-option-card:hover,
+.modal .mp-option-card:focus,
+.modal .mp-option-card:focus-visible {
   border-color: var(--accent); transform: translateY(-1px);
   background: var(--paper-2);
+  color: var(--ink);             /* explicit — defeats button:hover color override */
+  outline: none;
 }
-.mp-option-card .mp-icon { font-size: 32px; }
-.mp-option-card .mp-name {
+.modal .mp-option-card .mp-icon { font-size: 32px; }
+.modal .mp-option-card .mp-name {
   font-family: var(--serif-display); font-style: italic;
   font-size: 20px; color: var(--ink);
+  text-transform: none; letter-spacing: normal;
 }
-.mp-option-card .mp-desc {
+.modal .mp-option-card .mp-desc {
   font-size: 13px; color: var(--ink-muted); line-height: 1.4;
+  font-family: var(--serif-body, inherit);
+  text-transform: none; letter-spacing: normal;
+  font-weight: 400;
 }
-.mp-option-card .mp-cta {
+.modal .mp-option-card .mp-cta {
   font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
   color: var(--accent); text-transform: uppercase;
-  margin-top: 4px;
+  margin-top: 4px; font-weight: 600;
 }
 
 .mp-join-form {
