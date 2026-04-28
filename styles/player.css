@@ -1,0 +1,517 @@
+/* =============================================================
+   player.css — bacheca (build) + sidebar (assets, OKR, awards)
+   ============================================================= */
+
+/* ============ ASSETS / RESOURCES SIDEBAR ============ */
+.assets-list {
+  display: flex;
+  flex-direction: column;
+}
+.asset {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--rule);
+  gap: 8px;
+}
+.asset:last-of-type { border-bottom: none; }
+.asset .icon {
+  font-size: 14px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+.asset .label {
+  font-family: var(--serif-body);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.asset .val {
+  font-family: var(--serif-display);
+  font-weight: 700;
+  font-size: 19px;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.asset.warn .val { color: var(--warn); }
+
+/* S1.1.1: sub-line under an asset row, e.g. "−1⏱ persi ai bug" */
+.asset-sub {
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--warn);
+  padding: 2px 0 4px 26px; /* align under label, after icon */
+  margin-top: -4px;
+  letter-spacing: 0.01em;
+  border-bottom: 1px dashed var(--rule);
+}
+/* S1.2: neutral variant (e.g. "X di N talento usati") */
+.asset-sub.muted {
+  color: var(--ink-muted);
+}
+@keyframes valuePopUp {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.45); color: var(--accent); }
+  100% { transform: scale(1); color: var(--ink); }
+}
+@keyframes valuePopDown {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.3); color: var(--warn); }
+  100% { transform: scale(1); color: var(--ink); }
+}
+.asset .val.up { animation: valuePopUp 0.6s ease-out; }
+.asset .val.down { animation: valuePopDown 0.6s ease-out; }
+
+/* Permanents list inside sidebar */
+.permanents {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+.permanents .perm-label {
+  font-family: var(--serif-display);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--ink-muted);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.permanents .perm-item {
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--gold);
+  padding: 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.permanents .perm-item::before {
+  content: "★";
+  color: var(--gold);
+  font-style: normal;
+}
+.permanents-empty {
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 11.5px;
+  color: var(--ink-muted);
+}
+
+/* ============ OKR ============ */
+.okr {
+  padding: 8px 10px;
+  background: var(--paper-2);
+  margin-bottom: 6px;
+  border-left: 3px solid var(--gold);
+  font-family: var(--serif-body);
+  font-size: 12.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-2);
+}
+.okr.done {
+  border-left-color: var(--accent);
+  background: rgba(168, 50, 74, 0.06);
+  color: var(--ink);
+}
+.okr.done .okr-text { font-weight: 600; }
+.okr-text { line-height: 1.3; }
+.okr-text::before { content: "○ "; color: var(--ink-muted); font-weight: 700; }
+.okr.done .okr-text::before { content: "✓ "; color: var(--accent); }
+.okr-prog {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.okr.done .okr-prog { color: var(--accent); }
+
+/* === S7.2: Tech Debt visual overlay — cracks on tableau === */
+.tableau-grouped { position: relative; }
+.tableau-grouped.high-debt::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  pointer-events: none;
+  z-index: 5;
+  /* Two SVG-based crack paths */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300' preserveAspectRatio='none'><path d='M40,0 L52,38 L34,72 L60,108 L42,148 L72,188 L48,232 L70,300' stroke='%236e1320' stroke-width='1.4' fill='none' opacity='0.55'/><path d='M62,0 L70,32 L48,62' stroke='%236e1320' stroke-width='1' fill='none' opacity='0.4'/><path d='M210,0 L196,42 L222,82 L188,128 L218,170 L200,220 L226,300' stroke='%236e1320' stroke-width='1.2' fill='none' opacity='0.45'/><path d='M210,82 L240,108' stroke='%236e1320' stroke-width='0.8' fill='none' opacity='0.4'/></svg>");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+}
+.tableau-grouped.high-debt::before {
+  content: "🐞 TECH DEBT ACTIVE";
+  position: absolute;
+  top: -10px;
+  right: 8px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--warn);
+  font-weight: 700;
+  background: var(--paper);
+  padding: 2px 8px;
+  border: 1px solid var(--warn);
+  z-index: 6;
+}
+@keyframes debtShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+.tableau-grouped.shaking { animation: debtShake 0.5s ease-out; }
+
+/* ============ AWARDS forecast ============ */
+.awards-list { display: flex; flex-direction: column; gap: 0; }
+.award-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 4px;
+  border-bottom: 1px dashed var(--rule);
+  transition: background 0.18s;
+  font-family: var(--serif-body);
+}
+.award-row:last-child { border-bottom: none; }
+.award-row.empty { opacity: 0.4; }
+.award-row:hover:not(.empty) { background: var(--paper-2); }
+.a-icon { font-size: 16px; text-align: center; }
+.a-name {
+  font-family: var(--serif-display);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+.a-detail {
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  font-weight: 400;
+  display: block;
+  margin-top: 1px;
+}
+.a-points {
+  font-family: var(--serif-display);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.award-row.empty .a-points { color: var(--ink-muted); }
+
+/* S2.2: tiered styling for stat awards */
+.award-row.tier-gold .a-points { color: var(--gold); }
+.award-row.tier-gold .a-icon   { transform: scale(1.1); }
+.award-row.tier-silver .a-points { color: var(--ink); }
+.award-row.tier-bronze .a-points { color: var(--ink-soft); }
+.award-row.tier-none .a-points   { color: var(--ink-muted); opacity: 0.7; }
+.award-row.tier-none { opacity: 0.55; }
+
+/* S2.2: synergy section subtitle */
+.sidebar-panel .sp-subtitle {
+  font-family: var(--serif-display);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--ink-muted);
+  font-weight: 700;
+  margin-top: 14px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.sidebar-panel .sp-subtitle em {
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* S2.2: synergy rows — visually distinct from stat awards */
+.synergies-list .award-row {
+  padding: 8px 4px;
+}
+.award-row.synergy {
+  border-left: 3px solid var(--rule);
+  padding-left: 8px;
+  margin-left: -4px;
+  transition: all 0.2s;
+}
+.award-row.synergy.active {
+  border-left-color: var(--gold);
+  background: linear-gradient(90deg, rgba(193, 154, 61, 0.08), transparent 60%);
+}
+.award-row.synergy.almost {
+  border-left-color: var(--accent);
+  background: linear-gradient(90deg, rgba(168, 50, 74, 0.06), transparent 60%);
+}
+.award-row.synergy.active .a-points { color: var(--gold); font-size: 18px; }
+.award-row.synergy.inactive:not(.almost) .a-points { color: var(--ink-muted); opacity: 0.6; }
+
+/* S2.2: requirement chips (✓ / ✗ for each synergy condition) */
+.synergy-reqs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.synergy-reqs .req {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  padding: 1px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--rule-2);
+  white-space: nowrap;
+}
+.synergy-reqs .req.met {
+  background: rgba(61, 107, 74, 0.10);
+  color: var(--good);
+  border-color: rgba(61, 107, 74, 0.25);
+}
+.synergy-reqs .req.miss {
+  background: var(--paper-2);
+  color: var(--ink-muted);
+  border-color: var(--rule);
+}
+.a-total {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--ink);
+  color: var(--gold-2);
+  text-align: right;
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.a-total .num {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 18px;
+  margin-left: 8px;
+}
+.modal .awards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 18px;
+  margin-top: 10px;
+}
+
+/* ============ BACHECA — your built portfolio ============ */
+.bacheca {
+  /* uses .stage from main.css */
+}
+.tableau-grouped {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  min-height: 80px;
+  padding: 6px 0 4px;
+}
+.tab-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tab-group-header {
+  font-family: var(--serif-display);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  padding: 0 0 8px;
+  margin-bottom: 12px;
+  text-align: left;
+  border-bottom: 2px solid;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.tab-group-header.product { color: var(--product); border-color: var(--product); }
+.tab-group-header.eng     { color: var(--eng);     border-color: var(--eng); }
+.tab-group-header.data    { color: var(--data);    border-color: var(--data); }
+.tab-group-header .count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* === Stacked cards (7 Wonders style) === */
+.tab-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tab-card {
+  background: var(--paper-3);
+  border: 1px solid var(--ink);
+  padding: 6px 10px 10px;
+  position: relative;
+  height: 96px;
+  margin-top: -56px; /* overlap → ~40px visible */
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s, box-shadow 0.2s, height 0.2s;
+  cursor: default;
+  min-width: 0;
+}
+.tab-card:first-child { margin-top: 0; }
+.tab-card.product { border-top: 5px solid var(--product); }
+.tab-card.eng     { border-top: 5px solid var(--eng); }
+.tab-card.data    { border-top: 5px solid var(--data); }
+.tab-card:hover {
+  z-index: 10;
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--accent);
+}
+
+/* Mini wax-seal MAU on tab-card (bacheca) — same vibe as pyramid card */
+.tab-card .tc-seal {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--gold-2);
+  border: 1.5px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: -0.04em;
+  z-index: 2;
+  box-shadow: inset 0 0 0 1px rgba(193, 154, 61, 0.35);
+}
+/* Legacy tc-vp keeps backward-compat (unused) */
+.tab-card .tc-vp {
+  position: absolute; top: 7px; right: 8px;
+  background: var(--ink); color: var(--gold-2);
+  font-family: var(--serif-display); font-weight: 700;
+  font-size: 10px; padding: 1px 6px;
+}
+
+.tab-card .tc-mast {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+  padding-right: 30px;
+}
+.tab-card .tc-emblem {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  flex-shrink: 0;
+  background: var(--paper-3);
+}
+.tab-card .tc-emblem.product { color: var(--product); }
+.tab-card .tc-emblem.eng { color: var(--eng); }
+.tab-card .tc-emblem.data { color: var(--data); }
+.tab-card .tc-type {
+  font-family: var(--serif-display);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--ink-muted);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.tab-card .tc-name {
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 600;
+  font-variation-settings: "SOFT" 70, "opsz" 60;
+  letter-spacing: -0.012em;
+  line-height: 1.05;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+.tab-card .tc-effects {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--good);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+}
+.tab-card .tc-effects.perm {
+  color: var(--gold);
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 11px;
+}
+.tab-card .tc-desc {
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+@keyframes pop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.tab-card.just-played {
+  animation: pop 0.55s ease-out;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(168, 50, 74, 0.3), var(--shadow-card-hover);
+}
+
+/* ============ Main grid responsive collapse ============ */
+@media (max-width: 1180px) {
+  .layout { grid-template-columns: 1fr; }
+  .side-col { order: 2; }
+  .pyramid { grid-template-columns: repeat(3, 1fr); }
+}
