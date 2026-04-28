@@ -359,6 +359,22 @@ vedi `ROADMAP.md → 📚 BACKLOG` (multiplayer async, mobile, dark mode, etc.).
     "Click → pesca" che è a `bottom: -14px`. Le carte d1/d2/d3 mantengono
     `overflow: hidden` per il sliver effect.
 
+15. **🐛 RECURRING BUG — `<button>` come card-layout**: il selettore globale
+    `button {}` in main.css setta `text-transform: uppercase`,
+    `letter-spacing: 0.04em`, e ha pseudo-class :hover/:focus che fanno
+    `background: var(--ink); color: var(--paper-3)`. Quando crei un nuovo
+    "card-as-button" (es. Vision draft, OKR draft, Scenario chooser, MP
+    entry option), DEVI:
+    - Prefissare con `.modal` per specificità (0,3,0) > button:hover (0,2,1)
+    - Override esplicito di `:hover`, `:focus`, `:focus-visible` con
+      `background`, `color`, `outline: none` desiderati
+    - Reset `text-transform: none` + `letter-spacing: normal` su card
+      e figli (titoli, descrizioni)
+    Il primo button in un modal auto-riceve `:focus` al render: senza fix
+    appare già scuro PRIMA dell'hover. Già fixato 4 volte (S2.x Vision,
+    S2.x OKR, S6.x Scenario, S10 MP). Considerare in futuro una utility
+    class `.btn-card` per evitare il 5° fix.
+
 ---
 
 ## 🧠 Mental model — perché il gioco funziona
