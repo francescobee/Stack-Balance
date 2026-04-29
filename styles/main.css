@@ -1304,6 +1304,29 @@ body.reduced-motion .vc-reveal.revealed {
   font-style: italic;
 }
 
+/* === S11.7 mp-fix: waiting-for-others view inside Vision/OKR modals === */
+.mp-waiting-blurb {
+  color: var(--ink-muted); font-style: italic;
+  margin: 6px 0 18px; font-size: 14px; line-height: 1.5;
+  text-align: center;
+}
+.mp-waiting-spinner {
+  display: flex; justify-content: center; gap: 8px;
+  margin: 18px 0 8px;
+}
+.mp-waiting-spinner span {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent);
+  animation: mpWaitingDot 1.2s ease-in-out infinite;
+}
+.mp-waiting-spinner span:nth-child(2) { animation-delay: 0.2s; }
+.mp-waiting-spinner span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes mpWaitingDot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); }
+  40%           { opacity: 1;   transform: scale(1.15); }
+}
+body.reduced-motion .mp-waiting-spinner span { animation: none; opacity: 0.7; }
+
 .field-hint {
   font-size: 11px; color: var(--ink-muted);
   margin-top: 4px; font-style: italic;

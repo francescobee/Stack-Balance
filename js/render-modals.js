@@ -70,7 +70,7 @@ function showScenarioChooser({ onPick }) {
 //     localStorage.removeItem("dev.forceVision")
 //   Bypasses the random draft and auto-picks the requested Vision (if its
 //   id matches getVisionById). Useful per S9.2/S9.8 playtest gauntlet.
-function showVisionDraftModal({ options, onPick }) {
+function showVisionDraftModal({ options, onPick, mpWaiting }) {
   if (!options || options.length === 0) {
     if (typeof onPick === "function") onPick(null);
     return;
@@ -110,8 +110,16 @@ function showVisionDraftModal({ options, onPick }) {
       <div class="vision-cta">Scegli →</div>
     `;
     card.onclick = () => {
-      root.remove();
-      if (typeof onPick === "function") onPick(v);
+      // S11.7 mp-fix: in P2P MP, instead of removing the modal we transform
+      // it into a "waiting for others" view. Host broadcasts closeMpModal
+      // (and removes #visionDraftBg locally) when the draft phase resolves.
+      if (mpWaiting) {
+        renderMpDraftWaitingView(modal, "Vision");
+        if (typeof onPick === "function") onPick(v);
+      } else {
+        root.remove();
+        if (typeof onPick === "function") onPick(v);
+      }
     };
     grid.appendChild(card);
   });
@@ -126,7 +134,8 @@ function showVisionDraftModal({ options, onPick }) {
 // localSlotIdx=0, so state.players[0] (the original hardcoded path). In
 // multiplayer, clients have localSlotIdx=1/2/3 and need to draft for THEIR
 // own slot — not the host's.
-function showOKRDraftModal(onComplete) {
+function showOKRDraftModal(onComplete, opts) {
+  const mpWaiting = !!(opts && opts.mpWaiting);
   const localIdx = state.localSlotIdx ?? 0;
   const human = state.players[localIdx];
   const options = (human && human.okrOptions) || [];
@@ -170,8 +179,15 @@ function showOKRDraftModal(onComplete) {
         currentHuman.okrs = [okr];
         currentHuman.okrOptions = [];
       }
-      root.remove();
-      if (typeof onComplete === "function") onComplete();
+      // S11.7 mp-fix: in P2P MP, transform modal into "waiting for others"
+      // instead of removing it. Host clears it when all picks are in.
+      if (mpWaiting) {
+        renderMpDraftWaitingView(modal, "OKR");
+        if (typeof onComplete === "function") onComplete();
+      } else {
+        root.remove();
+        if (typeof onComplete === "function") onComplete();
+      }
     };
     grid.appendChild(card);
   });
@@ -179,6 +195,21 @@ function showOKRDraftModal(onComplete) {
 
   root.appendChild(modal);
   document.body.appendChild(root);
+}
+
+// S11.7 mp-fix: shared "waiting for others" view shown after a player picks
+// their Vision/OKR while remote slots are still drafting. Replaces modal
+// content in-place. Host removes #visionDraftBg/#okrDraftBg + broadcasts
+// closeMpModal once everyone has picked.
+function renderMpDraftWaitingView(modal, kindLabel) {
+  modal.innerHTML = `
+    <div class="modal-eyebrow">⏳ ${kindLabel} draft</div>
+    <h2>Scelta confermata!</h2>
+    <p class="mp-waiting-blurb">In attesa degli altri giocatori…</p>
+    <div class="mp-waiting-spinner" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+  `;
 }
 
 // ---------- S4.1: MARKET NEWS MODAL ----------

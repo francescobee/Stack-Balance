@@ -605,6 +605,15 @@ function mpBroadcastState() {
 // DRAFTS — Vision + OKR (S10.3)
 // ============================================================
 
+// S11.7 mp-fix: dismiss the "waiting for others" view shown after a player
+// confirms their pick. Removes the host's own modal-bg by id, and broadcasts
+// closeMpModal so clients clear their waiting view too. Idempotent.
+function closeMpDraftWaitingModals(rootId) {
+  const local = document.getElementById(rootId);
+  if (local) local.remove();
+  if (mp.isHost) mpBroadcast({ type: "closeMpModal" });
+}
+
 // HOST: orchestrate Vision draft for all human slots in parallel.
 // AI slots auto-pick via chooseAIVision. Returns Promise that resolves
 // when all drafts complete. S10 fix: try/catch around setup + onPick so a
@@ -614,7 +623,12 @@ function mpDraftVisionsForAll() {
     let pending = 0;
     const onOnePicked = () => {
       pending--;
-      if (pending === 0) resolve();
+      if (pending === 0) {
+        // S11.7 mp-fix: tear down "waiting for others" view (host local +
+        // broadcast for clients) the moment everyone has picked.
+        closeMpDraftWaitingModals("visionDraftBg");
+        resolve();
+      }
     };
     try {
       state.players.forEach((p, idx) => {
@@ -630,6 +644,7 @@ function mpDraftVisionsForAll() {
         if (p.slotType === "human-host") {
           showVisionDraftModal({
             options: p.visionOptions,
+            mpWaiting: true,
             onPick: (vision) => {
               try {
                 p.vision = vision;
@@ -677,7 +692,11 @@ function mpDraftOkrsForAll() {
     let pending = 0;
     const onOnePicked = () => {
       pending--;
-      if (pending === 0) resolve();
+      if (pending === 0) {
+        // S11.7 mp-fix: tear down "waiting for others" view once all OKRs in.
+        closeMpDraftWaitingModals("okrDraftBg");
+        resolve();
+      }
     };
     try {
       state.players.forEach((p, idx) => {
@@ -701,7 +720,7 @@ function mpDraftOkrsForAll() {
               console.error("[mp] OKR onComplete callback failed:", e);
               reject(e);
             }
-          });
+          }, { mpWaiting: true });
         } else {
           // human-remote
           const okrIds = p.okrOptions.map(o => o.id);
@@ -752,6 +771,7 @@ function handleDraftRequest(msg) {
     }
     showVisionDraftModal({
       options,
+      mpWaiting: true,
       onPick: (vision) => {
         console.log("[mp] client picked vision:", vision?.id, "→ sending response");
         mpSendToHost({
@@ -786,7 +806,7 @@ function handleDraftRequest(msg) {
       } else {
         console.error("[mp] OKR modal closed but no okr was chosen");
       }
-    });
+    }, { mpWaiting: true });
   }
 }
 

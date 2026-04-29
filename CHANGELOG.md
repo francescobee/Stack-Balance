@@ -9,6 +9,45 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S11.7] — 2026-04-29 · MP fix · "Waiting for others" view in Vision/OKR drafts
+
+### Why
+In P2P multiplayer, quando un giocatore confermava la propria Vision o OKR
+prima degli altri, il modal si chiudeva e restava sullo schermo solo lo
+sfondo del gioco. Mancava un feedback "ho finito, aspetto i compagni".
+
+### What
+`showVisionDraftModal` e `showOKRDraftModal` accettano ora un flag
+`mpWaiting`. Quando settato, dopo il pick il modal **non viene rimosso**:
+il contenuto è sostituito da una vista "⏳ In attesa degli altri giocatori…"
+con spinner a 3 dot. Il dismiss è centralizzato:
+- **Host** chiama `closeMpDraftWaitingModals(rootId)` quando il Promise di
+  `mpDraftVisionsForAll` / `mpDraftOkrsForAll` si risolve. La helper rimuove
+  il modal locale by id e fa broadcast `closeMpModal` ai client.
+- **Client** ricevono `closeMpModal` (handler già esistente da S10) che
+  pulisce tutti i `body > .modal-bg` — inclusi `#visionDraftBg` /
+  `#okrDraftBg` con vista waiting.
+
+### Files
+- `js/render-modals.js` — nuovo flag `mpWaiting` + helper privato
+  `renderMpDraftWaitingView(modal, kindLabel)` che riscrive `modal.innerHTML`
+  con eyebrow + headline "Scelta confermata!" + spinner.
+- `js/multiplayer.js` — passaggio di `mpWaiting: true` nei 4 call site
+  (host vision, host okr, client vision, client okr); nuovo helper
+  `closeMpDraftWaitingModals(rootId)` chiamato in entrambi i Promise quando
+  `pending === 0`.
+- `styles/main.css` — `.mp-waiting-blurb`, `.mp-waiting-spinner` con
+  keyframe `mpWaitingDot` (1.2s, 3 dot pulse-staggered) + reduced-motion override.
+
+### Cross-mode safety
+Hot Seat (`hotseat.js`) e single-player NON passano `mpWaiting` → comportamento
+identico a prima (modal removed on pick). Nessuna regressione attesa.
+
+### Tests
+58/58 pass (helpers untouched, UI-only change).
+
+---
+
 ## [S11.1-S11.6] — 2026-04-28 · Phase 11 Hot Seat (pass-and-play)
 
 > **Phase 11 · Hot Seat / pass-and-play locale** — implementata in un'unica
