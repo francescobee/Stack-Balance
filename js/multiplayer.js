@@ -488,6 +488,9 @@ function handleClientGameStart(msg) {
 // Fires celebration toasts/audio for the local POV by comparing pre/post state
 // (mirrors the host's celebrateChanges behavior so each client gets feedback).
 function handleStateUpdate(serialized) {
+  console.log("[mp] handleStateUpdate received: phase=", serialized?.phase,
+              "activePicker=", serialized?.activePicker,
+              "pickIndex=", serialized?.pickIndex);
   const localSlot = state?.localSlotIdx ?? 0;
   // S10 fix: capture isMultiplayer BEFORE replacing state. Even though
   // serializeState now includes it, we belt+suspenders preserve it here:
@@ -568,6 +571,9 @@ function applyHostSidePick(row, col, slotIdx) {
 // HOST: broadcast current state to all clients
 function mpBroadcastState() {
   if (!mp.isHost || !mp.active) return;
+  console.log("[mp] mpBroadcastState: phase=", state?.phase,
+              "activePicker=", state?.activePicker,
+              "pickIndex=", state?.pickIndex);
   mpBroadcast({ type: "stateUpdate", state: serializeState(state) });
 }
 

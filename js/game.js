@@ -97,20 +97,10 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
     .then(() => {
       console.log("[mp] visions complete. Applying starting modifiers + startQuarter.");
       applyStartingModifiers();
-      startQuarter();
-      console.log("[mp] startQuarter complete. Pre-render so host sees the board.");
+      startQuarter();  // resets phase to "draft"
       // S10 host fix: render NOW so the host sees the game UI under the
-      // upcoming OKR modal. Without this, the host stays on splash background
-      // until OKR is picked. Also defensively clean up any leftover modal-bg.
-      render();
-      mpBroadcastState();
-      console.log("[mp] Drafting OKRs.");
-      return mpDraftOkrsForAll();
-    })
-    .then(() => {
-      console.log("[mp] OKRs complete. Rendering + processNextPick.");
-      // Defensive: remove any stale modal-bg residue (e.g. lobby that wasn't
-      // properly closed)
+      // upcoming OKR modal. Without this, the host stays on splash background.
+      // Defensive cleanup of leftover modal-bg.
       document.querySelectorAll(".modal-bg").forEach(m => {
         const id = m.id || "";
         if (id === "mpLobbyBg" || id === "mpEntryBg") {
@@ -119,9 +109,16 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
         }
       });
       render();
-      console.log("[mp] post-OKR render complete. App content length:",
-        document.getElementById("app")?.innerHTML?.length || 0);
       mpBroadcastState();
+      console.log("[mp] Drafting OKRs.");
+      return mpDraftOkrsForAll();
+    })
+    .then(() => {
+      console.log("[mp] OKRs complete. Calling processNextPick (will set phase + broadcast).");
+      // S10 fix: don't render/broadcast here — processNextPick handles both
+      // with the final phase. Successive broadcasts cause race conditions on
+      // the guest where the post-broadcast render uses stale phase ("between"
+      // or "draft") and ignores subsequent updates.
       processNextPick();
     })
     .catch((err) => {
@@ -175,6 +172,12 @@ function applyStartingModifiers() {
 function startQuarter() {
   const Q = BALANCE.QUARTER;
   const D = BALANCE.DEBT;
+  // S10 fix: explicitly reset phase. Without this, state.phase trails the
+  // previous Q's final value ("between" set by processNextPick before
+  // endOfQuarter), so renders during draft setup show "..." indicator.
+  // processNextPick will set phase to "human" or "ai" once a picker is chosen.
+  state.phase = "draft";
+  state.activePicker = null;
   state.players.forEach((p, idx) => {
     // S2.3: Vision can shift the debt-tempo-loss formula offset
     const visionTempoOff = p.vision?.modifiers?.debtTempoLossOffset || 0;
@@ -369,6 +372,14 @@ async function processNextPick() {
   // S10: in multiplayer, Block & React is disabled — skip the deferred queue
   if (!state.isMultiplayer) flushDueDeferredReveals();
 
+  // S10 diagnostic: log every entry to processNextPick. Critical for tracing
+  // multiplayer sync issues where flow stalls between phases.
+  if (state.isMultiplayer) {
+    console.log("[mp] processNextPick: pickIndex=", state.pickIndex,
+                "/ pickOrder.length=", state.pickOrder?.length,
+                "phase before=", state.phase);
+  }
+
   if (state.pickIndex >= state.pickOrder.length) {
     state.phase = "between";
     state.activePicker = null;
@@ -382,15 +393,28 @@ async function processNextPick() {
   state.activePicker = playerIdx;
   const player = state.players[playerIdx];
 
+  if (!player) {
+    console.error("[mp] processNextPick: state.players[", playerIdx, "] is undefined!");
+    return;
+  }
+
   // S10: any human slot (host or remote) → wait. Only AI runs auto.
   const isAITurn = player.slotType === "ai" || !player.isHuman;
   if (!isAITurn) {
     state.phase = "human";
     state.aiHighlight = null;
+    if (state.isMultiplayer) {
+      console.log("[mp] processNextPick: human turn for slot", playerIdx,
+                  "(", player.slotType, ") — phase=human, broadcasting");
+    }
     render();
     // Broadcast so remote clients see whose turn it is
     if (state.isMultiplayer) mpBroadcastState();
     return; // wait for click (local) or pick message (remote)
+  }
+  if (state.isMultiplayer) {
+    console.log("[mp] processNextPick: AI turn for slot", playerIdx,
+                "(", player.slotType, ")");
   }
 
   // AI's turn
@@ -833,19 +857,29 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
       pickAndShowMarketEvent(() => {
         startQuarter();
         // S10 host fix: render immediately after startQuarter so the host
-        // sees the new Q's board under the upcoming OKR modal. Without this,
-        // host's underlying UI stays at Q1-end empty pyramid while waiting
-        // for the guest to pick OKR (mpDraftOkrsForAll resolves only when
-        // BOTH humans pick).
+        // sees the new Q's board under the upcoming OKR modal.
         render();
         if (state.isMultiplayer) {
-          // S10: parallel OKR draft for all humans + AI auto
+          // S10 fix: simplified chain. Only broadcast ONCE here (post-
+          // startQuarter); processNextPick broadcasts again with the final
+          // phase. Multiple successive broadcasts cause races on the guest.
+          // .catch added so errors in the OKR draft don't fail silently.
           mpBroadcastState();
-          mpDraftOkrsForAll().then(() => {
-            render();
-            mpBroadcastState();
-            processNextPick();
-          });
+          mpDraftOkrsForAll()
+            .then(() => {
+              console.log("[mp] Q-transition: OKRs drafted, calling processNextPick");
+              processNextPick();  // sets phase + renders + broadcasts inside
+            })
+            .catch((err) => {
+              console.error("[mp] Q-transition OKR draft failed:", err);
+              if (typeof showToast === "function") {
+                showToast({
+                  who: "ERRORE",
+                  what: "Avanzamento Q fallito: " + (err?.message || err),
+                  kind: "discard",
+                });
+              }
+            });
         } else {
           showOKRDraftModal(() => {
             render();
