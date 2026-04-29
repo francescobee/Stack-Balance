@@ -157,8 +157,19 @@ function showOKRDraftModal(onComplete) {
       <div class="okr-option-cta">Scegli →</div>
     `;
     card.onclick = () => {
-      human.okrs = [okr];
-      human.okrOptions = []; // clear unselected
+      // S10 fix: re-read state.players[currentIdx] at click time, NOT the
+      // closure-captured `human`. In multiplayer, handleStateUpdate replaces
+      // state.players (new array, new objects) when broadcasts arrive.
+      // The captured `human` then references the orphaned old player object,
+      // and mutations on it never reach the current state. The onComplete
+      // callback reads `state.players[localSlotIdx].okrs[0]` which is still
+      // empty, so the guest never sends draftResponse → host waits forever.
+      const currentIdx = state.localSlotIdx ?? 0;
+      const currentHuman = state.players[currentIdx];
+      if (currentHuman) {
+        currentHuman.okrs = [okr];
+        currentHuman.okrOptions = [];
+      }
       root.remove();
       if (typeof onComplete === "function") onComplete();
     };

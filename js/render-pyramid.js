@@ -131,19 +131,25 @@ function renderPyramid() {
 
   const meta = el("span", { class: "stage-meta" });
   meta.appendChild(makeTurnIndicator());
-  const remaining = state.pyramid.flat().filter(s => !s.taken).length;
+  // S10 fix: state.pyramid can be empty array [] during early multiplayer
+  // broadcasts (post-Vision draft, pre-startQuarter). Guard against that to
+  // avoid "Cannot read properties of undefined (reading '0')" TypeErrors.
+  const pyramid = state.pyramid || [];
+  const remaining = pyramid.flat().filter(s => !s.taken).length;
   meta.appendChild(document.createTextNode(`  ·  ${remaining} carte rimaste`));
   root.appendChild(meta);
 
   const grid = el("div", { class: "pyramid" });
-  for (let col = 0; col < PYR_COLS; col++) {
-    const colDiv = el("div", { class: "pcol" });
-    for (let row = 0; row < PYR_ROWS; row++) {
-      const slot = state.pyramid[row][col];
-      if (slot.taken) continue;
-      colDiv.appendChild(renderPyramidCard(slot, row, col));
+  if (pyramid.length > 0) {
+    for (let col = 0; col < PYR_COLS; col++) {
+      const colDiv = el("div", { class: "pcol" });
+      for (let row = 0; row < PYR_ROWS; row++) {
+        const slot = pyramid[row]?.[col];
+        if (!slot || slot.taken) continue;
+        colDiv.appendChild(renderPyramidCard(slot, row, col));
+      }
+      grid.appendChild(colDiv);
     }
-    grid.appendChild(colDiv);
   }
   root.appendChild(grid);
   return root;
