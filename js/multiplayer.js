@@ -325,6 +325,30 @@ function handlePeerMessage(msg, conn) {
         showMarketNewsModal(msg.event, () => {});
       }
       break;
+    case "finalSequenceShow":
+      if (mp.isHost) return;
+      console.log("[mp] finalSequenceShow received");
+      if (typeof showFinalSequenceModal === "function" && state?.players) {
+        // Reconstruct sortedPlayers from current state.players (the broadcast
+        // before this message updated state with the final pre-VC scores)
+        const sortedPlayers = (msg.sortedSlotIndices || [])
+          .map(i => state.players[i])
+          .filter(Boolean);
+        const leader = state.players[msg.leaderSlotIdx];
+        if (sortedPlayers.length && leader) {
+          showFinalSequenceModal(sortedPlayers, leader, msg.vc, () => {});
+        } else {
+          console.error("[mp] finalSequenceShow: missing players or leader");
+        }
+      }
+      break;
+    case "endGameShow":
+      if (mp.isHost) return;
+      console.log("[mp] endGameShow received");
+      if (typeof showEndGameModal === "function") {
+        showEndGameModal();
+      }
+      break;
     case "closeMpModal":
       if (mp.isHost) return;
       console.log("[mp] closeMpModal received");

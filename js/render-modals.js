@@ -298,6 +298,25 @@ function showFinalSequenceModal(sortedPlayers, leader, vc, onComplete) {
   root.appendChild(modal);
   document.body.appendChild(root);
 
+  // S10: MP client variant — passive observer. Replace buttons with
+  // "in attesa" indicator. Host's closeMpModal broadcast removes the modal.
+  // VC reveal panel stays hidden until host clicks Avanti (then its broadcast
+  // triggers a stateUpdate; we don't auto-reveal on client since host doesn't
+  // broadcast a "reveal" message — but client sees updated leader.vp via state).
+  const isMpClient = state?.isMultiplayer && typeof mp !== "undefined" && mp.active && !mp.isHost;
+  if (isMpClient) {
+    const actionsArea = modal.querySelector(".actions");
+    if (actionsArea) actionsArea.innerHTML = `<div class="mp-waiting">⏳ In attesa che l'host avanzi...</div>`;
+    // Reveal VC panel immediately on client (no host's "Avanti" click needed —
+    // client just observes the cinematic). The vc.vpDelta is already
+    // reflected in leader.vp via the broadcast that arrives before this modal.
+    setTimeout(() => {
+      const reveal = modal.querySelector(".vc-reveal");
+      if (reveal) reveal.classList.add("revealed");
+    }, 1500);  // delay so user sees pitch animation first
+    return;
+  }
+
   // Idempotent VC application (called by phase 1 reveal OR skip)
   const applyVcOnce = () => {
     if (leader._vcReaction) return;  // già applicata
@@ -305,6 +324,10 @@ function showFinalSequenceModal(sortedPlayers, leader, vc, onComplete) {
     leader._vcReaction = vc;
     if (typeof log === "function") {
       log(`🎤 ${leader.name}: VC reaction "${vc.name}" → ${vc.vpDelta >= 0 ? "+" : ""}${vc.vpDelta}K MAU`, "event");
+    }
+    // S10: broadcast post-VC state so clients see updated leader.vp
+    if (state?.isMultiplayer && typeof mpBroadcastState === "function") {
+      mpBroadcastState();
     }
   };
 

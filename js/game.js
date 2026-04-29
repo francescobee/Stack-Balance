@@ -972,55 +972,102 @@ function showInvestorPitch(onComplete) {
   const sorted = [...state.players].sort((a, b) => a.vp - b.vp);
   const leader = sorted[sorted.length - 1];
   const vc = pickRandom(VC_POOL, 1)[0];
-  showFinalSequenceModal(sorted, leader, vc, onComplete);
+  // S10: broadcast final sequence trigger so clients show the same pitch + VC.
+  // Send slot indices (resolved on client to current state.players[i]) and the
+  // VC data inline (vc has no fns, fully serializable).
+  if (state.isMultiplayer && typeof mpBroadcast === "function") {
+    mpBroadcast({
+      type: "finalSequenceShow",
+      sortedSlotIndices: sorted.map(p => state.players.indexOf(p)),
+      leaderSlotIdx: state.players.indexOf(leader),
+      vc: { id: vc.id, name: vc.name, icon: vc.icon, reaction: vc.reaction, vpDelta: vc.vpDelta },
+    });
+  }
+  showFinalSequenceModal(sorted, leader, vc, () => {
+    // S10: tell clients to close the final sequence modal before endGame
+    if (state.isMultiplayer && typeof mpBroadcast === "function") {
+      mpBroadcast({ type: "closeMpModal" });
+    }
+    if (typeof onComplete === "function") onComplete();
+  });
 }
 
 // ---------- END GAME ----------
+// S10 refactor: split into 2 functions:
+//   - endGame: host computes scores + broadcasts state + triggers modal on
+//     all clients. Only HOST runs this.
+//   - showEndGameModal: builds the modal HTML using state.localSlotIdx for
+//     POV. Both host AND clients call this to display the same screen with
+//     correct local-player data.
 function endGame() {
-  state.gameOver = true;
-  state.players.forEach(p => {
-    p._preAwardVp = p.vp;
-    p._awards = computeAwards(p);
-    p._awardsTotal = p._awards.reduce((s, a) => s + a.points, 0);
-    p.vp += p._awardsTotal;
+  // Score computation only runs on host (or in single-player). Clients
+  // receive computed state via broadcast.
+  if (!state.isMultiplayer || (typeof mp !== "undefined" && mp.isHost)) {
+    state.gameOver = true;
+    state.players.forEach(p => {
+      p._preAwardVp = p.vp;
+      p._awards = computeAwards(p);
+      p._awardsTotal = p._awards.reduce((s, a) => s + a.points, 0);
+      p.vp += p._awardsTotal;
 
-    const conv = Math.floor(p.budget / BALANCE.BUDGET.CONVERSION_DIVISOR);
-    p._budgetConv = conv;
-    p.vp += conv;
-    if (conv > 0) log(`${p.name}: ${p.budget} Budget convertiti in ${conv}K utenti`);
-    // S1.1: end-game debt penalty (BALANCE.DEBT.ENDGAME_PENALTY_MULT)
-    p._debtPenalty = p.techDebt * BALANCE.DEBT.ENDGAME_PENALTY_MULT;
-    p.vp = Math.max(0, p.vp - p._debtPenalty);
-  });
-  // S10: broadcast final state to clients before showing modal
-  if (state.isMultiplayer) mpBroadcastState();
+      const conv = Math.floor(p.budget / BALANCE.BUDGET.CONVERSION_DIVISOR);
+      p._budgetConv = conv;
+      p.vp += conv;
+      if (conv > 0) log(`${p.name}: ${p.budget} Budget convertiti in ${conv}K utenti`);
+      // S1.1: end-game debt penalty (BALANCE.DEBT.ENDGAME_PENALTY_MULT)
+      p._debtPenalty = p.techDebt * BALANCE.DEBT.ENDGAME_PENALTY_MULT;
+      p.vp = Math.max(0, p.vp - p._debtPenalty);
+    });
+    // S10: broadcast final state to clients THEN trigger their modal
+    if (state.isMultiplayer) {
+      mpBroadcastState();
+      if (typeof mpBroadcast === "function") {
+        mpBroadcast({ type: "endGameShow" });
+      }
+    }
+  }
+  showEndGameModal();
+}
+
+function showEndGameModal() {
   const ranked = [...state.players].sort((a, b) => b.vp - a.vp);
   const winner = ranked[0];
-  const youRank = ranked.indexOf(state.players[0]) + 1;
-  const you = state.players[0];
+  // S10: use localSlotIdx (host=0, client=1/2/3) so each player sees their
+  // own awards / rank / "did I win?" message.
+  const localIdx = state.localSlotIdx ?? 0;
+  const you = state.players[localIdx];
+  if (!you) {
+    console.error("[mp] showEndGameModal: no local player at slot", localIdx);
+    return;
+  }
+  const youRank = ranked.indexOf(you) + 1;
 
-  // Persist career stats on the user profile
+  // Persist career stats on the LOCAL player's profile
   // S6.1+S6.2+S6.3: record game with extended context
-  const won = winner.isHuman;
-  recordGameResult({
-    won,
-    finalUsers: you.vp,
-    scenarioId: state.scenario?.id || "standard",
-    visionId: you.vision?.id || null,
-    isDaily: !!state.isDaily,
-  });
+  const won = winner === you;  // did MY local player win?
+  if (typeof recordGameResult === "function") {
+    recordGameResult({
+      won,
+      finalUsers: you.vp,
+      scenarioId: state.scenario?.id || "standard",
+      visionId: you.vision?.id || null,
+      isDaily: !!state.isDaily,
+    });
+  }
 
-  // S6.2: check newly unlocked achievements
-  const ctx = buildAchievementContext(state, won, you);
-  const newlyUnlocked = checkNewAchievements(ctx);
-  if (newlyUnlocked.length > 0) unlockAchievements(newlyUnlocked);
-  // Stash for end-game modal display
+  // S6.2: check newly unlocked achievements (per-local-player)
+  let newlyUnlocked = [];
+  if (typeof buildAchievementContext === "function") {
+    const ctx = buildAchievementContext(state, won, you);
+    newlyUnlocked = checkNewAchievements(ctx);
+    if (newlyUnlocked.length > 0) unlockAchievements(newlyUnlocked);
+  }
   state._newAchievements = newlyUnlocked;
 
   // S6.3: clear RNG seed if was Daily
   if (state.isDaily) clearRngSeed();
 
-  const yourAwardsHtml = you._awards.map(a => {
+  const yourAwardsHtml = (you._awards || []).map(a => {
     const tierClass = a.isSynergy
       ? `synergy ${a.points > 0 ? "active" : "inactive"}`
       : `tier-${a.tier || "none"}`;
@@ -1033,11 +1080,14 @@ function endGame() {
     </div>`;
   }).join("");
 
+  // S10 fix: in MP both humans are isHuman=true. The winner banner needs to
+  // reflect "did I win" not "did any human win".
+  const iWon = winner === you;
   const html = `
     <div class="modal-bg"><div class="modal">
       <div class="winner-banner">
-        <h2>${winner.isHuman ? "🎉 Promosso a CTO!" : `🏆 ${winner.name} promosso a CTO`}</h2>
-        <div>${winner.isHuman ? "La tua app ha conquistato il mercato con più utenti." : `Hai chiuso ${youRank}° su ${NUM_PLAYERS}.`}</div>
+        <h2>${iWon ? "🎉 Promosso a CTO!" : `🏆 ${winner.name} promosso a CTO`}</h2>
+        <div>${iWon ? "La tua app ha conquistato il mercato con più utenti." : `Hai chiuso ${youRank}° su ${NUM_PLAYERS}.`}</div>
       </div>
 
       <h3 style="color: var(--accent); margin-top: 20px; margin-bottom: 8px;">I tuoi premi finali</h3>
@@ -1066,6 +1116,10 @@ function endGame() {
     document.getElementById("modalRoot").innerHTML = html;
     document.getElementById("restartBtn").onclick = () => {
       document.getElementById("modalRoot").innerHTML = "";
+      // S10: in multiplayer, disconnect cleanly so the next game starts fresh
+      if (state.isMultiplayer && typeof mpDisconnect === "function") {
+        mpDisconnect();
+      }
       // Restart goes back to splash so player can pick scenario again
       renderSplash();
     };
