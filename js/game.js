@@ -115,14 +115,24 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
     })
     .then(() => {
       console.log("[mp] OKRs complete. Calling processNextPick (will set phase + broadcast).");
-      // S10 fix: don't render/broadcast here — processNextPick handles both
-      // with the final phase. Successive broadcasts cause race conditions on
-      // the guest where the post-broadcast render uses stale phase ("between"
-      // or "draft") and ignores subsequent updates.
-      processNextPick();
+      // S10 fix: chain processNextPick into the promise so errors propagate
+      // to .catch instead of being silent. processNextPick is async; if any
+      // step throws (e.g. malformed state.players), we want to know.
+      return processNextPick();
+    })
+    .then(() => {
+      console.log("[mp] startGameMultiplayer chain fully complete (or first pick is awaiting human input)");
     })
     .catch((err) => {
       console.error("[mp] startGameMultiplayer chain failed:", err);
+      console.error("[mp] state at failure:", JSON.stringify({
+        phase: state?.phase,
+        activePicker: state?.activePicker,
+        pickIndex: state?.pickIndex,
+        pickOrderLength: state?.pickOrder?.length,
+        playersCount: state?.players?.length,
+        playersSlotTypes: state?.players?.map(p => p.slotType),
+      }, null, 2));
       if (typeof showToast === "function") {
         showToast({
           who: "ERRORE PARTITA",
@@ -868,10 +878,21 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
           mpDraftOkrsForAll()
             .then(() => {
               console.log("[mp] Q-transition: OKRs drafted, calling processNextPick");
-              processNextPick();  // sets phase + renders + broadcasts inside
+              return processNextPick();  // chain it so errors propagate
+            })
+            .then(() => {
+              console.log("[mp] Q-transition complete (awaiting first pick)");
             })
             .catch((err) => {
-              console.error("[mp] Q-transition OKR draft failed:", err);
+              console.error("[mp] Q-transition failed:", err);
+              console.error("[mp] state at failure:", JSON.stringify({
+                phase: state?.phase,
+                activePicker: state?.activePicker,
+                pickIndex: state?.pickIndex,
+                pickOrderLength: state?.pickOrder?.length,
+                playersCount: state?.players?.length,
+                playersSlotTypes: state?.players?.map(p => p.slotType),
+              }, null, 2));
               if (typeof showToast === "function") {
                 showToast({
                   who: "ERRORE",
