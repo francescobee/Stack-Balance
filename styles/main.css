@@ -1309,6 +1309,212 @@ body.reduced-motion .vc-reveal.revealed {
   margin-top: 4px; font-style: italic;
 }
 
+/* === S11: Hot Seat lobby modal === */
+.modal.hotseat-lobby { max-width: 640px; }
+
+.hs-blurb {
+  color: var(--ink-muted); font-style: italic;
+  margin: 4px 0 18px; font-size: 14px; line-height: 1.5;
+}
+
+.hs-slots-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin: 12px 0 14px;
+}
+.hs-slot {
+  background: var(--paper); border: 1.5px solid var(--rule);
+  border-radius: 5px; padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.hs-slot.is-human { border-color: var(--accent); background: var(--paper-2); }
+.hs-slot.is-ai    { border-style: dashed; opacity: 0.92; }
+.hs-slot-header {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.hs-slot-toggle {
+  display: flex; gap: 8px; font-size: 12px;
+}
+.modal .hs-toggle {
+  display: inline-flex; align-items: center; gap: 4px;
+  cursor: pointer; padding: 4px 8px;
+  border: 1px solid var(--rule); border-radius: 3px;
+  background: var(--paper); color: var(--ink);
+  font-family: inherit; font-size: 12px;
+  text-transform: none; letter-spacing: normal; font-weight: 400;
+}
+.modal .hs-toggle input { margin: 0; cursor: pointer; }
+.modal .hs-toggle:has(input:checked) {
+  background: var(--ink); color: var(--paper-3); border-color: var(--ink);
+}
+.hs-name-input, .hs-persona-select {
+  width: 100%; padding: 6px 8px;
+  border: 1px solid var(--rule); border-radius: 3px;
+  font-family: inherit; font-size: 13px;
+  background: var(--paper); color: var(--ink);
+}
+.hs-name-input:focus, .hs-persona-select:focus {
+  outline: none; border-color: var(--accent);
+}
+
+.hs-config {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  padding: 12px 14px; background: var(--paper-2);
+  border-radius: 5px; margin: 8px 0 14px;
+}
+.hs-config-row {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.hs-config-row label {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.hs-config-row select {
+  padding: 6px 8px; border: 1px solid var(--rule);
+  border-radius: 3px; font-family: inherit; font-size: 13px;
+  background: var(--paper); color: var(--ink);
+}
+
+/* === S11.2: Pass-screen modal === */
+.modal.pass-screen {
+  text-align: center;
+  max-width: 480px;
+  padding: 32px 28px;
+  position: relative;
+}
+.ps-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.ps-avatar-large {
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif-display);
+  font-size: 42px; font-weight: 600; font-style: italic;
+  margin: 0 auto 14px;
+  border: 3px solid var(--gold);
+}
+.ps-name-large {
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-size: 32px;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+.ps-role {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 18px;
+}
+.ps-blurb {
+  font-style: italic;
+  color: var(--ink-muted);
+  margin-bottom: 22px;
+}
+.ps-standings {
+  background: var(--paper-2);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 14px 0 22px;
+  text-align: left;
+}
+.ps-standings-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.ps-rank-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.ps-rank-row:last-child { border-bottom: none; }
+.ps-rank-row.is-next {
+  background: rgba(193, 154, 61, 0.18);
+  padding: 6px 8px; border-radius: 4px; margin: 2px -8px;
+  border-bottom: none;
+}
+.ps-rank {
+  font-family: var(--mono); font-size: 12px;
+  letter-spacing: 0.1em; color: var(--ink-muted); width: 28px;
+}
+.ps-name {
+  flex: 1; font-family: var(--serif-display);
+  font-style: italic; font-size: 16px; color: var(--ink);
+}
+.ps-mau {
+  font-family: var(--mono); font-size: 14px;
+  font-weight: 600; color: var(--accent);
+}
+.ps-mau small {
+  font-size: 9px; letter-spacing: 0.2em;
+  margin-left: 3px; color: var(--ink-muted);
+}
+.modal .ps-acknowledge {
+  padding: 14px 28px !important;
+  font-size: 14px !important;
+}
+
+/* Backdrop scuro più aggressivo per emphasize del pass */
+.pass-screen-bg { background: rgba(31, 29, 25, 0.88) !important; }
+
+/* === S11.5: Animations (slide-in, breath, fade-out) === */
+@keyframes passScreenSlideIn {
+  from { opacity: 0; transform: translateY(-30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes passScreenSlideOut {
+  to { opacity: 0; transform: translateY(20px) scale(0.96); }
+}
+@keyframes passScreenBackdropFade {
+  from { background: rgba(31, 29, 25, 0); }
+  to   { background: rgba(31, 29, 25, 0.88); }
+}
+@keyframes avatarBreath {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(193, 154, 61, 0.4);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 12px rgba(193, 154, 61, 0);
+  }
+}
+.modal.pass-screen {
+  animation: passScreenSlideIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
+}
+.modal.pass-screen.dismissing {
+  animation: passScreenSlideOut 0.24s ease-in forwards;
+}
+.modal-bg.pass-screen-bg {
+  animation: passScreenBackdropFade 0.4s ease-out forwards;
+}
+.ps-avatar-large {
+  animation: avatarBreath 2.4s ease-in-out infinite;
+}
+/* Reduced-motion override */
+body.reduced-motion .modal.pass-screen,
+body.reduced-motion .modal.pass-screen.dismissing,
+body.reduced-motion .modal-bg.pass-screen-bg,
+body.reduced-motion .ps-avatar-large {
+  animation: none;
+}
+
 /* === S9.5.c: New Achievements modal — auto-dismiss progress bar === */
 .ach-autodismiss {
   position: absolute;

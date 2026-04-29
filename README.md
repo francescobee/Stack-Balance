@@ -188,6 +188,90 @@ localStorage.setItem("dev.forceVision", "tech_first");
 
 ---
 
+## 🪑 Hot Seat Mode (pass-and-play locale)
+
+Per chi vuole giocare con amici fisicamente nello stesso luogo, il gioco
+supporta una modalità **Hot Seat**: 2-4 giocatori condividono **un unico
+PC**, si passano il mouse a turno tra una mossa e l'altra. Niente network,
+niente setup: party game classico.
+
+### Come iniziare
+
+1. Dalla splash, click **🪑 Hot Seat**
+2. Setup tavolo:
+   - 4 slot configurabili: ognuno **👤 Umano** o **🤖 AI**
+   - Per umani: input nome (slot 1 default = nome del profilo)
+   - Per AI: dropdown persona (Marco / Alessia / Karim — riusano le
+     personas di S5.1)
+   - Selettore **scenario** (Standard sblocca dopo prima win, gli altri
+     in base alla cronologia profilo)
+   - Selettore **difficoltà AI** globale (Junior / Senior / Director)
+3. Click **Avvia →**
+4. Sequenza Vision draft: ogni umano sceglie la propria Vision, intervallato
+   da pass-screen modal "PASSA IL MOUSE A X"
+5. Sequenza OKR draft: stesso pattern
+6. Snake draft delle carte: ogni turno umano è preceduto da pass-screen
+   (a meno che non sia consecutivo allo stesso umano)
+
+### Il pass-screen modal
+
+```
+┌─────────────────────────────────────────┐
+│         🪑  PASS THE MOUSE              │
+│                                         │
+│         ┌─────────┐                     │
+│         │    M    │  ← avatar grande    │
+│         └─────────┘                     │
+│                                         │
+│           MARCO                         │
+│           (Eng VP)                      │
+│                                         │
+│     Classifica attuale                  │
+│     #1 Federica  17K MAU                │
+│     #2 Marco     12K MAU                │
+│     #3 Alessia    8K MAU                │
+│     #4 Karim      5K MAU                │
+│                                         │
+│       [ Tocca a me, procedi → ]         │
+└─────────────────────────────────────────┘
+```
+
+Modal grande, backdrop scuro, **impossibile non vedere**. Click sul
+pulsante per assumere il controllo. Animazioni di slide-in + breath
+sull'avatar + sound cue (se audio abilitato).
+
+### Quando NON appare il pass-screen
+
+- Tra due AI consecutive (non interessa nessun umano)
+- Tra l'AI e il prossimo turno dello **stesso umano** che ha appena giocato
+- Single-human degrade: 1 umano + 3 AI funziona come single-player
+  normale, niente pass-screen mai
+- Modal pubblici (Q-end, Market News, Investor Pitch, Classifica finale):
+  visibili a tutti, sono il "momento sociale" del party game
+
+### Differenze vs P2P Multiplayer
+
+| Aspetto | 🌐 P2P Multiplayer | 🪑 Hot Seat |
+|---------|:------------------:|:-----------:|
+| Dispositivi | Uno per giocatore | **Uno solo** condiviso |
+| Network | WebRTC P2P | **Nessuno** |
+| Player setup | Lobby con room code | Lobby tavolo (4 slot) |
+| Privacy info | Ogni client vede il proprio | **Open table** (tutti vedono tutto) |
+| Block & React | 🚫 Disabled | 🚫 Disabled |
+| AI fillers | Auto sui posti vuoti | Configurabili per slot |
+| Profile tracking | Per-client | Solo slot 1 (per ora) |
+
+### Limitazioni MVP
+
+- 🚫 **Block & React** disabilitato (consistente con P2P)
+- 🚫 **Multi-profile**: solo lo slot 1 traccia stats nel localStorage. Gli
+  altri umani giocano "anonimi". V2 valuterà multi-profile.
+- 🚫 **Daily mode** non disponibile in Hot Seat (per ora)
+- 🚫 **Hidden info mode**: tutto pubblico (Vision, OKR, resources del
+  player attivo). Più "party game friendly" che strategico.
+
+---
+
 ## 🧪 Test harness
 
 Aprire `tests/test.html` in un browser. I test girano automaticamente al load

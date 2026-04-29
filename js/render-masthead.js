@@ -194,6 +194,10 @@ function renderByline() {
 // ---------- TURN INDICATOR ----------
 function makeTurnIndicator() {
   const localIdx = state.localSlotIdx ?? 0;
+  // S11.2: hot-seat "passing" phase = pass-screen modal is open, gameplay paused
+  if (state.phase === "passing") {
+    return el("span", { class: "turn-indicator" }, "🪑 Passa il mouse...");
+  }
   if (state.phase === "human") {
     const isMine = state.activePicker === localIdx;
     if (isMine) {

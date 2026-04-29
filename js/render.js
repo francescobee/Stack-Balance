@@ -76,7 +76,7 @@ function renderSplash() {
     if (playedToday) dailyBtn.style.opacity = "0.55";
     actions.appendChild(dailyBtn);
 
-    // S10: Multiplayer button
+    // S10: Multiplayer button (P2P)
     actions.appendChild(el("button", {
       class: "ghost",
       title: "Gioca con amici via P2P (PeerJS)",
@@ -88,6 +88,19 @@ function renderSplash() {
         }
       }
     }, "🌐 Multiplayer"));
+
+    // S11: Hot Seat button (pass-and-play locale)
+    actions.appendChild(el("button", {
+      class: "ghost",
+      title: "Pass-and-play locale: 2-4 giocatori sullo stesso PC",
+      onclick: () => {
+        if (!getProfile()) {
+          showProfileSetup({ onComplete: () => showHotSeatLobbyModal() });
+        } else {
+          showHotSeatLobbyModal();
+        }
+      }
+    }, "🪑 Hot Seat"));
 
     actions.appendChild(el("button", {
       class: "ghost",

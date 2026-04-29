@@ -505,6 +505,111 @@ describe("multiplayer slot helpers [S10.3]", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// S11: HOT SEAT helpers (Phase 11)
+// ─────────────────────────────────────────────────────────────
+describe("hot-seat helpers [S11]", () => {
+  function withHotSeatState(slotConfig, fn) {
+    const players = slotConfig.map((slot, idx) => {
+      const isHuman = slot.type === "human";
+      const p = mockPlayer({ name: slot.name, isHuman });
+      p.slotType = isHuman ? "human-host" : "ai";
+      return p;
+    });
+    withState({
+      players, isSharedScreen: true, isMultiplayer: false,
+      activeEvent: null, scenario: null,
+    }, fn);
+  }
+
+  it("isHumanSlot returns true for human-host slots", () => {
+    withHotSeatState([
+      { type: "human", name: "A" },
+      { type: "ai", name: "B" },
+      { type: "human", name: "C" },
+      { type: "ai", name: "D" },
+    ], () => {
+      assertEq(isHumanSlot(0), true);
+      assertEq(isHumanSlot(1), false);
+      assertEq(isHumanSlot(2), true);
+      assertEq(isHumanSlot(3), false);
+    });
+  });
+
+  it("countHumans counts only human-host slots", () => {
+    withHotSeatState([
+      { type: "human", name: "A" },
+      { type: "ai", name: "B" },
+      { type: "human", name: "C" },
+      { type: "ai", name: "D" },
+    ], () => assertEq(countHumans(), 2));
+
+    withHotSeatState([
+      { type: "human", name: "A" },
+      { type: "ai", name: "B" },
+      { type: "ai", name: "C" },
+      { type: "ai", name: "D" },
+    ], () => assertEq(countHumans(), 1));
+
+    withHotSeatState([
+      { type: "human", name: "A" },
+      { type: "human", name: "B" },
+      { type: "human", name: "C" },
+      { type: "human", name: "D" },
+    ], () => assertEq(countHumans(), 4));
+  });
+
+  it("shouldShowPassScreen: false when single human (degrade)", () => {
+    withHotSeatState([
+      { type: "human", name: "A" },
+      { type: "ai", name: "B" },
+      { type: "ai", name: "C" },
+      { type: "ai", name: "D" },
+    ], () => {
+      assertEq(shouldShowPassScreen(0), false, "1 human → no pass-screen");
+    });
+  });
+
+  it("shouldShowPassScreen: false when target is AI", () => {
+    withHotSeatState([
+      { type: "human", name: "A" },
+      { type: "human", name: "B" },
+      { type: "ai", name: "C" },
+      { type: "ai", name: "D" },
+    ], () => {
+      assertEq(shouldShowPassScreen(2), false, "AI target never gets pass-screen");
+      assertEq(shouldShowPassScreen(3), false);
+    });
+  });
+
+  it("shouldShowPassScreen: true when 2+ humans and target is human", () => {
+    withHotSeatState([
+      { type: "human", name: "A" },
+      { type: "human", name: "B" },
+      { type: "ai", name: "C" },
+      { type: "ai", name: "D" },
+    ], () => {
+      assertEq(shouldShowPassScreen(0), true);
+      assertEq(shouldShowPassScreen(1), true);
+    });
+  });
+
+  it("shouldShowPassScreen: false when not in shared-screen mode", () => {
+    withState({
+      players: [
+        Object.assign(mockPlayer({ name: "A", isHuman: true }), { slotType: "human-host" }),
+        Object.assign(mockPlayer({ name: "B", isHuman: true }), { slotType: "human-host" }),
+      ],
+      isSharedScreen: false,
+      isMultiplayer: false,
+      activeEvent: null, scenario: null,
+    }, () => {
+      assertEq(shouldShowPassScreen(0), false, "single-player ignores pass-screen");
+      assertEq(shouldShowPassScreen(1), false);
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // S9.6: AI scenario-aware Vision draft
 // ─────────────────────────────────────────────────────────────
 describe("scenarioPreferredVisions [S9.6.c]", () => {

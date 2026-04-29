@@ -411,8 +411,24 @@ async function processNextPick() {
   // S10: any human slot (host or remote) → wait. Only AI runs auto.
   const isAITurn = player.slotType === "ai" || !player.isHuman;
   if (!isAITurn) {
+    // S11.2: Hot Seat — show pass-screen between humans before resuming.
+    // Only when 2+ humans (single-human degrade has no pass-screen).
+    if (typeof shouldShowPassScreen === "function" && shouldShowPassScreen(playerIdx)) {
+      state.phase = "passing";
+      state.aiHighlight = null;
+      render();  // turn indicator shows "🪑 In attesa del prossimo player..."
+      showPassScreenModal(playerIdx, () => {
+        state.localSlotIdx = playerIdx;  // rotate POV for the new active player
+        state.phase = "human";
+        render();
+      });
+      return;
+    }
+    // Default human-turn flow (single-player, P2P MP, single-human hot-seat)
     state.phase = "human";
     state.aiHighlight = null;
+    // S11: in hot-seat, sync localSlotIdx with activePicker on every human turn
+    if (state.isSharedScreen) state.localSlotIdx = playerIdx;
     if (state.isMultiplayer) {
       console.log("[mp] processNextPick: human turn for slot", playerIdx,
                   "(", player.slotType, ") — phase=human, broadcasting");
@@ -489,6 +505,15 @@ async function processNextPick() {
 async function humanPickCard(row, col, cardEl) {
   if (state.gameOver || state.phase !== "human") return;
   if (!isPickable(row, col)) return;
+
+  // S11.4: in hot-seat, double-check that activePicker matches localSlotIdx.
+  // Pass-screen modal SHOULD have rotated localSlotIdx before this fires;
+  // if mismatched, something is wrong with the flow.
+  if (state.isSharedScreen && state.activePicker !== state.localSlotIdx) {
+    console.warn("[hotseat] activePicker mismatch:",
+                 state.activePicker, "vs localSlotIdx:", state.localSlotIdx);
+    return;
+  }
 
   // S10: Multiplayer — non-host clients route their pick through the host
   if (state.isMultiplayer && typeof mp !== "undefined" && mp.active && !mp.isHost) {
@@ -901,6 +926,12 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
                 });
               }
             });
+        } else if (state.isSharedScreen && typeof draftOkrsSequential === "function") {
+          // S11.6: hot-seat — sequential OKR draft for each human with pass-screen
+          draftOkrsSequential(() => {
+            render();
+            processNextPick();
+          });
         } else {
           showOKRDraftModal(() => {
             render();

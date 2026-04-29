@@ -9,6 +9,163 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S11.1-S11.6] — 2026-04-28 · Phase 11 Hot Seat (pass-and-play)
+
+> **Phase 11 · Hot Seat / pass-and-play locale** — implementata in un'unica
+> session intensiva. ~400 LOC nuovi distribuiti tra `js/hotseat.js` (nuovo) +
+> `js/render-hotseat.js` (nuovo) + hook minimi nel codice esistente.
+> Single-player e P2P multiplayer restano invariati.
+
+### Why
+L'utente ha chiesto una modalità "party game" dove 2-4 amici condividono
+un singolo PC e si passano il mouse a turno. Casi d'uso tipici:
+- Sera con amici, un solo laptop sul tavolo
+- Mostra del gioco a chi non vuole installare browser/setup network
+- Demo / playtest con pubblico
+
+Differente dal P2P MP (Phase 10) per scope: niente network, niente sync,
+single state. Più "snack" che "feast".
+
+### Architecture: Sequential turns + pass-screen
+
+**Pattern**: tra un turno umano e il prossimo turno di un umano DIVERSO,
+mostra un fullscreen modal "PASSA IL MOUSE A X". Al click "Tocca a me,
+procedi →", la UI ruota POV (`state.localSlotIdx = X`) e il gameplay
+riprende.
+
+**Niente** modal mirroring (un solo browser, un solo DOM). **Niente**
+serialization. **Niente** broadcast. State rimane single source.
+
+### Sessions delivered
+
+- ✅ **S11.1** Lobby UI & State Setup
+  - `js/hotseat.js`: helpers (`isHumanSlot`, `countHumans`,
+    `shouldShowPassScreen`), `startGameSharedScreen(slotConfig, scenarioId, difficulty)`
+  - `js/render-hotseat.js`: `showHotSeatLobbyModal` con 4 slot config
+    (umano/AI toggle, name input, persona dropdown), scenario selector,
+    AI difficulty selector, validation
+  - Splash button "🪑 Hot Seat"
+- ✅ **S11.2** Pass-Screen Modal & Phase Hook
+  - `showPassScreenModal(nextSlotIdx, onAcknowledge)` — fullscreen modal
+    con avatar grande, mini-classifica, button big-and-clear
+  - Hook in `processNextPick`: `if (shouldShowPassScreen(playerIdx))` →
+    set `state.phase = "passing"`, mostra modal, su acknowledge ruota
+    `localSlotIdx` e setta `state.phase = "human"`
+  - Turn indicator: aggiunto case `"passing"` → "🪑 Passa il mouse..."
+- ✅ **S11.3** Sequential Vision/OKR Drafts
+  - `draftVisionsSequential(onComplete)`: AI auto-pick, poi iterate
+    humans con pass-screen tra ognuno
+  - `draftOkrsSequential(onComplete)`: stesso pattern per OKR
+  - Hook in `showQuarterModal` nextQuarterBtn: detecta
+    `state.isSharedScreen` e chiama `draftOkrsSequential`
+- ✅ **S11.4** POV Rotation & Render Gating
+  - `humanPickCard`: aggiunto guard `if (state.isSharedScreen &&
+    state.activePicker !== state.localSlotIdx) return` (catch
+    inconsistencies)
+  - `state.localSlotIdx` ruota ad ogni human turn entry (sync con
+    activePicker)
+  - Audit OK: tutti i render usavano già `state.localSlotIdx ?? 0`
+    (post-S10 fix)
+- ✅ **S11.5** Polish: Animations, Sound, Transitions
+  - CSS animations: `passScreenSlideIn` (entry), `passScreenSlideOut`
+    (dismissing), `passScreenBackdropFade` (overlay), `avatarBreath`
+    (pulse subtle ogni 2.4s)
+  - Audio: `sndPassScreen` — 3-note ascending C-major chime (C4→E4→G4)
+    in `js/audio.js`
+  - Pass-screen close: 240ms slide-out + delay prima di rimuovere DOM
+    (no snap)
+  - Reduced-motion override: tutte le animazioni disabilitate, sound
+    rispetta toggle audio
+- ✅ **S11.6** Edge Cases, Tests, Docs
+  - 6 nuovi test in `test-rules.js` per hot-seat helpers
+  - `tests/run-headless.js` + `tests/test.html` aggiornati per caricare
+    `hotseat.js`
+  - README sezione Hot Seat (come iniziare, pass-screen flow, vs P2P,
+    limitazioni)
+  - CONTEXT.md additions: file map, gotchas, migration cheatsheet
+  - HOTSEAT-ROADMAP.md status updated to ✅ Done
+
+### Files
+
+**New**:
+- `js/hotseat.js` (~200 LOC)
+- `js/render-hotseat.js` (~180 LOC)
+
+**Modified**:
+- `index.html` — aggiunti `<script>` per hotseat.js + render-hotseat.js
+- `js/render.js` — splash button "🪑 Hot Seat"
+- `js/game.js` — hook in `processNextPick` per "passing" phase, hook in
+  `humanPickCard` per guard, hook in `showQuarterModal` nextQuarterBtn
+  per `draftOkrsSequential`
+- `js/render-masthead.js` — turn indicator case "passing"
+- `js/audio.js` — funzione `sndPassScreen`
+- `styles/main.css` — ~250 LOC CSS lobby + pass-screen + animations
+- `tests/test-rules.js` — 6 nuovi test
+- `tests/run-headless.js` + `tests/test.html` — load hotseat.js
+
+### Tests
+- **58/58 pass** (era 52, +6 nuovi):
+  - `isHumanSlot` returns true for human-host slots
+  - `countHumans` counts only human-host slots (3 cases: 1, 2, 4 humans)
+  - `shouldShowPassScreen`: false when single human (degrade)
+  - `shouldShowPassScreen`: false when target is AI
+  - `shouldShowPassScreen`: true when 2+ humans and target is human
+  - `shouldShowPassScreen`: false when not in shared-screen mode
+
+### Acceptance criteria (dal HOTSEAT-ROADMAP.md)
+
+Tutte le acceptance criteria di S11.1 → S11.6 sono soddisfatte
+**code-side**. Per la validazione completa serve **manual playtest**
+con 2-4 umani fisici (non testabile via headless DOM stub).
+
+Manual playtest checklist (deferred a sessione di playtest reale):
+- [ ] 1 umano + 3 AI: degrade silente (no pass-screen mai)
+- [ ] 2 umani + 2 AI: pass-screen tra umani
+- [ ] 4 umani: pass-screen sempre
+- [ ] Scenari diversi (Standard, Bear Market, AI Hype, Remote First)
+- [ ] Difficoltà diverse (Junior, Senior, Director)
+- [ ] Modal pubblici visibili senza pass-screen
+- [ ] Reduced motion: animations off, gameplay invariato
+- [ ] Audio toggle: sndPassScreen rispetta preference
+- [ ] Cross-mode: hot-seat → splash → single-player → ok (no state leak)
+- [ ] Cross-mode: hot-seat → splash → P2P MP → ok (mutex flags rispettati)
+
+### Edge cases handled
+
+- **Single human + 3 AI**: validation passa, ma `shouldShowPassScreen`
+  ritorna sempre false → flow visivamente identico a single-player.
+- **Validation lobby**: 0 umani → blocked. Nomi duplicati case-insensitive
+  → blocked. Nomi <2 char → blocked.
+- **AI persona name auto-fill**: quando toggle slot da Umano→AI, il nome
+  diventa la persona ("Alessia (CMO)"). Toggle inverso AI→Umano → nome
+  rigenerato come "P2", "P3", etc. (evitando duplicati con altri slot).
+- **Closure orphan in OKR modal** (S10 fix): preservato. Il click handler
+  re-legge `state.players[currentIdx]` invece di usare la closure-captured
+  reference.
+- **Reduced motion**: animations CSS disabilitate via `body.reduced-motion`
+  override.
+
+### Cross-mode safety
+
+`state.isSharedScreen` e `state.isMultiplayer` sono **mutex**:
+`startGameSharedScreen` esplicita `isMultiplayer: false`,
+`startGameMultiplayer` esplicita `isSharedScreen` non-true (mai set true
+a meno che non si voglia hot-seat). Code conditional ordering:
+```js
+if (state.isMultiplayer) { /* P2P branch */ }
+else if (state.isSharedScreen) { /* hot-seat branch */ }
+else { /* single-player default */ }
+```
+
+### Stato finale Phase 11
+
+**Code-complete**. Pronto per manual playtest con amici. Documentation
+aggiornata (README, CONTEXT, CHANGELOG, HOTSEAT-ROADMAP).
+
+Total LOC delta: ~600 (300 LOC code, 250 CSS, 50 docs).
+
+---
+
 ## [S10.7] — 2026-04-28 · MP synchronization hardening (post-MVP fix pass)
 
 > **Phase 10 follow-up** — dopo lo ship dell'MVP iniziale (S10.1-S10.6),

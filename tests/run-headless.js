@@ -67,6 +67,7 @@ function load(rel) {
   "js/rules.js",
   "js/ai.js",
   "js/multiplayer.js",  // S10: serialization + slot helpers (PeerJS calls graceful no-op since `Peer` undefined)
+  "js/hotseat.js",      // S11: hot-seat helpers (isHumanSlot, countHumans, shouldShowPassScreen)
   "tests/runner.js",
 ].forEach(load);
 

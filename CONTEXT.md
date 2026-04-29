@@ -531,6 +531,123 @@ _Last updated: 2026-04-28 dopo S8.2 (test harness + README). 🎉 **Roadmap
 a 8 fasi: 100% completato.** Aggiorna questo doc quando le convenzioni o
 l'architettura cambiano in modo non-locale._
 
+## 🆕 Phase 11 additions (2026-04-28) — Hot Seat (pass-and-play)
+
+### Architecture: shared-screen sequential turns
+
+Hot-seat **NON riusa** l'infrastruttura P2P (no networking, no serialize).
+**Riusa massicciamente** il render layer post-S10 (già `localSlotIdx`-aware)
+e il game loop (small hook in `processNextPick`).
+
+### File map
+- `js/hotseat.js` (~200 LOC) — helpers (`isHumanSlot`, `countHumans`,
+  `shouldShowPassScreen`), `startGameSharedScreen`, sequential drafts
+  (`draftVisionsSequential`, `draftOkrsSequential`)
+- `js/render-hotseat.js` (~180 LOC) — `showHotSeatLobbyModal` (4-slot
+  config), `showPassScreenModal` (fullscreen pass overlay)
+
+### State flags
+```js
+state.isSharedScreen = true   // hot-seat mode active
+state.isMultiplayer  = false  // mutex with P2P
+state.phase = "passing"       // NEW: pass-screen modal is open
+state.localSlotIdx = N        // ROTATES with activePicker on human turns
+```
+
+### Pass-screen flow
+
+```
+processNextPick()
+  → next picker is human?
+      → 2+ humans AND target ≠ current localSlotIdx?
+          → state.phase = "passing"
+          → render() (turn indicator: "🪑 Passa il mouse...")
+          → showPassScreenModal(targetIdx, onAck)
+              → modal opens, sound cue, focus button
+              → user clicks "Tocca a me, procedi →"
+              → modal slides out
+              → onAck(): state.localSlotIdx = targetIdx, phase = "human", render()
+      → otherwise (single human OR same-human consecutive turns):
+          → state.phase = "human"
+          → state.localSlotIdx = targetIdx (in shared-screen mode)
+          → render()
+```
+
+### Sequential drafts
+
+Vision draft (Q1) e OKR draft (Q1, Q2, Q3) iterate gli umani in ordine
+di slot, con pass-screen tra ciascuno (se 2+ humans). AI fanno auto-pick
+in parallelo (instant).
+
+```js
+draftVisionsSequential(onComplete)
+  → 1) AI auto-pick all visions (sync forEach)
+  → 2) iterate human slots, for each:
+       - if 2+ humans: showPassScreenModal → openModal
+       - else: openModal directly
+       - openModal: state.localSlotIdx = idx, render, showVisionDraftModal
+       - onPick: → next iteration
+  → 3) onComplete()
+```
+
+Stesso pattern per OKR. Q-transition hook in `showQuarterModal`
+nextQuarterBtn click: detecta `state.isSharedScreen` e chiama
+`draftOkrsSequential` invece dello showOKRDraftModal singolo.
+
+### Critical gotchas added (S11)
+
+1. **`state.isSharedScreen` e `state.isMultiplayer` sono mutex**.
+   `startGameSharedScreen` esplicita `isMultiplayer: false`. Mai entrambi
+   true: l'una esclude l'altra. Codice deve usare `if (state.isSharedScreen)`
+   prima di `else if (state.isMultiplayer)` per distinguere i 3 mode
+   (single-player / hot-seat / P2P).
+
+2. **`state.localSlotIdx` rotation è esplicita**. Solo nei punti dove
+   transizioniamo a un human turn. Mai durante AI sequences (evita
+   flicker). I render hanno già il pattern `state.localSlotIdx ?? 0`.
+
+3. **Pass-screen MUST close before next modal opens** (es. Vision/OKR
+   draft modal). `showPassScreenModal` usa `setTimeout(... 240ms)` per
+   slide-out animation prima di rimuovere dal DOM. Il `onAcknowledge`
+   callback fires DOPO che il modal è gone, evita stacking modali.
+
+4. **Single-human degrade**: `countHumans() <= 1` → `shouldShowPassScreen`
+   sempre false → flow identico a single-player. Permette di usare
+   il lobby Hot Seat anche per giocate solo per personalizzare le
+   personas AI.
+
+5. **Profile tracking**: solo slot 0 (o lo slot dove `isHuman` matcha
+   il profile name) salva stats. Per ora nessuna multi-profile localStorage.
+   Volendo aggiungerlo: hash il nome → key in localStorage.
+
+6. **Modal pubblici ≠ pass-screen modal**. I modal Q-end, Market News,
+   Investor Pitch, end-game classifica sono **pubblici**: tutti li
+   guardano insieme. Non c'è pass-screen prima di essi (è il momento
+   sociale del party game). Lo si vede in `showQuarterModal` che ha
+   un single button per tutti, e in `showFinalSequenceModal` che resta
+   uguale (non ha logica MP-client perché in shared-screen non serve —
+   l'host è il giocatore di turno).
+
+7. **`showOKRDraftModal` usa `state.localSlotIdx`** (post-S10 fix).
+   Quando `draftOkrsSequential` rotta `localSlotIdx` prima di chiamare
+   il modal, il modal legge l'array OKR del player giusto. Click handler
+   re-legge da `state.players[currentIdx]` (post-S10 closure fix), evita
+   race in caso di state replacement.
+
+### Migration cheatsheet
+
+Per aggiungere un nuovo modal "pubblico" (visibile a tutti senza pass-screen):
+- Nessuna logica speciale necessaria. È già fatto.
+
+Per aggiungere un nuovo flow che richiede ad ogni umano un'azione (tipo
+draft):
+- Pattern come `draftVisionsSequential` / `draftOkrsSequential`:
+  iterate human slots, show pass-screen + modal, onComplete → next.
+
+Per aggiungere un nuovo selector in lobby (es. tempo per turno):
+- In `render-hotseat.js` `showHotSeatLobbyModal` → aggiungi UI element +
+  passa il valore a `startGameSharedScreen` come param.
+
 ## 🆕 Phase 10 additions (2026-04-28) — Multiplayer P2P
 
 ### Architecture: Authoritative Host + WebRTC DataChannels

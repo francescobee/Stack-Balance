@@ -88,3 +88,12 @@ function sndOkrDone() {
   _tone({ freq: 1200, duration: 0.06, type: "square", vol: 0.4 });
   setTimeout(() => _tone({ freq: 1500, duration: 0.10, type: "square", vol: 0.35 }), 50);
 }
+
+// S11.5: Soft 3-note ascending C-major chime for hot-seat pass-screen.
+// Distinct from sndChain (which fires on game chain triggers) — softer
+// and more "your turn" announcement-y.
+function sndPassScreen() {
+  _tone({ freq: 261.63, duration: 0.32, type: "sine", vol: 0.45 }); // C4
+  setTimeout(() => _tone({ freq: 329.63, duration: 0.32, type: "sine", vol: 0.45 }), 80);  // E4
+  setTimeout(() => _tone({ freq: 392.00, duration: 0.40, type: "sine", vol: 0.50 }), 160); // G4
+}

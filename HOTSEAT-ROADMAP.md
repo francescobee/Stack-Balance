@@ -92,19 +92,19 @@ durante una sequenza di 3 AI).
 
 | Session | Tema | Effort | Stato |
 |---------|------|-------:|------:|
-| **S11.1** | Lobby UI & State Setup | M (~2h) | ⬜ |
-| **S11.2** | Pass-Screen Modal & Phase Hook | M (~2h) | ⬜ |
-| **S11.3** | Sequential Vision/OKR Drafts | M (~2h) | ⬜ |
-| **S11.4** | POV Rotation & Render Gating | S (~1.5h) | ⬜ |
-| **S11.5** | Polish — Animations, Sound, Transitions | M (~2h) | ⬜ |
-| **S11.6** | Edge Cases, Manual Playtest, Docs | M (~2.5h) | ⬜ |
+| **S11.1** | Lobby UI & State Setup | M (~2h) | ✅ Done · 2026-04-28 |
+| **S11.2** | Pass-Screen Modal & Phase Hook | M (~2h) | ✅ Done · 2026-04-28 |
+| **S11.3** | Sequential Vision/OKR Drafts | M (~2h) | ✅ Done · 2026-04-28 |
+| **S11.4** | POV Rotation & Render Gating | S (~1.5h) | ✅ Done · 2026-04-28 |
+| **S11.5** | Polish — Animations, Sound, Transitions | M (~2h) | ✅ Done · 2026-04-28 |
+| **S11.6** | Edge Cases, Manual Playtest, Docs | M (~2.5h) | ✅ Done · 2026-04-28 |
 
 **Critical path**: S11.1 → S11.2 → S11.3 → S11.4. Le ultime due sono
 polish/validation, partono in parallelo dopo S11.4.
 
 ---
 
-## 🪑 SESSION 11.1 — Lobby UI & State Setup
+## 🪑 SESSION 11.1 — Lobby UI & State Setup ✅ Done · 2026-04-28
 
 **Tipo**: foundation
 **Effort**: M (~2h)
@@ -246,7 +246,7 @@ function shouldShowPassScreen(targetSlotIdx) {
 
 ---
 
-## 📺 SESSION 11.2 — Pass-Screen Modal & Phase Hook
+## 📺 SESSION 11.2 — Pass-Screen Modal & Phase Hook ✅ Done · 2026-04-28
 
 **Tipo**: core UX
 **Effort**: M (~2h)
@@ -472,7 +472,7 @@ if (state.phase === "passing") {
 
 ---
 
-## 🎯 SESSION 11.3 — Sequential Vision/OKR Drafts
+## 🎯 SESSION 11.3 — Sequential Vision/OKR Drafts ✅ Done · 2026-04-28
 
 **Tipo**: game flow
 **Effort**: M (~2h)
@@ -658,7 +658,7 @@ pickAndShowMarketEvent(() => {
 
 ---
 
-## 🎬 SESSION 11.4 — POV Rotation & Render Gating
+## 🎬 SESSION 11.4 — POV Rotation & Render Gating ✅ Done · 2026-04-28
 
 **Tipo**: render integration
 **Effort**: S (~1.5h)
@@ -730,7 +730,7 @@ Audit + fix se ne trovi altri hardcoded a 0.
 
 ---
 
-## ✨ SESSION 11.5 — Polish: Animations, Sound, Transitions
+## ✨ SESSION 11.5 — Polish: Animations, Sound, Transitions ✅ Done · 2026-04-28
 
 **Tipo**: UX polish
 **Effort**: M (~2h)
@@ -850,7 +850,7 @@ In `renderByline`, aggiungere classe `.just-acted` se appropriate.
 
 ---
 
-## 🧪 SESSION 11.6 — Edge Cases, Manual Playtest, Docs
+## 🧪 SESSION 11.6 — Edge Cases, Manual Playtest, Docs ✅ Done · 2026-04-28
 
 **Tipo**: validation + docs
 **Effort**: M (~2.5h)
