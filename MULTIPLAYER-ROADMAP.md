@@ -93,6 +93,32 @@ vanno verso il proprio peerId nello state autoritativo dell'host.
 > pass, ma il playtest reale con 2-4 browser su rete reale richiede
 > validazione manuale (vedi Manual playtest checklist in S10.6).
 
+### S10.7 — Post-MVP synchronization hardening (2026-04-28)
+
+Dopo lo ship di S10.1-S10.6, playtest reale ha rivelato 8+ bug di
+sincronizzazione progressivi (closure capture race, isMultiplayer flag
+non serializzato, modal mirror mancanti, phase stale, broadcast race,
+TypeError in renderPyramid, etc.). Vedi entry [`[S10.7]`](CHANGELOG.md#s107--2026-04-28--mp-synchronization-hardening-post-mvp-fix-pass)
+in CHANGELOG per il dettaglio.
+
+**Stato post-S10.7**: ✅ Multiplayer end-to-end funzionante. Tutti i
+modal (lobby / vision / OKR / market news / quarter-end / final
+sequence / end-game) sono mirrorati host→guest. Game procede
+linearmente in MP esattamente come in single-player.
+
+| Fix | Commit | Bug |
+|-----|--------|-----|
+| CSS button override on entry modal | 27644c8 | bottoni neri |
+| Error guards on draft chains | 27dc7ea | stuck after vision pick |
+| Lobby modal close on guest | 49f6bb0 | "in attesa che l'host avvii" forever |
+| Host pre-render after Vision (Q1) | 54537c2 | host on splash |
+| **isMultiplayer in serializeState** | **1e1abc1** | **client picks divergent from host** |
+| Q-end + Market News modal mirror | 987771e | guest non vede modal Q-end |
+| Pre-render Q2/Q3 board on host | 0212983 | host vede board bianco |
+| Phase reset + broadcast linearization | 798738f | "..." indicator stuck |
+| **Closure capture race in OKR modal** | **99fd28c** | **OKR closed but no okr was chosen** |
+| Final sequence + end-game mirror | f6923c4 | guest stuck dopo Q3 |
+
 **Critical path**: S10.1 → S10.2 → S10.3. Le ultime 3 sessioni sono polish.
 
 **Strategia raccomandata**: spezza in 2 weekend.

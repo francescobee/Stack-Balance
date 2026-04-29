@@ -594,36 +594,95 @@ l'architettura cambiano in modo non-locale._
 | `state.log` | full array | last 10 only | as-is |
 | Cards / Vision / modifiers | pure data | passthrough | passthrough |
 
-### Critical gotchas added (S10)
+### Critical gotchas added (S10) — UPDATED post-S10.7 hardening
 
 1. **`state.localSlotIdx` is per-client**, NEVER serialize it. The host's
    `state.localSlotIdx` is 0; client's might be 1/2/3. We preserve
    localSlotIdx in `handleStateUpdate` before applying the new state.
 
-2. **Functions inside `state` will silently break broadcast** — if you
+2. **`state.isMultiplayer` MUST be in serializeState** (S10.7 fix). Without
+   it, clients lose the flag on the first stateUpdate → `humanPickCard`
+   falls into single-player branch → applies picks LOCALLY without
+   notifying host → state divergence. Belt+suspenders: also preserved
+   in `handleStateUpdate` from previous state. **THIS WAS THE #1 BUG**
+   of the post-MVP fix pass.
+
+3. **🐛 RECURRING BUG — Closure capture race in modal click handlers** (S10.7).
+   In multiplayer, `handleStateUpdate` REPLACES `state.players` with a
+   new array of new objects. Any modal handler that captures
+   `const human = state.players[localIdx]` at modal-open time becomes
+   ORPHANED when a broadcast arrives mid-modal: `human` references the
+   old player object, but the global state now has a new one. Click
+   handlers mutating `human.okrs = [okr]` mutate the orphan; the
+   onComplete callback reads the NEW state.players[localIdx] which
+   still has empty okrs.
+   **Recipe**: in click handlers that mutate state.players[i], ALWAYS
+   re-read `state.players[currentIdx]` at click time, never trust the
+   closure-captured reference.
+   Already fixed in `showOKRDraftModal`. Other modals to audit if you
+   add new ones with player mutation in click handlers.
+
+4. **Functions inside `state` will silently break broadcast** — if you
    add a new field to player/state with a function reference, update
    `serializeState` to strip it (or use id-lookup pattern).
 
-3. **OKR mocks in tests must reference real `OKR_POOL` entries** — the
+5. **OKR mocks in tests must reference real `OKR_POOL` entries** — the
    serialize/deserialize tests use real OKR ids (`OKR_POOL[0].id`) so the
    lookup succeeds.
 
-4. **Render gating uses `state.localSlotIdx`**, not hardcoded `0`. If you
+6. **Render gating uses `state.localSlotIdx`**, not hardcoded `0`. If you
    add new render code that says "the human player", use `state.players[state.localSlotIdx ?? 0]`.
+   **Audit list**: ` showQuarterModal`, `showEndGameModal`, `showOKRDraftModal`,
+   `renderMasthead`, `renderTableau`, `renderAssets`, `renderOKRs`,
+   `renderAwardsForecast` — all updated to use localSlotIdx.
 
-5. **Block & React in multiplayer is silently disabled** — the existing
-   block timer + DOM modal would need cross-client sync. MVP skips it.
+7. **`renderPyramid` must guard against empty `state.pyramid`** (S10.7).
+   Early multiplayer broadcasts (post-Vision-draft, pre-startQuarter)
+   carry `state.pyramid: []`. Without `if (pyramid.length > 0)` guard,
+   `state.pyramid[row][col]` throws "Cannot read properties of undefined
+   (reading '0')" on the client.
 
-6. **`mpBroadcastState` is no-op if not host** — safe to call anywhere
-   in game.js without checking `mp.isHost` first.
+8. **`startQuarter` MUST reset `state.phase = "draft"`** (S10.7). Without
+   this, phase trails the previous Q's "between" value through the OKR
+   draft. `humanPickCard`'s `if (state.phase !== "human") return` ignores
+   clicks. processNextPick eventually sets phase to "human" but if
+   anything in the chain throws first, host stays at "draft" forever.
 
-7. **Audio context unlock** in lobby: `unlockAudio?.()` is called inside
-   `humanPickCard` already. The first user click in lobby (e.g. "Crea
-   partita") provides the gesture browser needs to unlock audio.
+9. **All `.then()` chains in MP flow MUST have `.catch`** (S10.7). Silent
+   promise rejections in `mpDraftVisionsForAll`/`mpDraftOkrsForAll`
+   stalled the host with no error visible. `.catch` surfaces error as
+   toast + state dump in console.
 
-8. **`Peer === undefined` graceful degrade**: if PeerJS CDN fails to load,
-   the multiplayer button shows error toast instead of crashing.
-   Single-player flow unaffected.
+10. **Modal mirroring host→guest pattern**:
+    - Host calls modal locally + broadcasts trigger message
+    - Client's handler in `multiplayer.js` calls same modal function
+    - Modal function detects MP-client via
+      `state?.isMultiplayer && mp?.active && !mp?.isHost`
+    - In MP-client variant, replace action buttons with "in attesa" indicator
+    - Host's button click broadcasts `closeMpModal` to clean up client side
+    - Implemented for: lobby, vision draft, okr draft, market news,
+      quarter-end, final sequence (pitch+VC), end-game classifica.
+
+11. **Block & React in multiplayer is silently disabled** — the existing
+    block timer + DOM modal would need cross-client sync. MVP skips it.
+
+12. **`mpBroadcastState` is no-op if not host** — safe to call anywhere
+    in game.js without checking `mp.isHost` first.
+
+13. **Audio context unlock** in lobby: `unlockAudio?.()` is called inside
+    `humanPickCard` already. The first user click in lobby (e.g. "Crea
+    partita") provides the gesture browser needs to unlock audio.
+
+14. **`Peer === undefined` graceful degrade**: if PeerJS CDN fails to load,
+    the multiplayer button shows error toast instead of crashing.
+    Single-player flow unaffected.
+
+15. **`endGame` is split host vs all-clients** (S10.7). Host computes
+    scores + broadcasts state + triggers modal. `showEndGameModal` is
+    called by everyone (host directly, clients via `endGameShow` message)
+    and uses `localSlotIdx` for POV — each player records their own
+    profile, sees their own awards/rank, sees "🎉 Promosso a CTO" only
+    if they personally won.
 
 ### Migration cheatsheet
 

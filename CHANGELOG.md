@@ -9,6 +9,127 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S10.7] — 2026-04-28 · MP synchronization hardening (post-MVP fix pass)
+
+> **Phase 10 follow-up** — dopo lo ship dell'MVP iniziale (S10.1-S10.6),
+> playtest reale ha rivelato **8 bug di sincronizzazione** progressivi.
+> Questa entry riassume le fix iterative per arrivare a un multiplayer
+> end-to-end stabile.
+
+### Bug fixati (in ordine di scoperta)
+
+#### 1. CSS — bottoni multiplayer entry modal (commit 27644c8)
+Il `button:focus` globale rendeva il primo bottone del modal nero al render.
+Stesso pattern già fixato per Vision/OKR/Scenario chooser. Aggiunto
+override con `.modal` prefix + `text-transform: none`.
+
+#### 2. Error guards on draft chains (commit 27dc7ea)
+`mpDraftVisionsForAll` / `mpDraftOkrsForAll` non avevano try/catch attorno
+ai callback. Errori silenti freezavano la chain. Aggiunto try/catch +
+reject(e) + `showOKRDraftModal` slot-aware (era hardcoded `state.players[0]`).
+
+#### 3. Lobby modal stuck on guest (commit 49f6bb0)
+Il lobby modal in `document.body` con z-index 100 non veniva rimosso quando
+l'host avviava il game. I draft modal apparivano sotto, "incollando" il
+guest sulla lobby. Aggiunto cleanup esplicito in `handleClientGameStart`
++ defensive cleanup in `handleDraftRequest`.
+
+#### 4. Host pre-render dopo Vision (commit 54537c2)
+Tra Vision pick e OKR draft, il host non chiamava `render()` → restava
+sullo splash mentre aspettava il guest. Aggiunto pre-render dopo
+`startQuarter` per dare feedback immediato.
+
+#### 5. **THE BUG** — `isMultiplayer` non serializzato (commit 1e1abc1)
+`serializeState` non includeva `isMultiplayer`. Quando il client riceveva
+il primo `stateUpdate`, `state = deserializeState(...)` perdeva il flag.
+Da quel punto, `humanPickCard` su client cadeva nel branch single-player
+→ applicava i pick LOCALMENTE → host non riceveva niente → state
+divergente. Sintomo visibile: guest pickIndex avanza, host non si muove.
+**Fix**: include `isMultiplayer` in serialize + belt+suspenders preserve
+in `handleStateUpdate`.
+
+#### 6. Q-end + Market News mirror (commit 987771e)
+I modal di fine Q e di market event apparivano solo sull'host. Aggiunti
+3 nuovi message types: `quarterModalShow`, `marketNewsShow`, `closeMpModal`.
+`showQuarterModal` retunato per usare `state.localSlotIdx` + re-derivazione
+OKR completion via `o.check()` (invece di `okrResults.includes(o)` che
+falliva con OKR object identity differenti dopo deserialize).
+
+#### 7. Pre-render Q2/Q3 board (commit 0212983)
+Dopo `pickAndShowMarketEvent` il host non renderizzava il nuovo Q board
+prima del OKR draft. Stesso fix di #4 ma per le transizioni intra-game.
+
+#### 8. Linearization — phase reset + dedup broadcasts (commit 798738f)
+`startQuarter` non resettava `state.phase` → trascinava "between" dal
+Q precedente. Multipli `mpBroadcastState` in successione causavano race
+sul rendering del guest. **Fix**: `state.phase = "draft"` in startQuarter
++ rimossi broadcast ridondanti prima di `processNextPick` (che già
+broadcasta da solo) + `.catch` su tutti i chain.
+
+#### 9. **THE OTHER BUG** — closure capture race in OKR modal (commit 99fd28c)
+`showOKRDraftModal` capturava `const human = state.players[localIdx]` al
+modal-open time. Quando un broadcast dal host (post-host-OKR-pick)
+arrivava mentre il guest's modal era aperto, `handleStateUpdate`
+sostituiva `state.players` (nuovo array, nuovi oggetti). La variabile
+`human` restava ref all'oggetto OLD orfano. Click → mutate OLD object;
+onComplete legge NEW `state.players[localIdx]` → `okrs[]` → "no okr
+chosen" → guest non manda response → host pending=1 forever → stallo.
+**Fix**: re-leggere `state.players[currentIdx]` al click time, non
+capturare nel closure. Più guard pyramid empty array per evitare
+TypeError in `renderPyramid`.
+
+#### 10. Final sequence + endgame mirror (commit f6923c4)
+Investor Pitch, VC reaction, classifica finale apparivano solo sull'host
+(stesso pattern di #6 ma per Q3 finale). Aggiunti `finalSequenceShow` +
+`endGameShow` message types. `showFinalSequenceModal` MP-aware con
+auto-reveal del VC panel dopo 1.5s sul client. `endGame` refactored:
+split in `endGame` (host-only score calc + broadcast) e `showEndGameModal`
+(chiamata da entrambi, usa `localSlotIdx`). Each client records own profile +
+checks own achievements. Restart button calls `mpDisconnect`.
+
+### Lesson learned: closure capture in MP
+
+In multiplayer, **mai capturare reference a `state.players[i]` in un
+closure**. Lo `handleStateUpdate` sostituisce `state.players` con array
+nuovo ad ogni broadcast — references catturate diventano orfane. Sempre
+re-leggere `state.players[localSlotIdx]` al moment of mutation.
+
+### Files modificati (cumulativo S10.7)
+
+- `js/multiplayer.js` — handler nuovi (gameStarted, draftRequest/Response,
+  quarterModalShow, marketNewsShow, finalSequenceShow, endGameShow,
+  closeMpModal), serialize/deserialize hardening, error guards, logging
+- `js/game.js` — startGameMultiplayer / nextQuarterBtn chains con .catch,
+  endGame split in endGame + showEndGameModal, processNextPick logging,
+  startQuarter reset phase
+- `js/render-modals.js` — MP-aware variants per showQuarterModal,
+  showMarketNewsModal, showFinalSequenceModal; closure fix in
+  showOKRDraftModal
+- `js/render-pyramid.js` — empty pyramid guard
+- `styles/main.css` — fix `.mp-option-card` global button override
+- `CONTEXT.md` — aggiornato con multiplayer gotchas
+
+### Tests
+- **52/52 pass** (immutati — i bug erano runtime/integration, non testabili
+  via headless DOM stub)
+
+### Stato finale Phase 10
+
+Tutti i flow modal sono ora mirrorati host→guest:
+- ✅ Lobby
+- ✅ Vision draft (per-human via draftRequest)
+- ✅ OKR draft (idem)
+- ✅ Market news
+- ✅ Quarter-end
+- ✅ Final sequence (Pitch + VC)
+- ✅ End-game classifica
+
+Il game procede linearmente in MP esattamente come in SP. I nuovi
+sintomi (se emergono) richiedono playtest reale con network condition
+realistiche (latenza, packet loss).
+
+---
+
 ## [S10.1-S10.6] — 2026-04-28 · Phase 10 Multiplayer P2P (entire phase)
 
 > **Phase 10 · Multiplayer P2P** — implementata in un'unica session

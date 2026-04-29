@@ -101,31 +101,82 @@ globali invocate runtime).
 
 ## 🌐 Multiplayer P2P
 
-Il gioco supporta multiplayer fino a 4 player via **WebRTC peer-to-peer**.
+Il gioco supporta multiplayer **fino a 4 player** via **WebRTC peer-to-peer**.
 Niente server da gestire: il signaling è gratis tramite [PeerJS Cloud](https://peerjs.com/),
 i dati di gioco fluiscono direttamente tra browser. Funziona out-of-the-box
 su GitHub Pages.
 
 ### Come giocare in multiplayer
 
-1. **Host**: dalla splash, click **"🌐 Multiplayer"** → **"Crea partita"**
-2. Condividi il **room code** (4 caratteri, es. `ABCD`) o il link copiato
-   con i tuoi amici
-3. **Client**: dalla splash → **"Multiplayer"** → **"Unisciti"** + codice +
-   nome
-4. Il host vede i player che si connettono. **Posti vuoti = AI** (non c'è
-   bisogno di tutti e 4 i posti pieni)
-5. Il host clicca **"Avvia partita →"** quando pronto
-6. Ogni player draftano **Vision** e **OKR** in modo indipendente, poi il
-   gioco procede normalmente con snake draft
+1. **Host**: dalla splash, click **🌐 Multiplayer** → **Crea partita**
+2. Condividi il **room code** (4 caratteri, es. `ABCD`) o il **link copiato**
+   con i tuoi amici (il link apre direttamente il join modal con codice prefilled)
+3. **Client**: dalla splash → **🌐 Multiplayer** → **Unisciti** + codice + nome
+4. L'host vede i player che si connettono. **Posti vuoti = AI** (non serve
+   essere in 4 — il game balance resta intatto perché AI riempiono)
+5. L'host può scegliere la **difficoltà AI** (Junior / Senior / Director)
+   dal selector in lobby
+6. L'host clicca **Avvia partita →** quando pronto
 
-### Limitazioni MVP
+### Cosa funziona end-to-end (post-MVP)
 
-- 🚫 **Block & React disabled** in multiplayer (single-player conserva)
-- 🚫 **Host disconnect** = game over (no host migration)
-- 🚫 **Disconnect = AI replacement** (no reconnect)
-- 🚫 No spectator mode, no voice chat, no persistence
-- ⚠️ Qualche network corporate/mobile può avere problemi di NAT traversal
+- ✅ **Vision draft parallelo** — ogni human umano picca la propria Vision
+  simultaneamente; AI auto-pickano
+- ✅ **OKR draft per Q** — stesso pattern, parallelo per tutti gli umani
+- ✅ **Snake draft** — turni rispettati: solo l'`activePicker` può pescare
+- ✅ **AI auto-play** — l'host runa la logica AI, broadcasta lo state ai client
+- ✅ **Market News modal** — entrambi vedono lo stesso evento tra Q1↔Q2↔Q3
+- ✅ **Quarter-end milestone** — entrambi vedono dominanze + OKR + budget burn-down
+- ✅ **Investor Pitch + VC reaction** — pitch mirrorato sul guest con
+  auto-reveal del VC panel dopo 1.5s (cinematic effect)
+- ✅ **Classifica finale** — ogni player vede i propri award e il proprio
+  rank, con messaggio "🎉 Promosso a CTO" se ha vinto
+- ✅ **Profile + achievements per-player** — ogni client traccia il proprio
+  storico nel localStorage indipendentemente
+- ✅ **Disconnect graceful** — se il guest si disconnette mid-game, lo slot
+  diventa AI; se l'host si disconnette, i client vedono "Host disconnesso"
+  e tornano allo splash
+- ✅ **Shareable URL** — `https://.../#room=ABCD` apre direttamente il
+  join modal
+
+### Limitazioni MVP (by design)
+
+- 🚫 **Block & React disabilitato** in multiplayer (single-player lo conserva).
+  La sync di un timer 4s tra host e target client introdurrebbe edge case
+  troppo complessi per un MVP.
+- 🚫 **No host migration** — se l'host si disconnette, la partita finisce
+- 🚫 **No reconnect** — disconnessi non possono rejoinare partite in corso
+- 🚫 **No spectator mode** (esplicitamente fuori scope)
+- 🚫 **No voice chat** (esplicitamente fuori scope)
+- 🚫 **No persistence** — chiudendo il browser, la partita è persa
+- 🚫 **No friend list / login** — share via room code/URL
+- ⚠️ **NAT traversal severo** — qualche network corporate/mobile potrebbe
+  impedire la connessione P2P (PeerJS Cloud usa STUN ma TURN gratuito è
+  limitato)
+
+### Architettura — authoritative host
+
+```
+                    ┌──────────┐
+                    │  HOST    │  ← uno dei player umani è authoritative
+                    │ player N │     - mantiene IL state
+                    └────┬─────┘     - applica rules.js / game.js / ai.js
+                         │            - runa l'AI per i posti vuoti
+            ┌────────────┼────────────┐
+            ▼            ▼            ▼
+        ┌───────┐    ┌───────┐    ┌───────┐
+        │client │    │client │    │client │   ← ricevono state via broadcast,
+        │ (peer)│    │ (peer)│    │ (peer)│      inviano i loro pick all'host
+        └───────┘    └───────┘    └───────┘
+```
+
+L'host runa tutta la logica di gioco. I client sono "smart UIs": rendono
+lo state che ricevono e mandano action requests. Il host valida ogni
+pick (anti-cheat naturale) e broadcasta il nuovo state autoritativo.
+
+Vedi [`MULTIPLAYER-ROADMAP.md`](MULTIPLAYER-ROADMAP.md) per dettagli
+architetturali completi e [`CHANGELOG.md`](CHANGELOG.md) entry `[S10.1-S10.6]`
+per la cronologia delle fix di sincronizzazione.
 
 ### Setup deterministico (per dev)
 
