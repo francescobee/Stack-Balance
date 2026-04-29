@@ -832,6 +832,12 @@ function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents)
       // S4.1: market event picked between Q1→Q2 and Q2→Q3
       pickAndShowMarketEvent(() => {
         startQuarter();
+        // S10 host fix: render immediately after startQuarter so the host
+        // sees the new Q's board under the upcoming OKR modal. Without this,
+        // host's underlying UI stays at Q1-end empty pyramid while waiting
+        // for the guest to pick OKR (mpDraftOkrsForAll resolves only when
+        // BOTH humans pick).
+        render();
         if (state.isMultiplayer) {
           // S10: parallel OKR draft for all humans + AI auto
           mpBroadcastState();
