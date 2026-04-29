@@ -8,11 +8,12 @@
 > 1. `CONTEXT.md` (questo file) — orientation, conventions, gotchas
 > 2. `ROADMAP.md` — piano build (Phases 1-8, ✅ chiuso)
 > 3. `GAMEPLAY-ROADMAP.md` — piano refinement post-launch (Phase 9, 🟡 7/8)
-> 4. `MULTIPLAYER-ROADMAP.md` — Phase 10 P2P multiplayer (⬜ aperto)
-> 5. `BALANCE-NOTES.md` — analisi numerica + playtest protocol (S9.2+)
-> 6. `GIT-WORKFLOW.md` — git/GitHub workflow + Pages + CI
-> 7. `CHANGELOG.md` — log dettagliato di ogni session implementata
-> 8. Codice in `js/`, `styles/` — implementazione
+> 4. `MULTIPLAYER-ROADMAP.md` — Phase 10 P2P multiplayer (✅ + S10.7 hardening)
+> 5. `HOTSEAT-ROADMAP.md` — Phase 11 Hot Seat / pass-and-play (⬜ aperto)
+> 6. `BALANCE-NOTES.md` — analisi numerica + playtest protocol (S9.2+)
+> 7. `GIT-WORKFLOW.md` — git/GitHub workflow + Pages + CI
+> 8. `CHANGELOG.md` — log dettagliato di ogni session implementata
+> 9. Codice in `js/`, `styles/` — implementazione
 
 ---
 
