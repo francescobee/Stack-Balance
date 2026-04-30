@@ -52,10 +52,10 @@ Con S14.4 (rotation alt-catalogs) il ratio effettivo scende a ~48% su
 
 | Session | Tema | Effort | Stato |
 |---------|------|-------:|------:|
-| **S14.1** | Q1 expansion · +10 carte (Discovery / Hiring / Funding diversi) | M (~1.5h) | ⬜ |
-| **S14.2** | Q2 expansion · +10 carte (Build / Tools / BugFix diversi) | M (~1.5h) | ⬜ |
-| **S14.3** | Q3 expansion · +10 carte (Launch / Sabotage / late Funding) | M (~1.5h) | ⬜ |
-| **S14.4** | Quarterly pool rotation (CATALOG_QX_ALT, seed-picked) | M (~1.5h) | ⬜ (opzionale) |
+| **S14.1** | Q1 expansion · +10 carte (Discovery / Hiring / Funding diversi) | M (~1.5h) | ✅ Done · 2026-04-30 |
+| **S14.2** | Q2 expansion · +10 carte (Build / Tools / BugFix diversi) | M (~1.5h) | ✅ Done · 2026-04-30 |
+| **S14.3** | Q3 expansion · +10 carte (Launch / Sabotage / late Funding) | M (~1.5h) | ✅ Done · 2026-04-30 |
+| **S14.4** | Quarterly pool rotation (CATALOG_QX_ALT, seed-picked) | M (~1.5h) | ⏸ Deferred — opzionale, valutare dopo playtest delle 30 nuove |
 
 S14.1-S14.3 sono **content** (data.js edits + balance check).
 S14.4 è **infra** (game.js setup logic + state seed).

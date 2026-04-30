@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v7";  // bump on each deploy
+const CACHE_VERSION = "sb-v8";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -37,6 +37,10 @@ const CACHE_VERSION = "sb-v7";  // bump on each deploy
 //                  veil (paper overlay 700ms before new board reveals),
 //                  "Up next: [name]" indicator in pass-screen modal,
 //                  sndPassConfirm chime on acknowledge.
+// v8 (2026-04-30): Phase 14 — replayability content expansion. Pool
+//                  46 → 76 cards (consumption ratio 156% → 95%). 30
+//                  new cards across Q1/Q2/Q3. Game logic untouched.
+//                  data.js only.
 const ASSETS = [
   "./",
   "./index.html",

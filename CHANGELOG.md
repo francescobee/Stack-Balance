@@ -9,6 +9,83 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S14.1-S14.3] — 2026-04-30 · Phase 14 — Replayability (pool expansion)
+
+> **Phase 14** — addresses user playtest feedback "dopo un po' mi sembra
+> di vedere sempre le solite carte". Boardgame designer expert review
+> diagnosed root cause: 156% consumption ratio (46 cards in pool, 72
+> drawn per game = guaranteed duplicates every game).
+
+### Math impact
+
+| | Pool prima | Pool dopo | Consumo/partita | Ratio |
+|---|---:|---:|---:|---:|
+| Q1 | 15 | **25** | 24 | 96% |
+| Q2 | 14 | **24** | 24 | 100% |
+| Q3 | 17 | **27** | 24 | 89% |
+| **Tot** | **46** | **76** | 72 | **95%** ✓ |
+
+Comparison: 7 Wonders Duel benchmark = 73%, S&B was 156% (worst).
+After Phase 14: 95% (much closer to industry standard, with Q3 + Q1
+having natural slack so each game's draft varies).
+
+### Cards added (30 total)
+
+**S14.1 — Q1 (+10):**
+product_manager · customer_interviews · tech_cofounder · angel_investor ·
+hackathon · roadmap_workshop · oss_contrib · brand_identity ·
+code_bootcamp · bridge_loan
+
+**S14.2 — Q2 (+10):**
+db_migration · eng_manager · perf_optimization · api_docs ·
+pair_programming · product_analytics · webinar_series · stress_test ·
+internal_demo_day · onboarding_flow
+
+**S14.3 — Q3 (+10):**
+data_platform · influencer_deal · open_source_release · sales_director ·
+investor_day · bug_bounty · geo_expansion · cs_director · crisis_pr ·
+conference_talk
+
+### Design constraints (all respected)
+
+- ✅ **Existing effect fields only** — no new mechanics, no new
+  permanents, no new sabotage handlers (crisis_pr reuses
+  targetLeaderMorale)
+- ✅ **Chain pointers all valid** — only reference cards present in
+  same or prior quarters
+- ✅ **Synergy fit** — every new card examined against LEAN_OP /
+  ENG_EXC / DATA_EMPIRE / FULL_FUNDING; some boost specific synergies,
+  none break existing ones
+- ✅ **Median power level** — costs and effects sit in the existing
+  range; no OP, no strictly dominated
+- ✅ **Thematic** — Italian flavor consistent with existing pool
+
+### Architecture impact
+
+- `js/data.js` only file modified
+- `ALL_CARDS_BY_ID` and `CARD_META` IIFE auto-populates new cards
+- Numbering shifts: Q1 1-25, Q2 26-49, Q3 50-76 (was 1-15 / 16-29 /
+  30-46) — purely cosmetic in card-foot rendering
+- AI personas (chooseAIVision/OKR/decideAIPickFromPyramid) use
+  general heuristics (effect.vp, dept match, cost ratio) — not
+  hardcoded id-lists, so new cards plug in without tuning
+
+### Tests
+58/58 pass throughout. Game logic untouched.
+
+### S14.4 deferred
+
+Quarterly pool rotation (CATALOG_QX_ALT) is marked deferred per the
+roadmap (was opzionale). With base pool now 95% ratio + Q1/Q3 having
+natural slack, the user should playtest first to see if rotation is
+still needed. If the "same cards" feeling persists after 5+ games,
+S14.4 can be implemented as a follow-up.
+
+### Cache
+SW bumped sb-v7 → sb-v8.
+
+---
+
 ## [S13.1-S13.3] — 2026-04-30 · Phase 13 — Mobile polish (post-review fixes)
 
 > **Phase 13 complete in one sitting.** Closes the 9 issues identified
