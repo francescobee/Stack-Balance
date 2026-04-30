@@ -16,7 +16,10 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v1";  // bump on each deploy
+const CACHE_VERSION = "sb-v2";  // bump on each deploy
+// v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
+// rebalanced (board.css). Old visitors with v1 cache get the v2 cache
+// on next reload via activate handler.
 const ASSETS = [
   "./",
   "./index.html",

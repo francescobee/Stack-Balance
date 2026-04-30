@@ -598,33 +598,39 @@
 
 @media (max-width: 600px) {
 
-  /* ---- Pyramid grid: tight gaps, compact vertical envelope ----
-     Tweaked 2026-04-30 (post-S12.6): user feedback "carte molto strette,
-     spazi larghi". Gap 4 → 2, padding 6×2 → 4×1; recovered ~14px width.
-     Card aspect ratio rebalanced from 0.43 (matchstick) to ~0.6 (more
-     card-like) by widening + shortening. ---- */
+  /* ---- Pyramid grid: minimal gaps, full-width envelope ----
+     Iter 2 (2026-04-30): more aggressive than iter 1. Gap → 1px,
+     padding → 0 horizontal, .pyramid-area breaks out of #app side
+     padding via negative margin to reclaim the ~22px wasted on the
+     edges. Result: at iPhone 16 (393px) cards reach ~64px wide with
+     visually-zero gap. ---- */
+  .pyramid-area {
+    margin-left: -11px;   /* compensates #app's clamp(8, 3vw, 28) ≈ 11px */
+    margin-right: -11px;
+  }
   .pyramid {
-    gap: 2px;
-    padding: 4px 1px 0;
+    gap: 1px;
+    padding: 4px 4px 0;
     min-height: 160px;
   }
   .pcol { height: 140px; }
 
-  /* ---- Card sizing — re-balanced.
-         At 375px (iPhone SE): d0 = 15vw = ~56px, height 100 → aspect 0.56
-         At 430px (Pro Max):    d0 = 60px (cap),  height 100 → aspect 0.60
-         Effective viewport math: 375 - 22.5 (#app pad) - 2 (pyramid pad) =
-         350.5 → 6×56 + 5×2 = 346 ✓ fits with ~4.5px headroom. ---- */
+  /* ---- Card sizing — fully reclaimed width.
+         At 375px (iPhone SE): d0 = 16vw = 60px, aspect 60×100 = 0.60
+         At 393px (iPhone 16): d0 = 16vw = 62.9px, aspect ~0.63
+         At 430px (Pro Max):   d0 = 16vw = 68.8 → cap 66px, aspect 0.66
+         Effective viewport math at 375px: full width 375 - 8 (pyramid
+         pad 4×2) = 367 → 6×60 + 5×1 = 365 ✓ 2px headroom. ---- */
   .pcard.d0 {
-    max-width: clamp(48px, 15vw, 60px);
+    max-width: clamp(50px, 16vw, 66px);
     height: 100px;
     padding: 3px 3px 4px;
     border-width: 1.25px;
     border-top-width: 4px; /* dept color ribbon stays visible */
   }
-  .pcard.d1 { max-width: clamp(42px, 13vw, 54px);   height: 20px; bottom: 92px; }
-  .pcard.d2 { max-width: clamp(36px, 11.5vw, 48px); height: 14px; bottom: 110px; }
-  .pcard.d3 { max-width: clamp(32px, 10.5vw, 42px); height: 8px;  bottom: 124px; }
+  .pcard.d1 { max-width: clamp(44px, 14vw, 58px);   height: 20px; bottom: 92px; }
+  .pcard.d2 { max-width: clamp(38px, 12.5vw, 52px); height: 14px; bottom: 110px; }
+  .pcard.d3 { max-width: clamp(34px, 11vw, 46px);   height: 8px;  bottom: 124px; }
 
   /* ---- Hide non-essential content (tap-to-detail in S12.3 carries it) ---- */
   .pcard .ornament,
