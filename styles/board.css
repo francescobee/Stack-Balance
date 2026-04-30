@@ -598,28 +598,33 @@
 
 @media (max-width: 600px) {
 
-  /* ---- Pyramid grid: tight gaps, compact vertical envelope ---- */
+  /* ---- Pyramid grid: tight gaps, compact vertical envelope ----
+     Tweaked 2026-04-30 (post-S12.6): user feedback "carte molto strette,
+     spazi larghi". Gap 4 → 2, padding 6×2 → 4×1; recovered ~14px width.
+     Card aspect ratio rebalanced from 0.43 (matchstick) to ~0.6 (more
+     card-like) by widening + shortening. ---- */
   .pyramid {
-    gap: 4px;
-    padding: 6px 2px 0;
-    min-height: 200px;
+    gap: 2px;
+    padding: 4px 1px 0;
+    min-height: 160px;
   }
-  .pcol { height: 180px; }
+  .pcol { height: 140px; }
 
-  /* ---- Card sizing: fluid 6-col fit. At 375px → ~52px each (×6 + 5×4 gap +
-         4 padding = 348px, fits 352px effective viewport). At 430px → cap 58px.
-         Heights and bottom offsets are fixed px so the cascade stacks
-         consistently across sizes. ---- */
+  /* ---- Card sizing — re-balanced.
+         At 375px (iPhone SE): d0 = 15vw = ~56px, height 100 → aspect 0.56
+         At 430px (Pro Max):    d0 = 60px (cap),  height 100 → aspect 0.60
+         Effective viewport math: 375 - 22.5 (#app pad) - 2 (pyramid pad) =
+         350.5 → 6×56 + 5×2 = 346 ✓ fits with ~4.5px headroom. ---- */
   .pcard.d0 {
-    max-width: clamp(46px, 14vw, 58px);
-    height: 120px;
-    padding: 3px 2px 4px;
+    max-width: clamp(48px, 15vw, 60px);
+    height: 100px;
+    padding: 3px 3px 4px;
     border-width: 1.25px;
     border-top-width: 4px; /* dept color ribbon stays visible */
   }
-  .pcard.d1 { max-width: clamp(40px, 12.5vw, 52px); height: 22px; bottom: 112px; }
-  .pcard.d2 { max-width: clamp(36px, 11vw, 46px);   height: 14px; bottom: 132px; }
-  .pcard.d3 { max-width: clamp(32px, 10vw, 40px);   height: 8px;  bottom: 146px; }
+  .pcard.d1 { max-width: clamp(42px, 13vw, 54px);   height: 20px; bottom: 92px; }
+  .pcard.d2 { max-width: clamp(36px, 11.5vw, 48px); height: 14px; bottom: 110px; }
+  .pcard.d3 { max-width: clamp(32px, 10.5vw, 42px); height: 8px;  bottom: 124px; }
 
   /* ---- Hide non-essential content (tap-to-detail in S12.3 carries it) ---- */
   .pcard .ornament,
@@ -642,8 +647,8 @@
   }
 
   .pcard .name {
-    font-size: 9px;
-    line-height: 1.05;
+    font-size: 10px;
+    line-height: 1.08;
     margin: 1px 0 2px;
     /* allow up to 3 short lines, then ellipsis */
     display: -webkit-box;
