@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v8";  // bump on each deploy
+const CACHE_VERSION = "sb-v9";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -41,6 +41,10 @@ const CACHE_VERSION = "sb-v8";  // bump on each deploy
 //                  46 → 76 cards (consumption ratio 156% → 95%). 30
 //                  new cards across Q1/Q2/Q3. Game logic untouched.
 //                  data.js only.
+// v9 (2026-04-30): S15 — synergy pool drawn at game start. New
+//                  js/synergies.js (24 synergies, scenario flavour),
+//                  refactored rules.js, new showcase modal. Existing
+//                  PWAs get the new file + cleared old cache.
 const ASSETS = [
   "./",
   "./index.html",
@@ -58,6 +62,7 @@ const ASSETS = [
   "./js/audio.js",
   "./js/achievements.js",
   "./js/balance.js",
+  "./js/synergies.js",
   "./js/state.js",
   "./js/rules.js",
   "./js/ai.js",
