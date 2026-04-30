@@ -197,7 +197,7 @@ niente setup: party game classico.
 
 ### Come iniziare
 
-1. Dalla splash, click **🪑 Hot Seat**
+1. Dalla splash, click **🌐 Multiplayer** → card **🪑 Pass-and-play** nella sezione "Locale"
 2. Setup tavolo:
    - 4 slot configurabili: ognuno **👤 Umano** o **🤖 AI**
    - Per umani: input nome (slot 1 default = nome del profilo)

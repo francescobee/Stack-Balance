@@ -16,53 +16,81 @@
 //   • showToast, escapeHtml, getProfile, NUM_PLAYERS, renderSplash
 // =============================================================
 
-// ---------- S10.1: MULTIPLAYER ENTRY MODAL (host or join) ----------
+// ---------- S10.1 + S11.9: MULTIPLAYER ENTRY MODAL (P2P online + Hot Seat locale) ----------
+// S11.9: Hot Seat moved here from a standalone splash button. The two
+// online options (Host/Join) and the local option (Hot Seat) live under
+// the same "Multiplayer" umbrella. PeerJS unavailability disables the
+// online cards but Hot Seat stays clickable since it doesn't need the network.
 function showMultiplayerEntryModal({ onComplete } = {}) {
-  if (typeof Peer === "undefined") {
-    showToast({ who: "MULTIPLAYER", what: "Servizio non disponibile (CDN unreachable). Riprova più tardi.", kind: "discard" });
-    return;
-  }
+  const peerAvailable = typeof Peer !== "undefined";
   const root = el("div", { class: "modal-bg", id: "mpEntryBg" });
   const modal = el("div", { class: "modal mp-entry" });
+  const onlineDisabledNote = peerAvailable ? "" : `
+    <div class="mp-online-unavailable">⚠️ Servizio P2P non disponibile (CDN unreachable). Le opzioni online sono disabilitate. Hot Seat funziona comunque.</div>
+  `;
   modal.innerHTML = `
     <div class="modal-eyebrow">🌐 Multiplayer</div>
     <h2>Gioca con amici</h2>
     <p class="mp-blurb">Fino a 4 giocatori. I posti vuoti sono coperti da AI.
-       Il gioco gira P2P (peer-to-peer) — nessun server da gestire.</p>
+       Scegli online (P2P, ognuno sul proprio PC) o locale (un solo PC, ci si passa il mouse).</p>
+
+    <div class="mp-section-label">🌐 Online · P2P</div>
     <div class="mp-options-grid">
-      <button class="mp-option-card" id="mpHostBtn" type="button">
+      <button class="mp-option-card" id="mpHostBtn" type="button" ${peerAvailable ? "" : "disabled"}>
         <div class="mp-icon">🏠</div>
         <div class="mp-name">Crea partita</div>
         <div class="mp-desc">Sei l'host. Condividi il room code con gli amici.</div>
         <div class="mp-cta">Crea →</div>
       </button>
-      <button class="mp-option-card" id="mpJoinBtn" type="button">
+      <button class="mp-option-card" id="mpJoinBtn" type="button" ${peerAvailable ? "" : "disabled"}>
         <div class="mp-icon">🔗</div>
         <div class="mp-name">Unisciti</div>
         <div class="mp-desc">Inserisci un room code che ti hanno condiviso.</div>
         <div class="mp-cta">Connetti →</div>
       </button>
     </div>
+    ${onlineDisabledNote}
+
+    <div class="mp-section-label">🪑 Locale · Hot Seat</div>
+    <div class="mp-options-grid mp-options-grid-1">
+      <button class="mp-option-card" id="mpHotSeatBtn" type="button">
+        <div class="mp-icon">🪑</div>
+        <div class="mp-name">Pass-and-play</div>
+        <div class="mp-desc">Stesso PC, ci si passa il mouse a turno. 2-4 giocatori, AI riempie i posti vuoti.</div>
+        <div class="mp-cta">Avvia →</div>
+      </button>
+    </div>
+
     <div class="actions">
       <button id="mpEntryCancelBtn" type="button">Annulla</button>
     </div>
   `;
   root.appendChild(modal);
   document.body.appendChild(root);
-  modal.querySelector("#mpHostBtn").onclick = async () => {
+  if (peerAvailable) {
+    modal.querySelector("#mpHostBtn").onclick = async () => {
+      root.remove();
+      const profile = getProfile();
+      const hostName = profile?.name || "Host";
+      try {
+        const code = await mpCreateRoom(hostName);
+        showMultiplayerLobbyModal({ role: "host", roomCode: code, onComplete });
+      } catch (err) {
+        showToast({ who: "ERRORE", what: "Impossibile creare la room: " + (err.message || err.type), kind: "discard" });
+      }
+    };
+    modal.querySelector("#mpJoinBtn").onclick = () => {
+      root.remove();
+      showMultiplayerJoinModal({ onComplete });
+    };
+  }
+  modal.querySelector("#mpHotSeatBtn").onclick = () => {
     root.remove();
-    const profile = getProfile();
-    const hostName = profile?.name || "Host";
-    try {
-      const code = await mpCreateRoom(hostName);
-      showMultiplayerLobbyModal({ role: "host", roomCode: code, onComplete });
-    } catch (err) {
-      showToast({ who: "ERRORE", what: "Impossibile creare la room: " + (err.message || err.type), kind: "discard" });
+    if (typeof showHotSeatLobbyModal === "function") {
+      showHotSeatLobbyModal({ onComplete });
+    } else {
+      showToast({ who: "ERRORE", what: "Hot Seat non disponibile.", kind: "discard" });
     }
-  };
-  modal.querySelector("#mpJoinBtn").onclick = () => {
-    root.remove();
-    showMultiplayerJoinModal({ onComplete });
   };
   modal.querySelector("#mpEntryCancelBtn").onclick = () => root.remove();
 }

@@ -9,6 +9,36 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S11.9] — 2026-04-30 · UX · Hot Seat moved into Multiplayer entry modal
+
+### Why
+Treating Hot Seat as a separate splash button suggested it was a different
+game feature. Conceptually it's just the *local* flavor of multiplayer
+(same scope: 2-4 players, AI fills empty seats). Unifying simplifies the
+splash and gives both modes a shared mental model.
+
+### What
+- Removed the standalone "🪑 Hot Seat" splash button.
+- `showMultiplayerEntryModal` now has two sections: **🌐 Online · P2P**
+  (Crea / Unisciti, 2-card grid) and **🪑 Locale · Hot Seat** (single
+  card "Pass-and-play").
+- Removed the early-return on `typeof Peer === "undefined"`. Instead,
+  online cards are rendered with `disabled` and a small notice; Hot Seat
+  remains clickable since it doesn't need PeerJS.
+
+### Files
+- `js/render.js` — splash now only has the unified Multiplayer button
+- `js/render-multiplayer.js` — `showMultiplayerEntryModal` rewritten
+  with sections + PeerJS-aware disable logic
+- `styles/main.css` — `.mp-section-label`, `.mp-options-grid-1`,
+  `.mp-online-unavailable`, `.mp-option-card[disabled]`
+- `README.md` — start-instructions point at the new path
+
+### Tests
+58/58 pass. UX-only change.
+
+---
+
 ## [S11.8] — 2026-04-30 · HS fix · Block & React actually disabled in Hot Seat
 
 ### Why

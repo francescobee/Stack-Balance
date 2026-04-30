@@ -1155,7 +1155,30 @@ body.reduced-motion .vc-reveal.revealed {
 
 .mp-options-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-  margin: 14px 0 18px;
+  margin: 8px 0 14px;
+}
+/* S11.9: single-card variant for Hot Seat row inside the entry modal */
+.mp-options-grid-1 { grid-template-columns: 1fr; }
+
+/* S11.9: section labels separating Online (P2P) from Locale (Hot Seat) */
+.mp-section-label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
+  color: var(--ink-muted); text-transform: uppercase;
+  margin: 14px 0 4px; padding-top: 10px;
+  border-top: 1px dashed var(--rule);
+}
+.mp-section-label:first-of-type { border-top: none; padding-top: 0; margin-top: 8px; }
+
+.mp-online-unavailable {
+  font-size: 12px; color: var(--ink-muted); font-style: italic;
+  background: var(--paper-2); border-left: 3px solid var(--rule);
+  padding: 8px 10px; border-radius: 3px;
+  margin: 4px 0 10px;
+}
+
+.modal .mp-option-card[disabled] {
+  cursor: not-allowed; opacity: 0.45;
+  pointer-events: none;
 }
 /* `.modal` prefix bumps specificity to (0,3,0), beating `button:hover` (0,2,1)
    and `button:focus` (0,1,1). Without it, the global `button {}` styles
