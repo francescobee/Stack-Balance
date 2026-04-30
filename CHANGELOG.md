@@ -9,6 +9,61 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S12.1] — 2026-04-30 · Phase 12 · Foundational shell + breakpoint system
+
+> **Phase 12 · Mobile Experience** — kick-off. Lays down the responsive
+> foundation (breakpoint comment, fluid typography & padding, safe-area
+> inset for iOS PWA) without changing any visible desktop output.
+
+### Why
+Setting up Phase 12 mobile work requires a couple of CSS-level conventions
+agreed upon up front: the three breakpoints (≤600 phone / 601-900 tablet
+/ ≥901 desktop), fluid scaling primitives, iOS safe-area handling, and
+a theme-color hint for browser/PWA chrome. Doing this in a dedicated
+session means the next 5 sessions can focus on real mobile content
+rather than rewiring foundations mid-flight.
+
+### What
+- **`styles/main.css`**: breakpoint comment block at the top documenting
+  the three fascia + the `(hover: hover|none)` pattern + the
+  portrait-lock matcher (used in S12.6).
+- **`:root { font-size: clamp(14px, 1.5vw + 8px, 16px) }`** — reserved
+  rem base for future sessions (current codebase has no rem usage, so
+  this is a no-op today; clamps to 16px ≥ 533px viewport = browser default).
+- **Body**: `padding-top/left/right: env(safe-area-inset-*)` so iOS PWA
+  standalone correctly insets the notch / dynamic island area. Returns
+  0 in non-PWA contexts → desktop unchanged.
+- **`#app`**: fluid horizontal padding `clamp(8px, 3vw, 28px)` (28px at
+  desktop ≥ 933px = unchanged, ~11px at iPhone SE). Plus `overflow-x: hidden`
+  to suppress rogue horizontal scroll from modals not yet media-queried
+  (resolved in S12.4).
+- **`.masthead .title`**: `font-size: clamp(22px, 5vw, 38px)` — desktop
+  ≥ 760px stays at 38px, mobile compacts down to 22px floor.
+- **`.modal h2`**: `font-size: clamp(20px, 4vw, 32px)` — desktop ≥ 800px
+  unchanged, mobile compacts to 20px.
+- **`index.html`**: viewport gets `viewport-fit=cover` (enables safe-area
+  env() values inside notch). New `<meta name="theme-color" content="#f3ead4">`
+  matches `--paper` background for Android Chrome status bar tint + iOS PWA.
+
+### Desktop bit-identical guarantee
+Every change clamps to its existing desktop value at ≥ ~800px viewport.
+Current codebase has zero rem usage, so the `:root` font-size foundation
+has no visual effect today. iOS safe-area `env()` returns 0 outside PWA.
+`overflow-x: hidden` only triggers when content actually overflows
+(currently none on desktop).
+
+### Files
+- `styles/main.css` — breakpoint header comment, `:root` font-size,
+  body safe-area, `#app` fluid padding + `overflow-x`, `.masthead .title`
+  + `.modal h2` clamps
+- `index.html` — viewport-fit=cover + theme-color meta
+- `MOBILE-ROADMAP.md` — S12.1 marked ✅ Done
+
+### Tests
+58/58 pass (CSS-only foundation, no game-logic changes).
+
+---
+
 ## [S11.9] — 2026-04-30 · UX · Hot Seat moved into Multiplayer entry modal
 
 ### Why

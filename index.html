@@ -2,7 +2,11 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- S12.1: theme-color matches --paper bg (Android Chrome status bar tint
+       + iOS PWA standalone). viewport-fit=cover lets safe-area-inset env()
+       return non-zero values inside the notch/dynamic-island area. -->
+  <meta name="theme-color" content="#f3ead4" />
   <title>Stack &amp; Balance — Quarterly Rivals</title>
 
   <!-- Editorial typography: Fraunces (display) · Newsreader (body) · JetBrains Mono (numbers) -->

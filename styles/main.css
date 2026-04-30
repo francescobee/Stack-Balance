@@ -1,6 +1,28 @@
 /* =============================================================
    main.css — editorial light theme · masthead, progress strip,
               modals, splash, sidebar panels, log, help
+   =============================================================
+
+   📱 RESPONSIVE BREAKPOINTS — single source of truth (Phase 12)
+   ─────────────────────────────────────────────────────────────
+   Mobile-first overrides live inside @media blocks. Desktop is the
+   default (no media query). Three fascia:
+
+     • Phone   : @media (max-width: 600px)
+                 iPhone SE (375), iPhone 14/15, Pixel, Galaxy S
+                 → tap-to-detail overlay obbligatorio, thumbs piramide
+
+     • Tablet  : @media (min-width: 601px) and (max-width: 900px)
+                 iPad portrait (768), iPad mini, Surface Go
+                 → desktop layout scalato, no overlay obbligatorio
+
+     • Desktop : default (no media query, ≥ 901px)
+                 → identico a pre-Phase-12
+
+   Plus: @media (hover: hover)        — solo device con mouse
+         @media (hover: none)         — touch (no sticky-hover)
+         @media (orientation: landscape) and (max-width: 900px)
+                                      — phone landscape: portrait-lock overlay
    ============================================================= */
 
 :root {
@@ -45,6 +67,12 @@
   --serif-display: 'Fraunces', 'Times New Roman', Georgia, serif;
   --serif-body: 'Newsreader', Georgia, 'Times New Roman', serif;
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* S12.1: foundation rem base (currently no codebase uses rem; reserved
+     for future S12.x sessions that may switch to rem-based scaling). On
+     desktop ≥ 533px clamps to 16px (= browser default), so adding this
+     today is bit-identical at desktop widths. */
+  font-size: clamp(14px, 1.5vw + 8px, 16px);
 }
 
 * { box-sizing: border-box; }
@@ -62,6 +90,14 @@ html, body {
   line-height: 1.5;
   font-feature-settings: 'lnum' 1, 'kern' 1;
   min-height: 100vh;
+}
+
+/* S12.1: iOS PWA standalone safe-area for notch / dynamic island.
+   env(safe-area-inset-*) returns 0 in non-PWA contexts → no desktop effect. */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 h1, h2, h3, h4, .display {
@@ -111,7 +147,13 @@ button.ghost {
 #app {
   max-width: 1480px;
   margin: 0 auto;
-  padding: 18px 28px 64px;
+  /* S12.1: fluid horizontal padding. Vertical padding stays fixed.
+     At ≥ 933px viewport, 3vw ≥ 28px → ceiling at 28px (= desktop unchanged).
+     At 375px iPhone SE: ~11px lateral padding. */
+  padding: 18px clamp(8px, 3vw, 28px) 64px;
+  /* S12.1: prevent rogue horizontal scroll on small screens (modali grandi
+     non ancora media-queried — risolte in S12.4). */
+  overflow-x: hidden;
 }
 
 /* ============ MASTHEAD ============ */
@@ -135,7 +177,9 @@ button.ghost {
 }
 .masthead .title {
   font-family: var(--serif-display);
-  font-size: 38px;
+  /* S12.1: fluid scaling. At ≥ 760px viewport: 5vw ≥ 38px → 38px (desktop
+     unchanged). At 375px: 18.75vw → clamp to floor 22px (mobile readable). */
+  font-size: clamp(22px, 5vw, 38px);
   font-weight: 700;
   font-variation-settings: "SOFT" 80, "opsz" 144;
   letter-spacing: -0.025em;
@@ -771,7 +815,9 @@ body.reduced-motion *::after {
 }
 .modal h2 {
   font-family: var(--serif-display);
-  font-size: 32px;
+  /* S12.1: fluid scaling. At ≥ 800px: 4vw ≥ 32px → 32px (desktop unchanged).
+     At 375px: 15px → floor 20px (compact but legible on phone). */
+  font-size: clamp(20px, 4vw, 32px);
   font-weight: 700;
   font-variation-settings: "SOFT" 70;
   letter-spacing: -0.02em;
