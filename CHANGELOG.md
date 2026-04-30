@@ -9,6 +9,63 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S12.2] — 2026-04-30 · Phase 12 · Pyramid responsive (thumbs + grid scaling)
+
+> **Phase 12 / S12.2** — pyramid board ora leggibile su iPhone SE (375px)
+> e iPad portrait (768px). Desktop bit-identical: tutti gli override mobile
+> vivono dentro `@media (max-width: 600px)` o `@media (601-900px)`.
+
+### Why
+La piramide era una griglia rigida 6×4 a 1480px. Su 375px le carte
+finivano una sopra l'altra fuori viewport con scroll orizzontale grottesco.
+S12.2 introduce due pattern di layout (phone thumbs + tablet scaled)
+preservando intatto il desktop.
+
+### What — Phone (≤ 600px)
+- **Grid compatto**: gap 4px, padding 6px, `.pcol` height 180px
+- **Card sizing fluido**: d0 `clamp(46px, 14vw, 58px)` × 120px;
+  d1/d2/d3 width-fluid, height/bottom fissi (cascade math sotto).
+- **Cascade verticale** (visible heights): d0 120px / d1 14px /
+  d2 12px / d3 8px = 154px stack in pcol 180px (26px headroom).
+- **Hide non-essential content** (delegato a S12.3 detail overlay):
+  ornament, desc, perm-tag, chain-info, card-foot, type-label,
+  cost-row labels, eff-line.
+- **Compact what stays**: dept-emblem 16px, name `font-size: 9px` con
+  `-webkit-line-clamp: 3`, cost-row 1-col 9px, vp-seal 22px.
+- **Pickable accent**: border-bottom 3px (era 2.5px) per visibilità a
+  thumb-size.
+- **Disabled hover badges** (`Click → pesca`): no hover su touch + no room.
+- **Face-down monogram scaling**: 14px / 8px / 7px / 5px per layer.
+- **Byline strip** (3 opponents): collapse a 1-col, avatar 28px,
+  tableau pips nascosti.
+- **`.stage-label` "The Board"** nascosta su phone (saves vertical space).
+
+### What — Tablet (601-900px)
+- Layout desktop scalato ~70%: d0 115×168, d1 106×42, d2 98×24, d3 88×14
+- Tutti i contenuti restano visibili (no detail overlay obbligatorio in S12.3)
+- Byline strip resta 3-up ma con padding/avatar leggermente ridotti
+
+### Math sanity (iPhone SE 375px)
+- Effective viewport: 375 - 2×11px (`#app` clamp padding) = 352px
+- Pyramid: 6 × 52px (14vw) + 5 × 4px gap + 4px padding = 336px → fits 352px
+
+### Files
+- `styles/board.css` — ~150 LOC nuove in fondo, due `@media` block (phone + tablet)
+- `MOBILE-ROADMAP.md` — S12.2 marked ✅ Done
+
+### Tests
+58/58 pass. CSS-only — nessun cambio a render-pyramid.js.
+
+### Out-of-scope (sarà fatto in sessions future)
+- Tap-to-detail card overlay (S12.3) — la signal-density attuale dei
+  thumb è OK per riconoscere il dipartimento e capire quale carta sia,
+  ma per leggere effetto/chain serve l'overlay del prossimo session.
+- Modali responsive (S12.4) — Vision/OKR/scenario draft modals ancora
+  fanno overflow su phone, ma `#app overflow-x: hidden` da S12.1 li
+  contiene visualmente.
+
+---
+
 ## [S12.1] — 2026-04-30 · Phase 12 · Foundational shell + breakpoint system
 
 > **Phase 12 · Mobile Experience** — kick-off. Lays down the responsive

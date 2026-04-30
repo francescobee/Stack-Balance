@@ -586,3 +586,166 @@
   animation: cardSteal 0.55s ease-in forwards !important;
   pointer-events: none;
 }
+
+/* ============================================================
+   📱 PHASE 12 · MOBILE OVERRIDES (S12.2)
+   ────────────────────────────────────────────────────────────
+   Phone (≤600): pyramid as thumbnail mode — only dept-emblem +
+   compressed name + bare cost survive. Full info delegated to
+   tap-to-detail overlay (S12.3). Tablet (601-900): desktop layout
+   scaled ~70%, all content visible.
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+  /* ---- Pyramid grid: tight gaps, compact vertical envelope ---- */
+  .pyramid {
+    gap: 4px;
+    padding: 6px 2px 0;
+    min-height: 200px;
+  }
+  .pcol { height: 180px; }
+
+  /* ---- Card sizing: fluid 6-col fit. At 375px → ~52px each (×6 + 5×4 gap +
+         4 padding = 348px, fits 352px effective viewport). At 430px → cap 58px.
+         Heights and bottom offsets are fixed px so the cascade stacks
+         consistently across sizes. ---- */
+  .pcard.d0 {
+    max-width: clamp(46px, 14vw, 58px);
+    height: 120px;
+    padding: 3px 2px 4px;
+    border-width: 1.25px;
+    border-top-width: 4px; /* dept color ribbon stays visible */
+  }
+  .pcard.d1 { max-width: clamp(40px, 12.5vw, 52px); height: 22px; bottom: 112px; }
+  .pcard.d2 { max-width: clamp(36px, 11vw, 46px);   height: 14px; bottom: 132px; }
+  .pcard.d3 { max-width: clamp(32px, 10vw, 40px);   height: 8px;  bottom: 146px; }
+
+  /* ---- Hide non-essential content (tap-to-detail in S12.3 carries it) ---- */
+  .pcard .ornament,
+  .pcard .desc,
+  .pcard .perm-tag,
+  .pcard .chain-info,
+  .pcard .card-foot,
+  .pcard .card-mast .type-label,
+  .pcard .cost-row .lbl,
+  .pcard .cost-row .eff-line {
+    display: none;
+  }
+
+  /* ---- Compact what stays on screen ---- */
+  .pcard .pc-content { gap: 0; }
+  .pcard .card-mast { padding-right: 0; margin: 0 0 1px; gap: 2px; }
+  .dept-emblem {
+    width: 16px; height: 16px;
+    font-size: 10px; border-width: 1px;
+  }
+
+  .pcard .name {
+    font-size: 9px;
+    line-height: 1.05;
+    margin: 1px 0 2px;
+    /* allow up to 3 short lines, then ellipsis */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .pcard .cost-row {
+    grid-template-columns: 1fr;     /* drop the 50px label col since labels hidden */
+    border-top: 1px solid var(--ink);
+    padding-top: 2px;
+    margin-top: 3px;
+    font-size: 9px;
+  }
+  .pcard .cost-row .cost-line { letter-spacing: -0.02em; }
+
+  /* ---- VP seal scales down (top-right corner) ---- */
+  .pcard .vp-seal {
+    width: 22px; height: 22px;
+    top: 2px; right: 2px;
+    border-width: 1px;
+  }
+  .pcard .vp-seal .num { font-size: 10px; letter-spacing: -0.05em; }
+  .pcard .vp-seal .lbl { font-size: 5px; letter-spacing: 0.1em; margin-top: 0; }
+
+  /* ---- Pickable accent: thicker bottom border for visibility on small thumbs ---- */
+  .pcard.d0.pickable.affordable {
+    border-bottom-width: 3px;
+    border-left-width: 1.25px;
+    border-right-width: 1.25px;
+  }
+  .pcard.d0.pickable.unaffordable { border-bottom-width: 2px; }
+
+  /* ---- Suppress hover click-hint badges (no hover on touch + no room) ---- */
+  .pcard.d0.pickable.affordable::after,
+  .pcard.d0.pickable.unaffordable::after { display: none; }
+
+  /* ---- Inner decorative frame: tighter inset on tiny cards ---- */
+  .pcard.d0::before { inset: 2px; }
+
+  /* ---- Face-down monogram: drastically smaller for each layer ---- */
+  .pcard.face-down::after { font-size: 14px; line-height: 0.92; }
+  .pcard.d1.face-down::after { font-size: 8px; }
+  .pcard.d2.face-down::after { font-size: 7px; }
+  .pcard.d3.face-down::after { font-size: 5px; }
+
+  /* ---- Sliver labels for d1/d2/d3 face-up: smaller ---- */
+  .pcard.d1.face-up::before { font-size: 7px; padding: 0 2px; }
+  .pcard.d2.face-up::before { font-size: 6px; padding: 0 1px; }
+  .pcard.d3.face-up::before { font-size: 5px; padding: 0 1px; }
+
+  /* ---- Byline strip (3 opponents): collapse to vertical stack ---- */
+  .byline-list { grid-template-columns: 1fr; gap: 6px; }
+  .byline {
+    grid-template-columns: 28px 1fr auto;
+    padding: 4px 8px; gap: 8px;
+  }
+  .byline-avatar { width: 28px; height: 28px; font-size: 12px; }
+  .byline-name { font-size: 12px; }
+  .byline-role { font-size: 10px; }
+  .byline-stats .users { font-size: 14px; }
+  .byline-tableau { display: none; }   /* tableau pips lost in noise on small */
+
+  /* ---- "The Board" stage label: hide on phone (saves vertical space) ---- */
+  .pyramid-area > .stage-label { display: none; }
+  .pyramid-area > .stage-meta .turn-indicator { font-size: 11px; }
+}
+
+/* ============================================================
+   📱 PHASE 12 · TABLET OVERRIDES (S12.2)
+   ────────────────────────────────────────────────────────────
+   601-900px: desktop layout proportionally scaled to ~70%. All
+   content visible (no detail overlay obbligatorio). Targets iPad
+   portrait (768) and similar.
+   ============================================================ */
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .pyramid { gap: 8px; padding: 8px 2px 4px; min-height: 260px; }
+  .pcol { height: 240px; }
+
+  .pcard.d0 {
+    max-width: 115px;
+    height: 168px;
+    padding: 6px 7px 10px;
+  }
+  .pcard.d1 { max-width: 106px; height: 42px; bottom: 158px; }
+  .pcard.d2 { max-width: 98px;  height: 24px; bottom: 196px; }
+  .pcard.d3 { max-width: 88px;  height: 14px; bottom: 217px; }
+
+  .pcard .name { font-size: 14px; }
+  .pcard .desc { font-size: 10.5px; }
+  .pcard .vp-seal { width: 30px; height: 30px; top: 4px; right: 4px; }
+  .pcard .vp-seal .num { font-size: 13px; }
+  .pcard .vp-seal .lbl { font-size: 6px; }
+
+  .pcard .card-mast { font-size: 8px; padding-right: 32px; }
+  .pcard .cost-row { font-size: 10px; grid-template-columns: 42px 1fr; }
+  .pcard .cost-row .lbl { font-size: 7.5px; }
+  .pcard .chain-info { font-size: 9.5px; }
+
+  /* Byline strip stays at 3-up but tighter */
+  .byline { padding: 5px 10px; gap: 10px; }
+  .byline-avatar { width: 32px; height: 32px; font-size: 14px; }
+}
