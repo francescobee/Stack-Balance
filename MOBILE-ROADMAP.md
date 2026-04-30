@@ -153,7 +153,7 @@ Registrazione:
 |---------|------|-------:|------:|
 | **S12.1** | Foundational shell + breakpoint system | S (~1.5h) | ✅ Done · 2026-04-30 |
 | **S12.2** | Pyramid responsive (thumbs + grid scaling) | M (~2.5h) | ✅ Done · 2026-04-30 |
-| **S12.3** | Tap-to-detail card overlay | M (~2.5h) | ⬜ |
+| **S12.3** | Tap-to-detail card overlay | M (~2.5h) | ✅ Done · 2026-04-30 |
 | **S12.4** | Modali + form + input mobile-friendly | M (~2h) | ⬜ |
 | **S12.5** | Touch UX (`:active`, `(hover: none)`, tap targets) | S (~1.5h) | ⬜ |
 | **S12.6** | PWA manifest + service worker + portrait-lock + testing | M (~3h) | ⬜ |
@@ -323,7 +323,7 @@ overflow-x scroll-snap come fallback documentato.
 
 ---
 
-## 🃏 SESSION 12.3 — Tap-to-detail card overlay
+## 🃏 SESSION 12.3 — Tap-to-detail card overlay ✅ Done · 2026-04-30
 
 **Tipo**: feature (nuovo modal + interaction wrapping)
 **Effort**: M (~2.5h)

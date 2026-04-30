@@ -32,7 +32,26 @@ function renderPyramidCard(slot, row, col) {
     cls.push("ai-pulsing");
   }
 
-  const onClick = interactive ? (ev) => humanPickCard(row, col, ev.currentTarget) : null;
+  // S12.3: on phone (≤600px), wrap pick into a tap-to-detail overlay so the
+  // user confirms explicitly. On tablet/desktop, click runs the pick directly
+  // (existing behavior). On phone we also open the overlay for non-pickable
+  // cards (face-down dietro / not-my-turn) in read-only mode for inspection;
+  // tablet/desktop leave non-pickable cards inert.
+  const onPhone = typeof isMobileViewport === "function" && isMobileViewport();
+  let onClick = null;
+  if (onPhone && (slot.faceUp || pickable)) {
+    onClick = (ev) => {
+      const cardEl = ev.currentTarget;
+      showCardDetailModal({
+        row, col, slot,
+        isPickable: interactive,
+        canAfford: interactive && affordable,
+        onConfirm: () => humanPickCard(row, col, cardEl),
+      });
+    };
+  } else if (interactive) {
+    onClick = (ev) => humanPickCard(row, col, ev.currentTarget);
+  }
 
   const c = el("div", {
     class: cls.join(" "),

@@ -2485,3 +2485,148 @@ table.score-table .num {
   text-align: center;
   padding: 8px 0;
 }
+
+/* ============================================================
+   📱 PHASE 12 · CARD DETAIL OVERLAY (S12.3)
+   ────────────────────────────────────────────────────────────
+   Fullscreen card-preview shown when phone user taps a pyramid
+   card. Reuses .pcard styling but overrides the S12.2 phone
+   shrink-down rules so the BIG view is back to desktop sizing
+   (or even larger). Action bar sticky at bottom.
+   ============================================================ */
+
+.modal.card-detail {
+  max-width: min(360px, 92vw);
+  max-height: 92vh;
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;            /* the inner big card has its own bounds */
+  overscroll-behavior: contain;
+  animation: cardDetailIn 0.22s ease-out;
+}
+@keyframes cardDetailIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal.card-detail .cd-header {
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 6px;
+}
+.modal.card-detail .cd-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px; letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.modal.card-detail .cd-close {
+  width: 32px; height: 32px;
+  padding: 0; border: none; background: transparent;
+  font-size: 20px; line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 4px;
+}
+.modal.card-detail .cd-close:hover { background: var(--paper-2); color: var(--ink); }
+
+/* === Big card art (overrides the S12.2 phone-thumb shrink) === */
+.modal.card-detail .cd-card.pcard {
+  position: relative;          /* drop the absolute positioning of stacked layout */
+  left: auto; transform: none; bottom: auto;
+  margin: 0 auto;
+  /* Restore desktop-ish sizing for the detail view */
+  max-width: 240px !important;
+  width: 100%;
+  height: 320px !important;
+  padding: 9px 10px 14px !important;
+  border-width: 1.5px !important;
+  border-top-width: 5px !important;
+  flex-shrink: 0;
+  /* No depth animations needed inside detail overlay */
+  transition: none;
+}
+/* === Reset every "hidden on phone-thumb" rule from S12.2 inside the detail === */
+.modal.card-detail .cd-card .ornament,
+.modal.card-detail .cd-card .desc,
+.modal.card-detail .cd-card .perm-tag,
+.modal.card-detail .cd-card .chain-info,
+.modal.card-detail .cd-card .card-mast .type-label,
+.modal.card-detail .cd-card .cost-row .lbl,
+.modal.card-detail .cd-card .cost-row .eff-line {
+  display: revert;
+}
+.modal.card-detail .cd-card .pc-content { gap: revert; }
+.modal.card-detail .cd-card .card-mast { padding-right: 40px; margin: 1px 0 3px; gap: 6px; }
+.modal.card-detail .cd-card .dept-emblem {
+  width: 22px; height: 22px;
+  font-size: 13px; border-width: 1.5px;
+}
+.modal.card-detail .cd-card .name {
+  font-size: 17px; line-height: 1.02;
+  margin: 2px 0 4px;
+  display: revert;
+  -webkit-line-clamp: revert;
+  -webkit-box-orient: revert;
+  overflow: revert;
+}
+.modal.card-detail .cd-card .cost-row {
+  grid-template-columns: 50px 1fr;
+  font-size: 11px; padding-top: 5px; margin-top: 6px;
+}
+.modal.card-detail .cd-card .vp-seal {
+  width: 38px; height: 38px;
+  top: 6px; right: 6px;
+  border-width: 2px;
+}
+.modal.card-detail .cd-card .vp-seal .num { font-size: 16px; letter-spacing: -0.04em; }
+.modal.card-detail .cd-card .vp-seal .lbl { font-size: 7px; letter-spacing: 0.18em; margin-top: 1px; }
+
+/* === Action bar (bottom) === */
+.modal.card-detail .cd-actions {
+  display: flex; gap: 8px; align-items: stretch;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+.modal.card-detail .cd-actions button {
+  flex: 1;
+  min-height: 48px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.modal.card-detail .cd-actions .cd-confirm.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper-3);
+}
+.modal.card-detail .cd-actions .cd-confirm.warn {
+  background: var(--warn);
+  border-color: var(--warn);
+  color: var(--paper-3);
+}
+.modal.card-detail .cd-actions .cd-cancel-only { flex: 1; }
+
+/* Face-down detail: hint shown overlaid on the back-pattern */
+.modal.card-detail .cd-card.face-down {
+  position: relative;
+}
+.modal.card-detail .cd-mystery-hint {
+  position: absolute;
+  bottom: 18px; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--gold-2);
+  background: rgba(31, 28, 24, 0.7);
+  padding: 4px 10px;
+  border-radius: 3px;
+  text-align: center;
+  letter-spacing: 0.02em;
+  max-width: 80%;
+  z-index: 6;
+  pointer-events: none;
+}

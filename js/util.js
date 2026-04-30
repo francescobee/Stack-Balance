@@ -94,3 +94,19 @@ function showToast({ who, what, kind }) {
   cont.appendChild(t);
   setTimeout(() => t.remove(), 3100);
 }
+
+// =============================================================
+// S12.1+: Viewport helpers — single source of truth for the
+// breakpoint matchers documented in styles/main.css. Re-evaluated
+// on each call (matchMedia is cheap, no caching needed).
+// =============================================================
+function isMobileViewport() {
+  return typeof window !== "undefined"
+    && window.matchMedia
+    && window.matchMedia("(max-width: 600px)").matches;
+}
+function isTabletViewport() {
+  return typeof window !== "undefined"
+    && window.matchMedia
+    && window.matchMedia("(min-width: 601px) and (max-width: 900px)").matches;
+}

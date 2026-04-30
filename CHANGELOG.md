@@ -9,6 +9,93 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S12.3] — 2026-04-30 · Phase 12 · Tap-to-detail card overlay
+
+> **Phase 12 / S12.3** — chiude il loop di gameplay mobile. Su phone
+> (≤600px) tap su qualsiasi carta della piramide apre un overlay
+> fullscreen con dettaglio completo della carta e action bar di conferma
+> (Pesca / Scarta / Annulla / Chiudi). Desktop e tablet bypassano
+> l'overlay → click diretto come oggi.
+
+### Why
+Dopo S12.2 le carte su phone sono thumbs leggibili ma compatte:
+si vede dipartimento + nome + costo, ma effetto/chain/descrizione
+sono nascosti. Il giocatore ha bisogno di vedere tutti i dettagli
+prima di confermare la scelta. Pattern industry-standard (7 Wonders
+Duel, MTG Arena, Hearthstone): tap-to-detail con conferma esplicita.
+
+### What
+**Nuovo file** `js/render-card-detail.js` (~155 LOC):
+  • `showCardDetailModal({row, col, slot, isPickable, canAfford, onConfirm})`
+  • Renderizza la stessa struttura DOM della pcard d0 face-up (riusa
+    le rule CSS desktop), ma all'interno di un nuovo `.modal.card-detail`.
+  • Action bar in basso:
+    - Pickable + affordable: `← Annulla` + `🃏 Pesca` (accent button)
+    - Pickable + non-affordable: `← Annulla` + `❌ Scarta (+2 💰)` (warn button)
+    - Non pickable / read-only: solo `Chiudi`
+  • Face-down pickable (pesca alla cieca): rendering monogram-back con
+    hint "Verrà rivelata solo se la peschi" — niente reveal preventivo
+    (preserva la meccanica desktop).
+  • Tap su backdrop chiude. Pulsante X in alto-destra. Conferma chiama
+    `onConfirm` che è `humanPickCard(row, col, cardEl)` (route esistente,
+    invariata).
+
+**Helpers** `js/util.js`:
+  • `isMobileViewport()` → `matchMedia("(max-width: 600px)").matches`
+  • `isTabletViewport()` → 601-900px range
+  • Re-evaluati ad ogni call (matchMedia è cheap, no caching).
+
+**Wrap in** `js/render-pyramid.js`:
+  • Sostituisce il vecchio `onClick = interactive ? humanPickCard : null`
+  • Su phone + (faceUp || pickable): apre modal con `showCardDetailModal`
+  • Su tablet/desktop: comportamento invariato (humanPickCard diretto)
+  • Phone non-pickable face-up cards (es. d2/d3 visibili dietro):
+    aprono modal in read-only ("Chiudi") per ispezionare la carta
+
+**CSS** `styles/main.css` (~110 LOC):
+  • `.modal.card-detail`: `max-width: min(360px, 92vw)`, `max-height: 92vh`,
+    flex column, slide-in animation (`cardDetailIn` 0.22s)
+  • `.cd-header`: eyebrow + close X
+  • `.cd-card.pcard`: override le rule shrink di S12.2 → big card 240×320
+    (max-width 240 / height 320, padding desktop ripristinato)
+  • Reset di tutti i `display: none` di S12.2 sui sub-elementi (`ornament`,
+    `desc`, `chain-info`, `cost-row .lbl`, `eff-line`, `type-label`, etc.)
+    via `display: revert`.
+  • Action bar: bottoni `min-height: 48px` (oltre i 44px tap target),
+    `.cd-confirm.primary` accent, `.cd-confirm.warn` warn color.
+  • `.cd-mystery-hint`: tooltip in fondo per face-down cards.
+
+**index.html**: nuovo `<script src="js/render-card-detail.js">` dopo render-hotseat.js.
+
+### Cross-mode
+Funziona out-of-the-box in tutti e tre i mode senza branching:
+  • Single-player: `humanPickCard` locale
+  • P2P MP host: `humanPickCard` locale + `mpBroadcastState` (path esistente)
+  • P2P MP client: `humanPickCard` → `mpSendToHost` (path esistente)
+  • Hot Seat: `humanPickCard` locale, rotation `localSlotIdx` (path esistente)
+
+`humanPickCard` non sa nulla del modal — il modal vive sopra, lo chiama
+quando l'utente conferma e passa il `cardEl` originale per le animazioni
+flying/stealing.
+
+### Live resize
+Wrap re-evaluato ad ogni click via `isMobileViewport()`. Switching
+viewport in DevTools mid-game (es. resize da 1200→500): next tap usa
+il modal; resize back → next tap diretto. No reload necessario.
+
+### Files
+- `js/render-card-detail.js` (NEW, 155 LOC)
+- `js/render-pyramid.js` — wrap del onClick
+- `js/util.js` — `isMobileViewport`/`isTabletViewport` helpers
+- `index.html` — script tag
+- `styles/main.css` — `.modal.card-detail` + variants
+- `MOBILE-ROADMAP.md` — S12.3 marked ✅ Done
+
+### Tests
+58/58 pass. Game logic e route P2P/Hot Seat invariate.
+
+---
+
 ## [S12.2] — 2026-04-30 · Phase 12 · Pyramid responsive (thumbs + grid scaling)
 
 > **Phase 12 / S12.2** — pyramid board ora leggibile su iPhone SE (375px)
