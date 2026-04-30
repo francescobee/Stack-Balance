@@ -13,6 +13,11 @@
 //   - zeroResourceCosts: [resourceNames]                     (NEW)
 //   - statCaps: { stat: max }                                (NEW)
 //   - onQuarterStart(state)  callback                        (NEW)
+//
+// S15: synergyFlavor describes how the scenario tints the synergy draw:
+//   - guaranteed: [synergyId]   sinergie sempre incluse nel pool attivo
+//   - boostedTags: [tagName]    tag pesati ×2 (o più) durante la pesca
+//   - excluded: [synergyId]     opzionale, rimuove sinergie dal pool
 // =============================================================
 
 const SCENARIO_POOL = [
@@ -26,6 +31,7 @@ const SCENARIO_POOL = [
     locked: false,
     minWinsToUnlock: 0,
     modifiers: {},
+    synergyFlavor: {},
   },
   {
     id: "bear_market_2008",
@@ -40,6 +46,10 @@ const SCENARIO_POOL = [
       costModifiersByType: { Funding: { budget: 2 } },
       awardMultipliers: { funding: 2, full_funding: 1.5 },
     },
+    synergyFlavor: {
+      guaranteed: ["bootstrapped_run"],
+      boostedTags: ["lean", "frugal", "capital"],
+    },
   },
   {
     id: "ai_hype_wave",
@@ -53,6 +63,10 @@ const SCENARIO_POOL = [
     modifiers: {
       effectMultipliersByDept: { data: { vp: 1.5, dati: 1.5 } },
       costModifiersByType: { Tool: { budget: -1 } },
+    },
+    synergyFlavor: {
+      guaranteed: ["ai_first"],
+      boostedTags: ["data", "ai", "launch"],
     },
   },
   {
@@ -72,6 +86,10 @@ const SCENARIO_POOL = [
           p.morale = Math.max(0, p.morale - 1);
         });
       },
+    },
+    synergyFlavor: {
+      guaranteed: ["remote_unity"],
+      boostedTags: ["team", "morale", "remote"],
     },
   },
 ];

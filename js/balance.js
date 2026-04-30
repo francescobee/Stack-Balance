@@ -109,13 +109,17 @@ const BALANCE = Object.freeze({
     CLEAN_CODE: Object.freeze({ 0: 8, 1: 5, 2: 2 }),
     TECH_STACK: Object.freeze({ 4: 8, 3: 4, 2: 1 }),
 
-    // S2.2: Synergy awards — multi-condition, all-or-nothing
-    SYNERGIES: Object.freeze({
-      LEAN_OP:        Object.freeze({ points: 10, MORALE_MIN: 8, TALENT_MAX: 4 }),
-      ENG_EXC:        Object.freeze({ points: 12, BUGFIX_MIN: 3, DEBT_MAX: 1 }),
-      DATA_EMPIRE:    Object.freeze({ points: 15, DATA_MIN: 8, DATA_CARDS_MIN: 3 }),
-      FULL_FUNDING:   Object.freeze({ points: 10, UNIQUE_MIN: 3 }),
-    }),
+    // S15: Synergies are now data-driven. Per-synergy thresholds and
+    // points live in js/synergies.js (SYNERGY_POOL). The pool is drawn
+    // at game start and stored in state.synergies. See BALANCE.SYNERGIES
+    // below for draw-level tunables.
+  }),
+
+  // ────────────────────────────────────────────
+  // Synergy draw (S15) — pesca a inizio partita
+  // ────────────────────────────────────────────
+  SYNERGIES: Object.freeze({
+    PER_GAME: 5,             // sinergie attive per partita
   }),
 
   // ────────────────────────────────────────────

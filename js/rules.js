@@ -431,96 +431,38 @@ function computeAwards(p) {
   return awards;
 }
 
-// S2.2: synergy = multi-condition, all-or-nothing reward. Returns one award
-// per synergy with `requirements: [{label, current, target, met}]` for UI.
+// S15: synergy = multi-condition, all-or-nothing reward. Each synergy is
+// defined declaratively in SYNERGY_POOL (synergies.js); this function maps
+// the active set (state.synergies, drawn at game start) to award rows.
+// Falls back to the full pool when state.synergies is missing — keeps unit
+// tests deterministic without requiring full game setup.
 function computeSynergies(p) {
-  const S = BALANCE.AWARDS.SYNERGIES;
-  const out = [];
+  const pool = (typeof state !== "undefined" && state && Array.isArray(state.synergies) && state.synergies.length > 0)
+    ? state.synergies
+    : (typeof SYNERGY_POOL !== "undefined" ? SYNERGY_POOL : []);
 
-  // 1. Lean Operation: high morale ∧ low talent
-  {
-    const reqs = [
-      { label: `Morale ≥ ${S.LEAN_OP.MORALE_MIN}`,
-        current: p.morale,  target: S.LEAN_OP.MORALE_MIN,
-        met: p.morale >= S.LEAN_OP.MORALE_MIN },
-      { label: `Talento ≤ ${S.LEAN_OP.TALENT_MAX}`,
-        current: p.talento, target: S.LEAN_OP.TALENT_MAX,
-        met: p.talento <= S.LEAN_OP.TALENT_MAX },
-    ];
-    const active = reqs.every(r => r.met);
-    out.push({
-      icon: "🌿", id: "lean_op", name: "Lean Operation",
-      points: active ? S.LEAN_OP.points : 0,
-      detail: active ? "Squadra snella ad alto morale" : "Sinergia: morale alto + team contenuto",
-      isSynergy: true, requirements: reqs,
+  return pool.map(syn => {
+    const result = (typeof syn.check === "function")
+      ? syn.check(p, state)
+      : { requirements: [], active: false };
+    const active = !!result.active;
+    let detail;
+    if (active && typeof syn.detailActive === "function") {
+      detail = syn.detailActive(p, result);
+    } else if (active && typeof syn.detailActive === "string") {
+      detail = syn.detailActive;
+    } else {
+      detail = syn.detailInactive || "";
+    }
+    return {
+      icon: syn.icon, id: syn.id, name: syn.name,
+      points: active ? (syn.points || 0) : 0,
+      detail,
+      isSynergy: true,
+      requirements: result.requirements || [],
       tier: active ? "gold" : "none",
-    });
-  }
-
-  // 2. Engineering Excellence: many BugFix ∧ low Tech Debt
-  {
-    const bugCount = p.played.filter(c => c.type === "BugFix").length;
-    const reqs = [
-      { label: `BugFix ≥ ${S.ENG_EXC.BUGFIX_MIN}`,
-        current: bugCount,  target: S.ENG_EXC.BUGFIX_MIN,
-        met: bugCount >= S.ENG_EXC.BUGFIX_MIN },
-      { label: `Tech Debt ≤ ${S.ENG_EXC.DEBT_MAX}`,
-        current: p.techDebt, target: S.ENG_EXC.DEBT_MAX,
-        met: p.techDebt <= S.ENG_EXC.DEBT_MAX },
-    ];
-    const active = reqs.every(r => r.met);
-    out.push({
-      icon: "⚙️", id: "eng_exc", name: "Engineering Excellence",
-      points: active ? S.ENG_EXC.points : 0,
-      detail: active ? `${bugCount} fix · debt ${p.techDebt}` : "Sinergia: codebase pulito a regola d'arte",
-      isSynergy: true, requirements: reqs,
-      tier: active ? "gold" : "none",
-    });
-  }
-
-  // 3. Data Empire: Data Lake ∧ molti dati ∧ molte carte data
-  {
-    const dataCardsCount = p.played.filter(c => c.dept === "data").length;
-    const reqs = [
-      { label: "Data Lake (perm.)",
-        current: p.permanents.data_lake ? 1 : 0, target: 1,
-        met: !!p.permanents.data_lake },
-      { label: `Dati ≥ ${S.DATA_EMPIRE.DATA_MIN}`,
-        current: p.dati, target: S.DATA_EMPIRE.DATA_MIN,
-        met: p.dati >= S.DATA_EMPIRE.DATA_MIN },
-      { label: `Carte data ≥ ${S.DATA_EMPIRE.DATA_CARDS_MIN}`,
-        current: dataCardsCount, target: S.DATA_EMPIRE.DATA_CARDS_MIN,
-        met: dataCardsCount >= S.DATA_EMPIRE.DATA_CARDS_MIN },
-    ];
-    const active = reqs.every(r => r.met);
-    out.push({
-      icon: "📈", id: "data_empire", name: "Data Empire",
-      points: active ? S.DATA_EMPIRE.points : 0,
-      detail: active ? `Lake + ${p.dati}📊 + ${dataCardsCount} carte` : "Sinergia: stack data completo",
-      isSynergy: true, requirements: reqs,
-      tier: active ? "gold" : "none",
-    });
-  }
-
-  // 4. Full Funding Round: 3+ Funding cards diversi
-  {
-    const fundIds = new Set(p.played.filter(c => c.type === "Funding").map(c => c.id));
-    const reqs = [
-      { label: `Round diversi ≥ ${S.FULL_FUNDING.UNIQUE_MIN}`,
-        current: fundIds.size, target: S.FULL_FUNDING.UNIQUE_MIN,
-        met: fundIds.size >= S.FULL_FUNDING.UNIQUE_MIN },
-    ];
-    const active = reqs[0].met;
-    out.push({
-      icon: "🏦", id: "full_funding", name: "Full Funding Round",
-      points: active ? S.FULL_FUNDING.points : 0,
-      detail: active ? `${fundIds.size} round diversi` : "Sinergia: capitali da fonti multiple",
-      isSynergy: true, requirements: reqs,
-      tier: active ? "gold" : "none",
-    });
-  }
-
-  return out;
+    };
+  });
 }
 
 function awardsTotal(p) {

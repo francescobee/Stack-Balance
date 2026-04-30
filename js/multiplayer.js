@@ -392,6 +392,8 @@ function serializeState(s) {
     activePicker: s.activePicker,
     activeEvent: s.activeEvent ? { id: s.activeEvent.id } : null,
     scenario: s.scenario ? { id: s.scenario.id } : null,
+    // S15: synergies → array of ids; clients re-bind via getSynergyById
+    synergies: (s.synergies || []).map(syn => syn.id),
     counterMarketingPending: (s.counterMarketingPending || []).length, // count only
     deferredReveals: [],  // Block & React disabled in MP, ignore
     aiHighlight: s.aiHighlight,
@@ -430,6 +432,10 @@ function deserializeState(serialized) {
   s.scenario = serialized.scenario
     ? getScenarioById(serialized.scenario.id)
     : null;
+  // S15: rebind synergy refs (with their `check` fns) from local pool
+  s.synergies = (serialized.synergies || [])
+    .map(id => (typeof getSynergyById === "function" ? getSynergyById(id) : null))
+    .filter(Boolean);
   // counterMarketingPending: re-construct as empty array (client doesn't
   // need the actual queue, host manages it)
   s.counterMarketingPending = [];

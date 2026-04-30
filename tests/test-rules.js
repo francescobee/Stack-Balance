@@ -394,6 +394,152 @@ describe("computeSynergies", () => {
       assert(eng.points > 0, "eng_exc should fire with 3 BugFix + low debt");
     });
   });
+
+  // ── S15: new synergies coverage ──
+  it("S15 happy_team: single-condition Morale ≥ 7", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const yes = computeSynergies(mockPlayer({ morale: 7 })).find(s => s.id === "happy_team");
+      const no  = computeSynergies(mockPlayer({ morale: 6 })).find(s => s.id === "happy_team");
+      assert(yes.points > 0, "happy_team fires at morale 7");
+      assertEq(no.points, 0,  "happy_team does NOT fire at morale 6");
+    });
+  });
+
+  it("S15 mvp_to_market: needs Discovery + Feature + Launch", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const full = mockPlayer({ played: [
+        mockCard({ id: "d1", type: "Discovery" }),
+        mockCard({ id: "f1", type: "Feature" }),
+        mockCard({ id: "l1", type: "Launch" }),
+      ]});
+      const missing = mockPlayer({ played: [
+        mockCard({ id: "d1", type: "Discovery" }),
+        mockCard({ id: "f1", type: "Feature" }),
+      ]});
+      const ok  = computeSynergies(full).find(s => s.id === "mvp_to_market");
+      const bad = computeSynergies(missing).find(s => s.id === "mvp_to_market");
+      assert(ok.points > 0, "mvp_to_market fires with all 3 types");
+      assertEq(bad.points, 0, "mvp_to_market needs all 3 types");
+    });
+  });
+
+  it("S15 bootstrapped_run: 0 Funding AND vp ≥ 25", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const yes = computeSynergies(mockPlayer({ vp: 25 })).find(s => s.id === "bootstrapped_run");
+      const noFund = computeSynergies(mockPlayer({
+        vp: 25,
+        played: [mockCard({ id: "preseed", type: "Funding" })],
+      })).find(s => s.id === "bootstrapped_run");
+      const noVp = computeSynergies(mockPlayer({ vp: 20 })).find(s => s.id === "bootstrapped_run");
+      assert(yes.points > 0, "bootstrapped fires with 0 Funding + vp ≥ 25");
+      assertEq(noFund.points, 0, "any Funding card kills bootstrapped");
+      assertEq(noVp.points, 0,   "vp < 25 kills bootstrapped");
+    });
+  });
+
+  it("S15 full_stack_play: one card per dept", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const full = mockPlayer({ played: [
+        mockCard({ id: "p1", dept: "product", type: "Feature" }),
+        mockCard({ id: "e1", dept: "eng",     type: "Tool" }),
+        mockCard({ id: "d1", dept: "data",    type: "Discovery" }),
+      ]});
+      const justTwo = mockPlayer({ played: [
+        mockCard({ id: "p1", dept: "product" }),
+        mockCard({ id: "e1", dept: "eng" }),
+      ]});
+      const ok  = computeSynergies(full).find(s => s.id === "full_stack_play");
+      const bad = computeSynergies(justTwo).find(s => s.id === "full_stack_play");
+      assert(ok.points > 0, "full_stack_play fires when all 3 depts represented");
+      assertEq(bad.points, 0, "needs all 3 depts");
+    });
+  });
+
+  // ── S15: state.synergies overrides the full pool when set ──
+  it("S15 computeSynergies honors state.synergies (subset only)", () => {
+    const subset = SYNERGY_POOL.filter(s => s.id === "happy_team");
+    withState({ activeEvent: null, scenario: null, synergies: subset }, () => {
+      const out = computeSynergies(mockPlayer({ morale: 8 }));
+      assertEq(out.length, 1, "only the drawn synergy is evaluated");
+      assertEq(out[0].id, "happy_team");
+      assert(out[0].points > 0, "single drawn synergy still scores");
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// S15: SYNERGY DRAW (drawSynergies + scenario flavor)
+// ─────────────────────────────────────────────────────────────
+describe("drawSynergies [S15]", () => {
+  it("returns the requested count, with no duplicate ids", () => {
+    setRngSeed(42);
+    try {
+      const standard = SCENARIO_POOL.find(s => s.id === "standard");
+      const drawn = drawSynergies(standard, 5);
+      assertEq(drawn.length, 5, "drew 5 synergies");
+      const ids = drawn.map(s => s.id);
+      const unique = new Set(ids);
+      assertEq(unique.size, 5, "no duplicate ids in draw");
+    } finally { clearRngSeed(); }
+  });
+
+  it("deterministic: same seed → same draw", () => {
+    const standard = SCENARIO_POOL.find(s => s.id === "standard");
+    setRngSeed(12345);
+    const a = drawSynergies(standard, 5).map(s => s.id);
+    setRngSeed(12345);
+    const b = drawSynergies(standard, 5).map(s => s.id);
+    clearRngSeed();
+    // Order of guaranteed picks + weighted random both consume rng.
+    // Same seed = same sequence.
+    for (let i = 0; i < a.length; i++) {
+      assertEq(a[i], b[i], `idx ${i} matches across runs`);
+    }
+  });
+
+  it("scenario.guaranteed synergies always included", () => {
+    setRngSeed(7);
+    try {
+      const bear = SCENARIO_POOL.find(s => s.id === "bear_market_2008");
+      const drawn = drawSynergies(bear, 5);
+      assert(drawn.some(s => s.id === "bootstrapped_run"),
+             "Bear Market guarantees bootstrapped_run");
+    } finally { clearRngSeed(); }
+  });
+
+  it("scenario.boostedTags increase the average count of tag-matched synergies", () => {
+    // Statistical: across 300 draws, AI Hype should land more synergies
+    // tagged with data/ai/launch than Standard. Counts the average per-draw
+    // total (including the guaranteed pick) — robust against the variance
+    // of any single synergy id.
+    const ai   = SCENARIO_POOL.find(s => s.id === "ai_hype_wave");
+    const std  = SCENARIO_POOL.find(s => s.id === "standard");
+    const boosted = new Set(["data", "ai", "launch"]);
+
+    function avgTaggedPerDraw(scenario) {
+      let total = 0;
+      clearRngSeed();
+      for (let i = 0; i < 300; i++) {
+        const drawn = drawSynergies(scenario, 5);
+        total += drawn.filter(s => (s.tags || []).some(t => boosted.has(t))).length;
+      }
+      return total / 300;
+    }
+
+    const aiAvg  = avgTaggedPerDraw(ai);
+    const stdAvg = avgTaggedPerDraw(std);
+    assert(aiAvg > stdAvg + 0.5,
+      `AI Hype should average more boosted-tag synergies (got AI=${aiAvg.toFixed(2)} vs Standard=${stdAvg.toFixed(2)})`);
+  });
+
+  it("count larger than pool returns full pool only", () => {
+    setRngSeed(1);
+    try {
+      const standard = SCENARIO_POOL.find(s => s.id === "standard");
+      const drawn = drawSynergies(standard, 999);
+      assertEq(drawn.length, SYNERGY_POOL.length, "capped at pool size");
+    } finally { clearRngSeed(); }
+  });
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -478,6 +624,25 @@ describe("multiplayer serialization [S10.2]", () => {
 
   it("serializeState with null state returns null (no crash)", () => {
     assertEq(serializeState(null), null);
+  });
+
+  // ── S15: synergies serialization ──
+  it("S15 serialize/deserialize roundtrip restores synergies (with check fns)", () => {
+    const orig = buildSerializableState();
+    orig.synergies = [
+      getSynergyById("happy_team"),
+      getSynergyById("eng_exc"),
+    ];
+    const serial = serializeState(orig);
+    // Wire format: array of ids
+    assertEq(serial.synergies.length, 2);
+    assertEq(serial.synergies[0], "happy_team");
+    assertEq(serial.synergies[1], "eng_exc");
+    const restored = deserializeState(serial);
+    assertEq(restored.synergies.length, 2);
+    assertEq(restored.synergies[0].id, "happy_team");
+    assert(typeof restored.synergies[0].check === "function",
+           "synergy.check restored as function (not orphaned ref)");
   });
 });
 

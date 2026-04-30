@@ -33,16 +33,23 @@ function startGame(scenarioId = "standard", isDaily = false) {
     isDaily,                       // S6.3: true if Daily Run mode
     dominanceSweepsByPlayer: {},   // S6.2: tracker for "Dominator" achievement
     localSlotIdx: 0,               // S10: which slot is this client (0 in single-player)
+    synergies: [],                 // S15: drawn at game start, see drawSynergies()
   };
+  // S15: pesca le sinergie attive per la partita (game-wide). Va prima
+  // del Vision draft così il giocatore le vede nella showcase modal.
+  state.synergies = drawSynergies(state.scenario, BALANCE.SYNERGIES.PER_GAME);
   // S2.3: Vision draft happens BEFORE the first quarter (game-start identity).
   // After the human picks (and AI auto-pick), starting modifiers apply,
   // then we proceed to Q1 setup and OKR draft.
   draftVisionsFlow(() => {
     applyStartingModifiers();
     startQuarter();
-    showOKRDraftModal(() => {
-      render();
-      processNextPick();
+    // S15: showcase delle 5 sinergie pescate, dopo Vision e prima di OKR
+    showSynergyShowcaseModal(state.synergies, state.scenario, () => {
+      showOKRDraftModal(() => {
+        render();
+        processNextPick();
+      });
     });
   });
 }
@@ -87,7 +94,11 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
     dominanceSweepsByPlayer: {},
     localSlotIdx,
     isMultiplayer: true,           // S10 flag
+    synergies: [],                 // S15: drawn below (host only — clients hydrate from broadcast)
   };
+  // S15: host pesca le sinergie; verranno serializzate e ricevute dai client
+  // via stateUpdate. Vedi serializeState/deserializeState in multiplayer.js.
+  state.synergies = drawSynergies(state.scenario, BALANCE.SYNERGIES.PER_GAME);
   // Vision draft: all humans in parallel + AI auto-pick.
   // S10 fix: wrap the chain in explicit error handlers — silent promise
   // rejections were causing "stuck after Vision pick" hangs (no visible error,

@@ -197,6 +197,94 @@ function showOKRDraftModal(onComplete, opts) {
   document.body.appendChild(root);
 }
 
+// ---------- S15: SYNERGY SHOWCASE MODAL ----------
+// Mostra le 5 sinergie pescate per la partita corrente. Triggerato dopo
+// Vision draft, prima OKR draft. One-shot informativo: il giocatore le
+// rivedrà in sidebar (renderAwardsForecast) durante tutta la partita.
+// Le sinergie marcate `guaranteed` dallo scenario hanno un piccolo badge
+// "🎯 da scenario" per indicare la provenienza tematica.
+function showSynergyShowcaseModal(synergies, scenario, onComplete) {
+  const safeComplete = () => { if (typeof onComplete === "function") onComplete(); };
+  if (!synergies || synergies.length === 0) {
+    safeComplete();
+    return;
+  }
+  const guaranteedIds = new Set(
+    (scenario && scenario.synergyFlavor && scenario.synergyFlavor.guaranteed) || []
+  );
+
+  const root = el("div", { class: "modal-bg", id: "synergyShowcaseBg" });
+  const modal = el("div", { class: "modal synergy-showcase" });
+
+  const scenarioBadge = scenario && scenario.id !== "standard"
+    ? `<span class="ss-scenario">${scenario.icon} ${scenario.name}</span>`
+    : "";
+
+  modal.innerHTML = `
+    <div class="modal-eyebrow">🤝 Sinergie · Quest Game</div>
+    <h2>Sinergie di questa partita</h2>
+    <p class="ss-blurb">
+      Cinque obiettivi multi-condizione. Soddisfa tutti i requisiti di una
+      sinergia entro fine partita per i K MAU bonus. ${scenarioBadge}
+    </p>
+    <div class="synergy-showcase-grid"></div>
+    <div class="actions">
+      <button class="primary" id="ackSynergyBtn" type="button">Continua →</button>
+    </div>
+  `;
+  const grid = modal.querySelector(".synergy-showcase-grid");
+  synergies.forEach(syn => {
+    const fromScenario = guaranteedIds.has(syn.id);
+    const card = el("div", {
+      class: `synergy-showcase-card${fromScenario ? " from-scenario" : ""}`
+    });
+    const reqsHtml = (syn.tags || []).slice(0, 3)
+      .map(t => `<span class="ss-tag">#${t}</span>`).join("");
+    // Compute requirement labels for an empty player snapshot so the
+    // showcase shows the actual conditions without needing a live player.
+    const dummyPlayer = {
+      budget: 0, tempo: 0, talento: 0, dati: 0, morale: 0, techDebt: 0, vp: 0,
+      played: [], permanents: {},
+    };
+    const reqLabels = (typeof syn.check === "function")
+      ? (syn.check(dummyPlayer, null).requirements || [])
+        .map(r => `<li>${r.label}</li>`).join("")
+      : "";
+    card.innerHTML = `
+      <div class="ss-head">
+        <span class="ss-icon">${syn.icon}</span>
+        <span class="ss-name">${syn.name}</span>
+        <span class="ss-points">+${syn.points}<small>K MAU</small></span>
+      </div>
+      ${fromScenario ? `<div class="ss-from-scenario">🎯 da scenario</div>` : ""}
+      <div class="ss-desc">${syn.detailInactive || ""}</div>
+      <ul class="ss-reqs">${reqLabels}</ul>
+      <div class="ss-tags">${reqsHtml}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  root.appendChild(modal);
+  document.body.appendChild(root);
+
+  // S10: in MP, host triggers + clients see via stateUpdate. For now, the
+  // showcase is host-side only (single-player). MP support: would broadcast
+  // a `synergyShowcaseShow` message similar to showMarketNewsModal. Keeping
+  // simple for first cut.
+  const isMpClient = state && state.isMultiplayer
+    && typeof mp !== "undefined" && mp.active && !mp.isHost;
+  if (isMpClient) {
+    const actionsArea = modal.querySelector(".actions");
+    if (actionsArea) actionsArea.innerHTML = `<div class="mp-waiting">⏳ In attesa che l'host avanzi...</div>`;
+    return;
+  }
+
+  modal.querySelector("#ackSynergyBtn").onclick = () => {
+    root.remove();
+    safeComplete();
+  };
+}
+
 // S11.7 mp-fix: shared "waiting for others" view shown after a player picks
 // their Vision/OKR while remote slots are still drafting. Replaces modal
 // content in-place. Host removes #visionDraftBg/#okrDraftBg + broadcasts
