@@ -2716,3 +2716,130 @@ table.score-table .num {
   .profile-chip .pc-avatar { width: 24px; height: 24px; font-size: 12px; }
   .profile-chip .pc-name { font-size: 12px; max-width: 80px; }
 }
+
+/* ============================================================
+   📱 PHASE 12 · TOUCH UX (S12.5)
+   ────────────────────────────────────────────────────────────
+   • @media (hover: none) — neutralize sticky-hover effects on
+     touch devices (where :hover briefly fires on tap and "sticks"
+     until the next tap elsewhere).
+   • :active rules — press-feedback (works on both touch and
+     mouse-down; on mouse it's secondary to :hover, on touch it's
+     the primary tactile signal).
+   • -webkit-tap-highlight-color: transparent — disables the iOS
+     gray/blue flash on tap (we provide our own :active feedback).
+   • user-select: none on interactive controls — prevents
+     accidental text selection on long-press / drag.
+   ============================================================ */
+
+/* ---- Tap highlight: kill the iOS default flash globally ---- */
+button,
+.pcard,
+.modal .vision-option-card,
+.modal .okr-option-card,
+.modal .scenario-option-card,
+.modal .mp-option-card,
+.hs-slot,
+.hs-toggle,
+.tab-card,
+.profile-chip,
+.help-btn,
+.cd-card,
+.cd-close,
+.diff-btn,
+.mp-copy-btn,
+.start-btn {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* ---- Press feedback (:active) — fires on both mouse-down and
+        touch. Subtle scale-down + paper-2 bg where applicable. ---- */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 0.05s ease-out;
+}
+button.primary:active:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.pcard.d0.pickable:active {
+  transform: translateX(-50%) scale(0.97) translateY(-2px);
+  transition: transform 0.05s ease-out;
+}
+
+.modal .vision-option-card:active:not(:disabled),
+.modal .okr-option-card:active:not(:disabled),
+.modal .scenario-option-card:active:not(.locked):not(:disabled),
+.modal .mp-option-card:active:not(:disabled) {
+  background: var(--paper-2);
+  border-color: var(--accent);
+  transform: scale(0.98);
+  transition: transform 0.05s ease-out, border-color 0.05s ease-out;
+}
+
+.hs-slot:active { background: var(--paper-2); transform: scale(0.99); }
+.profile-chip:active { background: var(--paper-2); }
+.tab-card:active { background: var(--paper-2); }
+
+/* ---- Touch-only neutralization of sticky-hover effects ---- */
+@media (hover: none) {
+  /* Global button: revert hover bg/color/transform so a released tap
+     doesn't leave the inverted state behind */
+  button:hover:not(:disabled) {
+    background: transparent;
+    color: var(--ink);
+    transform: none;
+  }
+  button.primary:hover:not(:disabled) {
+    background: var(--ink);
+    color: var(--paper-3);
+    border-color: var(--ink);
+    transform: none;
+  }
+
+  /* Pyramid pickable card: no hover-lift on touch (S12.3 detail overlay
+     is the touch interaction model) */
+  .pcard.d0.pickable:hover {
+    transform: translateX(-50%);
+    box-shadow: var(--shadow-card);
+  }
+  /* Hover click-hint badges: don't fire on touch (already display:none
+     at ≤600px from S12.2, but cover the tablet touch case too) */
+  .pcard.d0.pickable.affordable:hover::after,
+  .pcard.d0.pickable.unaffordable:hover::after { opacity: 0; }
+
+  /* Option cards: revert :hover so nothing sticks after a release.
+     :active above provides the tactile feedback. */
+  .modal .vision-option-card:hover,
+  .modal .okr-option-card:hover,
+  .modal .scenario-option-card:hover:not(.locked),
+  .modal .mp-option-card:hover {
+    background: var(--paper);
+    border-color: var(--rule);
+    transform: none;
+  }
+  .vision-option-card:hover .vision-cta { color: inherit; }
+  .modal .okr-option-card:hover .okr-option-cta { color: inherit; }
+
+  /* Profile chip: skip the expand-on-hover (.pc-stats becomes visible
+     on hover via main.css ~290). On touch, the expand has no trigger,
+     keep it collapsed to avoid layout flicker on tap-pass-through. */
+  .profile-chip:hover {
+    background: transparent;
+    border-color: var(--rule);
+  }
+
+  /* Splash big "Inizia" button: no transform on hover */
+  .splash .start-btn:hover { transform: none; }
+
+  /* Help button + small chrome */
+  .help-btn:hover { background: transparent; color: var(--ink-soft); }
+  .mp-copy-btn:hover { background: var(--paper-3); }
+  .modal.card-detail .cd-close:hover { background: transparent; color: var(--ink-soft); }
+
+  /* Splash tab-cards (recent runs / achievements) */
+  .tab-card:hover { background: transparent; }
+}

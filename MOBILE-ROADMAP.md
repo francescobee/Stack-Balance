@@ -155,7 +155,7 @@ Registrazione:
 | **S12.2** | Pyramid responsive (thumbs + grid scaling) | M (~2.5h) | ✅ Done · 2026-04-30 |
 | **S12.3** | Tap-to-detail card overlay | M (~2.5h) | ✅ Done · 2026-04-30 |
 | **S12.4** | Modali + form + input mobile-friendly | M (~2h) | ✅ Done · 2026-04-30 |
-| **S12.5** | Touch UX (`:active`, `(hover: none)`, tap targets) | S (~1.5h) | ⬜ |
+| **S12.5** | Touch UX (`:active`, `(hover: none)`, tap targets) | S (~1.5h) | ✅ Done · 2026-04-30 |
 | **S12.6** | PWA manifest + service worker + portrait-lock + testing | M (~3h) | ⬜ |
 
 **Critical path**: S12.1 → S12.2 → S12.3 (board mobile completo).
@@ -556,7 +556,7 @@ phone portrait senza overflow orizzontale e senza bottoni tagliati.
 
 ---
 
-## 👆 SESSION 12.5 — Touch UX (`:active`, `(hover: none)`, tap targets)
+## 👆 SESSION 12.5 — Touch UX (`:active`, `(hover: none)`, tap targets) ✅ Done · 2026-04-30
 
 **Tipo**: UX polish (CSS + minimi JS)
 **Effort**: S (~1.5h)

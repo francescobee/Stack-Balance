@@ -9,6 +9,74 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S12.5] — 2026-04-30 · Phase 12 · Touch UX (`:active`, `(hover: none)`, tap-highlight)
+
+> **Phase 12 / S12.5** — risolve i tre fastidi tipici dei desktop-first
+> CSS toccati su mobile: sticky-hover, mancanza di press feedback,
+> flash blu di iOS al tap. Singolo blocco aggiuntivo in fondo a
+> `main.css`, nessun cambio strutturale.
+
+### Why
+Il codebase usa `:hover` pervasivamente (~25 rule) per visual feedback.
+Su touch device i browser fanno fire `:hover` brevemente al tap, e
+l'effetto **rimane attaccato** (sticky) finché un altro tap altrove non
+lo rimuove. Per option-card (vision/OKR/scenario) e per la pyramid card
+pickable significa carte "colorate come selezionate" anche dopo che
+hai tappato altrove. Brutto.
+
+In più mancavano i `:active` (mouse-down / finger-down feedback), e
+iOS mostrava il default tap-highlight grigio al tap su ogni elemento
+cliccabile (cosmeticamente fuori posto rispetto al tema).
+
+### What
+**`-webkit-tap-highlight-color: transparent`** + **`user-select: none`**
++ **`-webkit-touch-callout: none`** applicati a tutti i controlli
+interattivi: `button`, `.pcard`, option-card di tutti i modal,
+`.hs-slot`, `.tab-card`, `.profile-chip`, `.help-btn`, `.cd-card`,
+`.cd-close`, `.diff-btn`, `.mp-copy-btn`, `.start-btn`.
+
+**`:active` press feedback** (globale, funziona su mouse-down e touch):
+- `button:active`: `transform: scale(0.97)`, transition 0.05s
+- `button.primary:active`: + accent bg
+- `.pcard.d0.pickable:active`: scale + lift -2px
+- Option cards (`.modal .vision-option-card`, `.okr-option-card`,
+  `.scenario-option-card:not(.locked)`, `.mp-option-card`):
+  paper-2 bg + accent border + scale 0.98
+- `.hs-slot:active`: paper-2 bg + scale 0.99
+- `.profile-chip:active`, `.tab-card:active`: paper-2 bg
+
+**`@media (hover: none)`** (touch-only) neutralizza i `:hover` con
+visual feedback:
+- `button:hover` → revert background/color/transform
+- `.pcard.d0.pickable:hover` → revert translate + box-shadow
+- `.pcard.d0.pickable.{affordable,unaffordable}:hover::after` → opacity 0
+  (i click-hint badges non emergono su touch)
+- Option cards `:hover` → revert paper/rule/transform
+- `.profile-chip:hover` → revert (stop expand-on-hover sul touch)
+- `.splash .start-btn:hover` → no transform
+- Mini chrome (`.help-btn`, `.mp-copy-btn`, `.cd-close`) → revert hover
+- `.tab-card:hover` → revert
+
+### Cross-device behavior
+| Device | `:hover` | `:active` | tap-highlight |
+|--------|----------|-----------|----------------|
+| Desktop mouse | Original effect | + scale press feedback (new) | N/A |
+| Touch (iOS/Android) | Neutralized | Primary tactile signal | Killed |
+| Hybrid (touch + mouse, eg. Surface) | Original effect | Both work | Killed |
+
+`:active` su desktop è un micro-bonus (mouse-down anim 0.05s) che
+non rompe nulla. Single-source-of-truth touch UX gestita in fondo a
+`main.css`.
+
+### Files
+- `styles/main.css` — ~110 LOC nuove dopo il blocco S12.4
+- `MOBILE-ROADMAP.md` — S12.5 ✅ Done
+
+### Tests
+58/58 pass.
+
+---
+
 ## [S12.4] — 2026-04-30 · Phase 12 · Modali + form + input mobile-friendly
 
 > **Phase 12 / S12.4** — tutte le modali (scenario, vision draft,
