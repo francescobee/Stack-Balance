@@ -768,14 +768,10 @@ Asset richiesti (in `icons/`):
 (`var(--serif-display)`) su sfondo `--paper`, con piccola sottolineatura
 accent color. Generabili via Figma export o tool online (icogen, realfavicongenerator).
 
-⚠️ **Open question**: chi genera gli asset? Tre opzioni:
-- (a) L'utente li produce in Figma/Photoshop/online tool
-- (b) Generati da SVG inline + canvas-to-PNG (~30 min di JS one-off,
-  poi non più toccato)
-- (c) Placeholder solid-color icons "S&B" basic, sostituibili dopo
-
-Default consigliato: **(c)** per non bloccare lo ship; promo a (b) se
-l'utente vuole un look polished e non ha skill grafici.
+✅ **Risolto in chat (2026-04-30)**: opzione **(c) placeholder solid-color
+"S&B" basic**. Generabili in S12.6 con un mini-tool one-shot (canvas →
+PNG) o online quick-export. Sostituibili in un follow-up dedicato senza
+toccare il manifest.
 
 #### E. Testing matrix
 
