@@ -2568,14 +2568,22 @@ table.score-table .num {
   color: var(--ink-muted);
 }
 .modal.card-detail .cd-close {
-  width: 32px; height: 32px;
+  /* S13.1.D: bumped 32 → 40 so the close X is comfortably above the
+     44px guideline including its own padding */
+  width: 40px; height: 40px;
   padding: 0; border: none; background: transparent;
-  font-size: 20px; line-height: 1;
+  font-size: 22px; line-height: 1;
   color: var(--ink-soft);
   cursor: pointer;
   border-radius: 4px;
 }
 .modal.card-detail .cd-close:hover { background: var(--paper-2); color: var(--ink); }
+/* S13.1.A: press feedback on close X */
+.modal.card-detail .cd-close:active {
+  background: var(--paper-2);
+  transform: scale(0.94);
+  transition: transform 0.05s ease-out;
+}
 
 /* === Big card art (overrides the S12.2 phone-thumb shrink) === */
 .modal.card-detail .cd-card.pcard {
@@ -2637,7 +2645,8 @@ table.score-table .num {
 }
 .modal.card-detail .cd-actions button {
   flex: 1;
-  min-height: 48px;
+  /* S13.1.D: bumped 48 → 52 for thumb-zone comfort */
+  min-height: 52px;
   font-size: 14px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2653,6 +2662,23 @@ table.score-table .num {
   color: var(--paper-3);
 }
 .modal.card-detail .cd-actions .cd-cancel-only { flex: 1; }
+
+/* S13.1.A: :active press feedback for the card-detail action buttons.
+   In S12.5 we added :active globally for buttons + option-cards, but
+   the card-detail modal lives in its own selector tree and was missed.
+   Highest-frequency tap interaction in mobile play — must communicate. */
+.modal.card-detail .cd-actions button:active:not(:disabled) {
+  transform: scale(0.96);
+  transition: transform 0.05s ease-out, filter 0.05s ease-out;
+}
+.modal.card-detail .cd-actions .cd-confirm.primary:active:not(:disabled),
+.modal.card-detail .cd-actions .cd-confirm.warn:active:not(:disabled) {
+  filter: brightness(0.88);
+}
+.modal.card-detail .cd-actions .cd-cancel:active:not(:disabled),
+.modal.card-detail .cd-actions .cd-cancel-only:active:not(:disabled) {
+  background: var(--paper-2);
+}
 
 /* Face-down detail: hint shown overlaid on the back-pattern */
 .modal.card-detail .cd-card.face-down {

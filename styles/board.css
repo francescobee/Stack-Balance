@@ -638,17 +638,27 @@
 
   /* ---- Hide non-essential content (tap-to-detail in S12.3 carries it).
          Iter 3 (2026-04-30): .eff-line UNHIDDEN — user wants to see card
-         effects/yields directly on the thumb (not just in the detail
-         overlay). chain-info and desc remain hidden — they're long-form
-         text that won't fit at thumb size. ---- */
+         effects/yields directly on the thumb.
+         S13.1.B: .type-label UN-hidden too — it's the tier signal
+         (Junior/Senior/Tier B/etc.) that helps glanceability per design
+         review. Rendered tiny next to the dept-emblem. ---- */
   .pcard .ornament,
   .pcard .desc,
   .pcard .perm-tag,
   .pcard .chain-info,
   .pcard .card-foot,
-  .pcard .card-mast .type-label,
   .pcard .cost-row .lbl {
     display: none;
+  }
+  /* S13.1.B: tiny tier label, abbreviated with ellipsis if too long */
+  .pcard .card-mast .type-label {
+    font-size: 7px;
+    letter-spacing: 0.03em;
+    color: var(--ink-soft);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 
   /* ---- Compact what stays on screen ---- */

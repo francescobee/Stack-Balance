@@ -154,18 +154,23 @@ function renderMobileResourcesStrip(p) {
   const talentoUsed = p.talentoUsed || 0;
   const talentoAvailable = (p.talento || 0) - talentoUsed;
 
+  // S13.1.C: ordered by decision priority (per design review), not schema:
+  //   budget+tempo are picking gates → first
+  //   morale ↑ — gates morale-dependent cards earlier in thought
+  //   talento, dati — follow-on capacity / defensive
+  //   techDebt — penalty (consequence, not input) → last
   const items = [
     { k: "budget",   icon: "💰", val: p.budget,
       warn: p.budget < 2 },
     { k: "tempo",    icon: "⏱",  val: p.tempo,
       warn: p.tempo < 1 },
+    { k: "morale",   icon: "🚀", val: p.morale,
+      warn: p.morale < 3 },
     { k: "talento",  icon: "🧠",
       val: talentoUsed > 0 ? `${talentoAvailable}/${p.talento}` : String(p.talento),
       warn: talentoAvailable < 1 },
     { k: "dati",     icon: "📊", val: p.dati,
       warn: false },
-    { k: "morale",   icon: "🚀", val: p.morale,
-      warn: p.morale < 3 },
     { k: "techDebt", icon: "🐞", val: p.techDebt,
       warn: p.techDebt >= 4 },
   ];

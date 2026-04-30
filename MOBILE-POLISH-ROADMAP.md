@@ -57,7 +57,7 @@ I temi sono tre:
 
 | Session | Tema | Effort | Stato |
 |---------|------|-------:|------:|
-| **S13.1** | Touch feedback + glanceability fixes (critical + worth-doing) | M (~1.5h) | ⬜ |
+| **S13.1** | Touch feedback + glanceability fixes (critical + worth-doing) | M (~1.5h) | ✅ Done · 2026-04-30 |
 | **S13.2** | Discoverability — persistent turn + blind-pick cue | M (~1.5h) | ⬜ |
 | **S13.3** | Hot Seat phone pacing (reveal delay + up-next) | M (~2h) | ⬜ |
 
