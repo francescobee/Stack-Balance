@@ -898,6 +898,26 @@ Phase 12 è **DONE** quando tutti i seguenti sono veri:
   con overlay; in futuro design un layout orizzontale dedicato (cards
   in fila, sidebar a destra). Effort: ~6h.
 
+### 320px fallback (sub-target — documentato S13.2.C)
+
+iPhone 5 / SE classico ha viewport 320px. Le rule attuali shrinkano
+le carte fino al floor del clamp:
+- d0 floor 54px → 6×54 + 5×1 + 0 padding (full breakout) = 329px → fits 320 con scroll-x suppression via #app `overflow-x: hidden`
+  
+In pratica le carte si "chioppano" leggermente ai bordi su 320px
+ma restano funzionali. La tipografia compatta (10px name, 9px cost,
+8.5px eff, 7px type-label) è leggibile ma molto stretta.
+
+**Strategia raccomandata se 320px diventa target ufficiale**:
+- d0 floor da 54 → 44 nel clamp `clamp(44px, 16vw, 68px)` (e
+  proporzionali per d1/d2/d3)
+- `name` font-size 10 → 9px
+- Rimuovere `.type-label` re-introduced in S13.1.B (sotto i 360px)
+- Documentare come "supported with compact typography"
+
+V1 attuale: target ufficiale **iPhone SE 375px** (4° gen e successivi).
+320px = best-effort.
+
 ---
 
 ## 🎮 Quando iniziare?

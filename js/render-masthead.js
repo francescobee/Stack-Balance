@@ -185,6 +185,57 @@ function renderMobileResourcesStrip(p) {
   return root;
 }
 
+// ---------- MOBILE TURN BAR (S13.2.A — Phase 13) ----------
+// Persistent "whose turn is it" bar between progress strip and resources
+// strip on phone. Visible only ≤ 600px via CSS. Solves the discoverability
+// gap noted in design review: turn-indicator inside .pyramid-area scrolls
+// out of view when reading sidebar/tableau.
+function renderMobileTurnBar() {
+  const root = el("div", { class: "mobile-turn-bar" });
+  const idx = state.activePicker;
+  const localIdx = state.localSlotIdx ?? 0;
+
+  // Pass phase (Hot Seat) — already covered by full-screen pass modal,
+  // but show a placeholder for consistency
+  if (state.phase === "passing") {
+    root.appendChild(el("span", { class: "mtb-status" }, "🪑 Passa il mouse…"));
+    return root;
+  }
+  if (idx == null) {
+    // pre-pyramid (vision/okr draft) — show neutral placeholder
+    root.appendChild(el("span", { class: "mtb-status" }, "Setup in corso…"));
+    return root;
+  }
+
+  const p = state.players[idx];
+  const cleanName = (p?.name?.split(" (")[0] || p?.name || "?");
+  const initial = (cleanName[0] || "?").toUpperCase();
+  const isMe = idx === localIdx && state.phase === "human";
+
+  if (isMe) root.classList.add("is-me");
+
+  const avatar = el("span", { class: `mtb-avatar player-${idx}` }, initial);
+  root.appendChild(avatar);
+
+  const nameSpan = el("span", { class: "mtb-name" }, cleanName);
+  root.appendChild(nameSpan);
+
+  // Status text varies by phase
+  let statusText = "";
+  if (state.phase === "human") {
+    statusText = isMe ? "🎯 Tocca a te" : "in attesa…";
+  } else if (state.phase === "ai") {
+    statusText = "sta pescando…";
+  } else if (state.phase === "animating") {
+    statusText = "…";
+  } else if (state.phase === "between") {
+    statusText = "fine pesca";
+  }
+  root.appendChild(el("span", { class: "mtb-status" }, statusText));
+
+  return root;
+}
+
 // ---------- BYLINE STRIP (rivals) ----------
 function renderByline() {
   const root = el("div", { class: "byline-strip" });

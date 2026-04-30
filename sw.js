@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v5";  // bump on each deploy
+const CACHE_VERSION = "sb-v6";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -29,6 +29,10 @@ const CACHE_VERSION = "sb-v5";  // bump on each deploy
 //                  :active on card-detail buttons + close X, type-label
 //                  visible on thumb, resources strip reordered, tap
 //                  targets 48→52 / 32→40.
+// v6 (2026-04-30): Phase 13.2 — discoverability: persistent
+//                  renderMobileTurnBar above resources strip, sparkle ✨
+//                  on face-down pickable d0 (blind-pick cue), 320px
+//                  fallback documented.
 const ASSETS = [
   "./",
   "./index.html",

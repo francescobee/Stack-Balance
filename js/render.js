@@ -118,6 +118,9 @@ function render() {
   // Phase 12 mobile UX iter 4: compact resources strip ABOVE the pyramid,
   // visible on phone only via CSS. Replaces byline-strip on mobile so you
   // see your own resources at a glance while picking from thumb-sized cards.
+  // S13.2.A: turn-bar before the resources strip so "whose turn is it"
+  // stays glanceable even when scrolling in the sidebar.
+  app.appendChild(renderMobileTurnBar());
   app.appendChild(renderMobileResourcesStrip(localPlayer));
   app.appendChild(renderByline());
 

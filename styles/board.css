@@ -744,6 +744,34 @@
   /* ---- "The Board" stage label: hide on phone (saves vertical space) ---- */
   .pyramid-area > .stage-label { display: none; }
   .pyramid-area > .stage-meta .turn-indicator { font-size: 11px; }
+
+  /* ---- S13.2.B: sparkle ✨ on face-down PICKABLE d0 cards.
+         Tells skilled players "this is a blind pick" before they tap.
+         Only on .d0 (the front layer) and only when .pickable + .face-down.
+         The d1/d2/d3 face-down stay decorative (not pickable yet). ---- */
+  .pcard.face-down.pickable.d0 {
+    overflow: visible;     /* allow sparkle to show outside the border */
+  }
+  .pcard.face-down.pickable.d0::before {
+    content: "✨";
+    position: absolute;
+    top: -6px; right: -4px;
+    font-size: 14px;
+    z-index: 6;
+    pointer-events: none;
+    animation: blindSparkle 2s ease-in-out infinite;
+    /* override the inset rule from the desktop face-down ::before */
+    inset: auto;
+    border: none;
+  }
+  @keyframes blindSparkle {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.18); }
+  }
+  body.reduced-motion .pcard.face-down.pickable.d0::before {
+    animation: none;
+    opacity: 0.7;
+  }
 }
 
 /* ============================================================

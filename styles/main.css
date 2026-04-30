@@ -2494,7 +2494,8 @@ table.score-table .num {
    Hidden on desktop/tablet (byline-strip remains the rivals header).
    ============================================================ */
 
-.mobile-resources-strip { display: none; }   /* default: desktop hides it */
+.mobile-resources-strip,
+.mobile-turn-bar { display: none; }   /* default: desktop hides both */
 
 @media (max-width: 600px) {
   .mobile-resources-strip {
@@ -2529,6 +2530,58 @@ table.score-table .num {
   }
   .mobile-resources-strip .mrs-item.warn { color: var(--warn); }
   .mobile-resources-strip .mrs-item.warn .val { font-weight: 700; }
+
+  /* S13.2.A: persistent turn bar — sits between progress strip and
+     resources strip on phone. Tells you "whose turn" without scrolling. */
+  .mobile-turn-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    margin: 0 calc(-1 * clamp(8px, 3vw, 28px));   /* full-width breakout */
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px dashed var(--rule);
+    background: var(--paper-3);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .mobile-turn-bar.is-me {
+    background: linear-gradient(90deg, var(--accent) 0 5px, var(--paper-3) 5px);
+  }
+  .mobile-turn-bar .mtb-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif-display);
+    font-style: italic; font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+    background: var(--paper);
+  }
+  .mobile-turn-bar .mtb-avatar.player-0 { color: var(--p0); }
+  .mobile-turn-bar .mtb-avatar.player-1 { color: var(--p1); }
+  .mobile-turn-bar .mtb-avatar.player-2 { color: var(--p2); }
+  .mobile-turn-bar .mtb-avatar.player-3 { color: var(--p3); }
+  .mobile-turn-bar .mtb-name {
+    font-family: var(--serif-display);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .mobile-turn-bar .mtb-status {
+    color: var(--ink-soft);
+    font-style: italic;
+    font-size: 11px;
+    margin-left: auto;            /* push to right */
+  }
+  .mobile-turn-bar.is-me .mtb-status {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 600;
+  }
 }
 
 /* ============================================================
