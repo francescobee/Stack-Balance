@@ -9,6 +9,35 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S11.8] — 2026-04-30 · HS fix · Block & React actually disabled in Hot Seat
+
+### Why
+Phase 11 design validated "Block & React disabled in Hot Seat" but the
+guard was never implemented — only a comment in `hotseat.js`. Result:
+in HS the block overlay surfaced to `state.players[0]` (hardcoded) when
+*any other human* picked, including prompting a player to "block their
+own pick". Even when the block was confirmed, it only delays the next
+reveal — the next player could still pick the (face-down) blocked card,
+which the user reasonably found surprising.
+
+### What
+Added `state.isSharedScreen` to the same short-circuit as `isMultiplayer`
+in three places: `offerBlockOpportunity` (root gate) and the two call
+sites in `aiTurn` / `humanPickCard` that already pre-empt the call for
+P2P MP. Block & React now behave identically across MP variants
+(disabled), single-player retains the full mechanic.
+
+### Files
+- `js/game.js` — `offerBlockOpportunity`, `aiTurn` block guard,
+  `humanPickCard` block guard
+- `js/hotseat.js` — clarified the design comment to point at the gate
+
+### Tests
+58/58 pass (block flow has no helper tests; behaviour validated via
+manual playtest of HS + single-player + P2P MP regression).
+
+---
+
 ## [S11.7] — 2026-04-29 · MP fix · "Waiting for others" view in Vision/OKR drafts
 
 ### Why

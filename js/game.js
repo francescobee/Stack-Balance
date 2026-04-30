@@ -473,8 +473,9 @@ async function processNextPick() {
     kind: "steal"
   });
 
-  // S3.2: human can block the AI's reveal (S10: disabled in multiplayer)
-  const blockResult = state.isMultiplayer
+  // S3.2: human can block the AI's reveal
+  // S10: disabled in P2P multiplayer · S11.8: also disabled in Hot Seat
+  const blockResult = (state.isMultiplayer || state.isSharedScreen)
     ? { blocked: false }
     : await offerBlockOpportunity(playerIdx, toReveal);
   if (toReveal && !blockResult.blocked) {
@@ -575,8 +576,9 @@ async function humanPickCard(row, col, cardEl) {
     showToast({ who: "TU SCARTI", what: `<em>${card.name}</em> · +2 💰, +1 🐞`, kind: "discard" });
   }
 
-  // S3.2: AI can react/block the human's reveal (S10: disabled in multiplayer)
-  const blockResult = state.isMultiplayer
+  // S3.2: AI can react/block the human's reveal
+  // S10: disabled in P2P multiplayer · S11.8: also disabled in Hot Seat
+  const blockResult = (state.isMultiplayer || state.isSharedScreen)
     ? { blocked: false }
     : await offerBlockOpportunity(playerIdx, toReveal);
   if (toReveal && !blockResult.blocked) {
@@ -625,8 +627,12 @@ function flushDueDeferredReveals() {
 function offerBlockOpportunity(actingIdx, toReveal) {
   return new Promise((resolve) => {
     if (!toReveal) return resolve({ blocked: false });
-    // S10: Block & React disabled in multiplayer (MVP simplification)
-    if (state.isMultiplayer) return resolve({ blocked: false });
+    // S10: Block & React disabled in P2P multiplayer (MVP simplification)
+    // S11.8: also disabled in Hot Seat — design validated in Phase 11 (the
+    // overlay assumes a single human at slot 0; with multi-human the prompt
+    // would surface to the wrong player and the reveal-delay mechanic
+    // confuses sequential turns).
+    if (state.isMultiplayer || state.isSharedScreen) return resolve({ blocked: false });
 
     if (actingIdx === 0) {
       // Human picked — AI may react (auto-decide)

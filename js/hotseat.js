@@ -11,7 +11,8 @@
 //   • Open table — all info public (Vision, OKR visible to everyone)
 //   • Single-human degrade — 1 human + 3 AI = no pass-screen, plays
 //     like single-player
-//   • Block & React disabled (consistent with P2P MP)
+//   • Block & React disabled (consistent with P2P MP) — enforced in
+//     offerBlockOpportunity by short-circuiting on state.isSharedScreen
 //   • Single global AI difficulty selector (not per-slot)
 //   • Mini-classifica in pass-screen
 //
