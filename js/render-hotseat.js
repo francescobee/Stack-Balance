@@ -209,6 +209,32 @@ function showPassScreenModal(nextSlotIdx, onAcknowledge) {
   const role = roleMatch ? roleMatch[2] : "";
   const initial = cleanName.charAt(0).toUpperCase() || "?";
 
+  // S13.3.B: compute the next HUMAN player after the current one.
+  // Walks forward in pickOrder from current pickIndex+1; if we don't
+  // find one before the array ends (last pick of the quarter), no
+  // "Up next" is shown (Q-end takes over the flow anyway).
+  const nextHuman = (() => {
+    const order = state.pickOrder || [];
+    const startAt = (state.pickIndex ?? -1) + 1;
+    for (let i = startAt; i < order.length; i++) {
+      const slotIdx = order[i];
+      if (slotIdx === nextSlotIdx) continue;  // skip the current "tocca a te"
+      const p = state.players[slotIdx];
+      if (p?.slotType === "human-host") return { slotIdx, p };
+    }
+    return null;
+  })();
+  const upNextHtml = nextHuman ? (() => {
+    const m = nextHuman.p.name.match(/^(.+?)\s*\((.*?)\)/);
+    const nName = m ? m[1] : nextHuman.p.name;
+    const nInit = (nName[0] || "?").toUpperCase();
+    return `<div class="ps-up-next">
+       <span class="ps-up-label">Up next:</span>
+       <span class="ps-up-avatar player-${nextHuman.slotIdx}">${escapeHtml(nInit)}</span>
+       <span class="ps-up-name">${escapeHtml(nName)}</span>
+     </div>`;
+  })() : "";
+
   modal.innerHTML = `
     <div class="ps-eyebrow">🪑 PASS THE MOUSE</div>
     <div class="ps-avatar-large">${escapeHtml(initial)}</div>
@@ -219,6 +245,7 @@ function showPassScreenModal(nextSlotIdx, onAcknowledge) {
       <div class="ps-standings-label">Classifica attuale</div>
       ${standingsHtml}
     </div>
+    ${upNextHtml}
     <div class="actions" style="justify-content:center;border-top:none;padding-top:8px;">
       <button class="primary ps-acknowledge" type="button">Tocca a me, procedi →</button>
     </div>
@@ -236,11 +263,39 @@ function showPassScreenModal(nextSlotIdx, onAcknowledge) {
   setTimeout(() => btn.focus(), 50);
 
   btn.onclick = () => {
+    // S13.3.C: distinct confirmation chime (different from open cue)
+    if (typeof sndPassConfirm === "function") {
+      try { sndPassConfirm(); } catch (e) { /* ignore */ }
+    }
+
     // S11.5: fade-out animation before removing
     modal.classList.add("dismissing");
+
+    // S13.3.A: on phone, show a "reveal-delay" veil that briefly hides
+    // the board so the new player has a beat before seeing the previous
+    // player's move. Desktop skips this — the pass-screen ceremony is
+    // already enough on big screens.
+    const isPhone = typeof isMobileViewport === "function" && isMobileViewport();
+    let veil = null;
+    if (isPhone) {
+      veil = el("div", { class: "hs-pass-veil" });
+      // append AFTER the modal slide-out begins so it covers the board
+      // for the visual hand-off. z-index just below the modal-bg so the
+      // dismissing modal still slides over it.
+      setTimeout(() => document.body.appendChild(veil), 100);
+    }
+
     setTimeout(() => {
       root.remove();
       if (typeof onAcknowledge === "function") onAcknowledge();
+
+      // Hold the veil ~700ms after acknowledge fires, then fade out
+      if (veil) {
+        setTimeout(() => {
+          veil.classList.add("fade-out");
+          setTimeout(() => veil.remove(), 400);
+        }, 700);
+      }
     }, 240);
   };
 }

@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v6";  // bump on each deploy
+const CACHE_VERSION = "sb-v7";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -33,6 +33,10 @@ const CACHE_VERSION = "sb-v6";  // bump on each deploy
 //                  renderMobileTurnBar above resources strip, sparkle ✨
 //                  on face-down pickable d0 (blind-pick cue), 320px
 //                  fallback documented.
+// v7 (2026-04-30): Phase 13.3 — Hot Seat phone pacing: reveal-delay
+//                  veil (paper overlay 700ms before new board reveals),
+//                  "Up next: [name]" indicator in pass-screen modal,
+//                  sndPassConfirm chime on acknowledge.
 const ASSETS = [
   "./",
   "./index.html",

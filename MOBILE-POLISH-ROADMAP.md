@@ -59,7 +59,7 @@ I temi sono tre:
 |---------|------|-------:|------:|
 | **S13.1** | Touch feedback + glanceability fixes (critical + worth-doing) | M (~1.5h) | ✅ Done · 2026-04-30 |
 | **S13.2** | Discoverability — persistent turn + blind-pick cue | M (~1.5h) | ✅ Done · 2026-04-30 |
-| **S13.3** | Hot Seat phone pacing (reveal delay + up-next) | M (~2h) | ⬜ |
+| **S13.3** | Hot Seat phone pacing (reveal delay + up-next) | M (~2h) | ✅ Done · 2026-04-30 |
 
 **Critical path**: S13.1 standalone, può andare in parallelo a S13.2.
 S13.3 indipendente (tocca solo Hot Seat). Tutte e tre eseguibili in un

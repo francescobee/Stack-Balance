@@ -1565,6 +1565,69 @@ body.reduced-motion .mp-waiting-spinner span { animation: none; opacity: 0.7; }
 /* Backdrop scuro più aggressivo per emphasize del pass */
 .pass-screen-bg { background: rgba(31, 29, 25, 0.88) !important; }
 
+/* ============================================================
+   📱 PHASE 13.3 · HOT SEAT PHONE PACING
+   ────────────────────────────────────────────────────────────
+   Veil + up-next + audio cue work together as the "pass moment".
+   ============================================================ */
+
+/* S13.3.B: Up-next indicator below the standings */
+.modal.pass-screen .ps-up-next {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 12px; padding-top: 8px;
+  border-top: 1px dashed var(--rule);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  justify-content: center;
+}
+.modal.pass-screen .ps-up-next .ps-up-label {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+}
+.modal.pass-screen .ps-up-next .ps-up-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  font-family: var(--serif-display);
+  font-style: italic; font-weight: 700;
+  font-size: 11px;
+  background: var(--paper-3);
+}
+.modal.pass-screen .ps-up-next .ps-up-avatar.player-0 { color: var(--p0); }
+.modal.pass-screen .ps-up-next .ps-up-avatar.player-1 { color: var(--p1); }
+.modal.pass-screen .ps-up-next .ps-up-avatar.player-2 { color: var(--p2); }
+.modal.pass-screen .ps-up-next .ps-up-avatar.player-3 { color: var(--p3); }
+.modal.pass-screen .ps-up-next .ps-up-name {
+  font-family: var(--serif-display);
+  font-size: 13px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--ink);
+}
+
+/* S13.3.A: Reveal-delay veil — paper opaque overlay shown briefly after
+   pass-screen acknowledge, before the new player sees the board update.
+   Phone-only: applied via JS check (isMobileViewport), so no media query
+   gate here — but desktop never gets the element added. */
+.hs-pass-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;             /* below modal-bg z-index (10000), above body */
+  background: var(--paper);
+  background-image:
+    radial-gradient(circle at 30% 30%, rgba(193, 154, 61, 0.10), transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(168, 50, 74, 0.06), transparent 50%);
+  opacity: 0.97;
+  pointer-events: none;
+  transition: opacity 0.4s ease-out;
+}
+.hs-pass-veil.fade-out { opacity: 0; }
+body.reduced-motion .hs-pass-veil { transition: opacity 0.1s linear; }
+
 /* === S11.5: Animations (slide-in, breath, fade-out) === */
 @keyframes passScreenSlideIn {
   from { opacity: 0; transform: translateY(-30px) scale(0.95); }

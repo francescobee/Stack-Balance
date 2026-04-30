@@ -9,6 +9,63 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S13.1-S13.3] — 2026-04-30 · Phase 13 — Mobile polish (post-review fixes)
+
+> **Phase 13 complete in one sitting.** Closes the 9 issues identified
+> by the external mobile UX design review post-Phase-12: 1 🔴 critical
+> + 3 🟡 worth-doing + 5 🟢 nice-to-have. ~5h total.
+
+### S13.1 — Touch feedback + glanceability fixes
+- 🔴 `:active` press feedback added to `.modal.card-detail .cd-actions`
+  buttons and close X (was missing — most-tapped controls in mobile play
+  had no tactile signal).
+- 🟡 `.type-label` un-hidden on phone thumbs (7px italic, ellipsis) —
+  tier signal (Junior/Senior/etc.) restored for glanceability.
+- 🟡 Resources strip reordered by decision priority:
+  `budget · tempo · MORALE↑ · talento · dati · techDebt↓` (was schema order).
+- 🟡 Tap targets bumped: card-detail action buttons 48→52px,
+  close X 32→40px (font 20→22px).
+
+### S13.2 — Discoverability
+- New `renderMobileTurnBar()` above resources strip (~50 LOC,
+  `js/render-masthead.js`) — persistent "whose turn" with avatar +
+  status; "🎯 Tocca a te" with accent left-bar when it's mine.
+- Sparkle ✨ on `.pcard.face-down.pickable.d0` (CSS-only, board.css).
+  2s pulse animation, reduced-motion override. Tells skilled players
+  "this is a blind pick" without tapping.
+- 320px fallback documented in `MOBILE-ROADMAP.md` Open follow-ups.
+
+### S13.3 — Hot Seat phone pacing
+- Reveal-delay veil after pass acknowledge: paper overlay covers the
+  board ~700ms before the new player sees the previous player's move.
+  Creates a "moment of surprise". Phone-only (desktop pass-screen is
+  already enough ceremony).
+- "Up next: [avatar] [name]" in pass-screen modal — walks `pickOrder`
+  to find the next human-host player. Hidden when at quarter end.
+- New `sndPassConfirm()` audio cue (G4 → C5 ascending dyad) on
+  acknowledge — distinct from the open chime (sndPassScreen).
+
+### Files (Phase 13 net)
+- `styles/main.css` — :active card-detail, mobile-turn-bar, ps-up-next,
+  hs-pass-veil + reduced-motion (~140 LOC across 3 sessions)
+- `styles/board.css` — type-label visible, sparkle keyframe (~30 LOC)
+- `js/render-masthead.js` — items reorder + new `renderMobileTurnBar`
+- `js/render.js` — wire turn-bar
+- `js/render-hotseat.js` — up-next compute + veil + sndPassConfirm wire
+- `js/audio.js` — `sndPassConfirm`
+- `sw.js` — `CACHE_VERSION sb-v4 → sb-v7` (3 bumps, one per session)
+- `MOBILE-ROADMAP.md` — 320px fallback subsection
+- `MOBILE-POLISH-ROADMAP.md` — all 3 sessions ✅
+
+### Tests
+58/58 pass throughout. Game logic untouched.
+
+### Desktop bit-identical
+All Phase 13 additions live inside `@media (max-width: 600px)` (CSS) or
+gate by `isMobileViewport()` (JS). Desktop visually unchanged.
+
+---
+
 ## [S12.6] — 2026-04-30 · Phase 12 · PWA manifest + service worker + portrait-lock 🎉
 
 > **Phase 12 completa.** Stack & Balance è ora installabile come PWA

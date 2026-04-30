@@ -97,3 +97,12 @@ function sndPassScreen() {
   setTimeout(() => _tone({ freq: 329.63, duration: 0.32, type: "sine", vol: 0.45 }), 80);  // E4
   setTimeout(() => _tone({ freq: 392.00, duration: 0.40, type: "sine", vol: 0.50 }), 160); // G4
 }
+
+// S13.3.C: Short 2-note ascending dyad fired when the user CONFIRMS the
+// pass (clicks "Tocca a me, procedi"). Shorter / louder than sndPassScreen
+// (the open chime) — distinct cue for "OK, you're up now". Pairs with
+// the reveal-delay veil to bridge the modal-close → board-reveal moment.
+function sndPassConfirm() {
+  _tone({ freq: 392.00, duration: 0.18, type: "sine", vol: 0.55 }); // G4
+  setTimeout(() => _tone({ freq: 523.25, duration: 0.22, type: "sine", vol: 0.55 }), 80); // C5
+}
