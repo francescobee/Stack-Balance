@@ -7,6 +7,15 @@
        + iOS PWA standalone). viewport-fit=cover lets safe-area-inset env()
        return non-zero values inside the notch/dynamic-island area. -->
   <meta name="theme-color" content="#f3ead4" />
+
+  <!-- S12.6: PWA manifest + iOS standalone hints -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="S&amp;B" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+
   <title>Stack &amp; Balance — Quarterly Rivals</title>
 
   <!-- Editorial typography: Fraunces (display) · Newsreader (body) · JetBrains Mono (numbers) -->
@@ -61,5 +70,16 @@
   <script src="js/render.js"></script>
 
   <script src="js/main.js"></script>
+
+  <!-- S12.6: register service worker for PWA / offline-capable single-player.
+       Fails silently on file:// or non-https hosts (browser policy). -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+          .catch(err => console.warn("[pwa] sw register failed:", err));
+      });
+    }
+  </script>
 </body>
 </html>

@@ -1,0 +1,21 @@
+{
+  "name": "Stack & Balance",
+  "short_name": "S&B",
+  "description": "Drafting boardgame in una scale-up tech. 4 quarter, 24 carte, AI o multiplayer P2P / Hot Seat.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3ead4",
+  "theme_color": "#f3ead4",
+  "lang": "it",
+  "categories": ["games", "strategy"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

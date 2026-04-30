@@ -9,6 +9,104 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S12.6] — 2026-04-30 · Phase 12 · PWA manifest + service worker + portrait-lock 🎉
+
+> **Phase 12 completa.** Stack & Balance è ora installabile come PWA
+> su iOS e Android, gira offline in single-player + Hot Seat, lock-a
+> l'orientamento portrait su phone, e mostra un'icona placeholder
+> con monogramma "S&B" sostituibile post-ship.
+
+### What — PWA bones
+
+**`manifest.json`** (root):
+- name "Stack & Balance", short_name "S&B"
+- `display: "standalone"`, `orientation: "portrait"`,
+  `start_url: "./"`, `scope: "./"`
+- `theme_color` + `background_color` = `#f3ead4` (matches `--paper`)
+- 1 icon entry, sources `icons/icon.svg`, `purpose: "any maskable"`
+- `categories: ["games", "strategy"]`, `lang: "it"`
+
+**`sw.js`** (root): cache-first service worker.
+- `CACHE_VERSION = "sb-v1"` — bump ad ogni deploy che cambia asset
+- `ASSETS` array enumerated (~30 file: HTML, 3 CSS, 24 JS, manifest, icon)
+- Install: `caches.open(CACHE_VERSION).addAll(ASSETS)` + `skipWaiting()`
+- Activate: pulisce cache vecchie + `clients.claim()`
+- Fetch: bypassa non-GET e cross-origin (PeerJS CDN, Google Fonts);
+  per same-origin GET fa cache-first con fallback rete + index.html
+  fallback se entrambi falliscono
+
+**`icons/icon.svg`** (placeholder): monogramma "S&B" italic Georgia
+su sfondo paper (#f3ead4), accent oxblood underline, "STACK & BALANCE"
+subtitle. ViewBox 512×512, maskable safe-zone rispettata
+(contenuto entro l'80% centrale per Android adaptive).
+
+### What — index.html
+- Nuovo `<link rel="manifest" href="manifest.json">`
+- `<meta name="apple-mobile-web-app-capable" content="yes">`
+- `<meta name="apple-mobile-web-app-status-bar-style" content="default">`
+- `<meta name="apple-mobile-web-app-title" content="S&B">`
+- `<link rel="icon" type="image/svg+xml" href="icons/icon.svg">`
+- `<link rel="apple-touch-icon" href="icons/icon.svg">`
+- Service worker registration script prima di `</body>`:
+  `navigator.serviceWorker.register("./sw.js")` con `.catch` graceful
+  (fail silenzioso su `file://` e non-https come da policy browser)
+
+### What — Portrait-lock CSS
+`@media (max-width: 900px) and (orientation: landscape)`:
+- `body::before` overlay fullscreen z-index 999999, "📱  Ruota il
+  telefono in verticale per giocare" centrato
+- Background paper + radial gradients (coerente col tema)
+- Padding rispetta `safe-area-inset-*` per notch landscape
+- `#app`, `#toastContainer`, `.modal-bg` nascosti dietro l'overlay
+- Tablet landscape (>900px) non triggera l'overlay (è un layout valido)
+
+### What — README
+Nuova sezione "📱 Mobile / PWA (Phase 12)" con:
+- Highlight delle 6 session
+- Istruzioni install per iOS Safari + Android Chrome
+- Limitazioni V1 (icona placeholder, no landscape phone, no haptic)
+- Tabella feature parity Desktop / Tablet / Phone
+
+### Cache versioning workflow
+Ad ogni deploy che cambia asset critici:
+1. Bump `CACHE_VERSION` in `sw.js` (es. `"sb-v1"` → `"sb-v2"`)
+2. Push
+3. Primi visitatori prendono ancora old cache (fallback grazioso)
+4. Secondi visitatori (post `activate`) prendono new cache pulita
+
+### Files
+- `manifest.json` (NEW, root)
+- `sw.js` (NEW, root, ~95 LOC)
+- `icons/icon.svg` (NEW, placeholder)
+- `index.html` — head meta + sw register script
+- `styles/main.css` — portrait-lock @media block (~40 LOC)
+- `README.md` — Mobile / PWA section
+- `MOBILE-ROADMAP.md` — S12.6 ✅ Done
+
+### Tests
+58/58 pass. Nessun cambio a game logic.
+
+### Manual testing matrix (out-of-scope per Claude — utente)
+| Device | Browser | Cosa testare |
+|--------|---------|------|
+| iPhone (iOS 16+) | Safari | Splash, single-player Q1-Q3, Add to Home, Hot Seat 2 umani |
+| iPhone | Chrome | Stesso minimo |
+| Android (12+) | Chrome | Install via banner, MP P2P online |
+| iPad portrait | Safari | Layout tablet, modali, Hot Seat |
+| iPad landscape | Safari | Niente overlay (è tablet) |
+| Desktop Chrome | — | Regression bit-identical pre-S12 |
+
+### Out-of-scope — follow-up
+- Sostituzione SVG placeholder con asset finale + apple-touch-icon
+  PNG dedicato (oggi punta allo stesso SVG)
+- Push notifications, background sync
+- Wake Lock API (no screen-off durante partite lunghe)
+- Web Share API per condividere room code
+- Vibration API
+- Lighthouse audit + ottimizzazioni (cap a >= 90 PWA / A11y / Performance)
+
+---
+
 ## [S12.5] — 2026-04-30 · Phase 12 · Touch UX (`:active`, `(hover: none)`, tap-highlight)
 
 > **Phase 12 / S12.5** — risolve i tre fastidi tipici dei desktop-first

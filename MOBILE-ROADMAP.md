@@ -156,7 +156,7 @@ Registrazione:
 | **S12.3** | Tap-to-detail card overlay | M (~2.5h) | ✅ Done · 2026-04-30 |
 | **S12.4** | Modali + form + input mobile-friendly | M (~2h) | ✅ Done · 2026-04-30 |
 | **S12.5** | Touch UX (`:active`, `(hover: none)`, tap targets) | S (~1.5h) | ✅ Done · 2026-04-30 |
-| **S12.6** | PWA manifest + service worker + portrait-lock + testing | M (~3h) | ⬜ |
+| **S12.6** | PWA manifest + service worker + portrait-lock + testing | M (~3h) | ✅ Done · 2026-04-30 |
 
 **Critical path**: S12.1 → S12.2 → S12.3 (board mobile completo).
 S12.4/S12.5 partono in parallelo dopo S12.1. S12.6 alla fine —
@@ -640,7 +640,7 @@ abbastanza preciso.
 
 ---
 
-## 🚀 SESSION 12.6 — PWA manifest + service worker + portrait-lock + testing
+## 🚀 SESSION 12.6 — PWA manifest + service worker + portrait-lock + testing ✅ Done · 2026-04-30
 
 **Tipo**: integration + ops
 **Effort**: M (~3h)

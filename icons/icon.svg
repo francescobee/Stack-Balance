@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Stack & Balance — placeholder PWA icon (S12.6).
+  Design: monogramma "S&B" italic Georgia su sfondo paper, sottolineato
+  dall'accent oxblood. Maskable safe-zone: tutto il contenuto sta dentro
+  il cerchio centrale 80% (zona safe per Android adaptive icons).
+  Da sostituire con asset finale post-ship — manifest e SW non cambiano.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background fill (matches --paper) -->
+  <rect width="512" height="512" fill="#f3ead4"/>
+
+  <!-- Subtle inner ring (decorative, ink) -->
+  <circle cx="256" cy="256" r="232" fill="none" stroke="#1d1c1a" stroke-width="3" opacity="0.10"/>
+
+  <!-- Monogramma S&B, centro vertical -->
+  <text x="256" y="304"
+        text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-style="italic"
+        font-weight="700"
+        font-size="220"
+        fill="#1d1c1a"
+        letter-spacing="-6">S&amp;B</text>
+
+  <!-- Accent rule line (oxblood) sotto il monogramma -->
+  <line x1="160" y1="370" x2="352" y2="370"
+        stroke="#a8324a" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Tiny "STACK & BALANCE" subtitle -->
+  <text x="256" y="408"
+        text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-weight="700"
+        font-size="22"
+        fill="#5d544a"
+        letter-spacing="6">STACK &amp; BALANCE</text>
+</svg>

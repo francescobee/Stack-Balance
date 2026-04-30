@@ -272,6 +272,74 @@ sull'avatar + sound cue (se audio abilitato).
 
 ---
 
+## 📱 Mobile / PWA (Phase 12)
+
+Stack & Balance è giocabile **first-class su smartphone portrait**
+(iPhone SE 375px → iPhone Pro Max ~430px) e tablet portrait (iPad ~768px).
+Il desktop resta visivamente identico al pre-Phase-12.
+
+### Highlight
+
+- **Pyramid responsive** (S12.2): su phone le carte diventano thumb
+  ~52px×120px con dipartimento + nome + costo visibili. Tablet:
+  layout desktop scalato ~70%.
+- **Tap-to-detail overlay** (S12.3): tap su qualsiasi carta apre un
+  modal fullscreen con dettaglio completo + bottoni espliciti
+  "🃏 Pesca" / "❌ Scarta" / "← Annulla". Pattern 7 Wonders Duel /
+  MTG Arena / Hearthstone.
+- **Modali responsive** (S12.4): tutte le modali (scenario, vision,
+  OKR, MP entry/lobby/join, Hot Seat lobby, market news, end-game)
+  adattate a 95vw, grid 2/3-col → 1-col, tap target ≥ 44px.
+- **Input mobile-friendly** (S12.4): `inputmode`, `autocapitalize`,
+  `enterkeyhint` su tutti i form. Font-size ≥ 16px per evitare
+  auto-zoom iOS al focus.
+- **Touch UX** (S12.5): no più sticky-hover dopo tap, press-feedback
+  `:active` su tutti i controlli, niente flash blu iOS.
+- **Portrait-lock**: phone in landscape mostra "📱 Ruota il telefono
+  in verticale per giocare". Tablet/desktop landscape unaffected.
+- **PWA installabile** (S12.6): manifest + service worker. Add to Home
+  Screen su iOS/Android, single-player + Hot Seat **completamente
+  giocabili offline** dopo il primo load. P2P MP richiede ovviamente
+  la rete.
+
+### Installare come app
+
+**iOS Safari**:
+1. Apri il sito
+2. Tap su Condividi (□↑) → "Aggiungi a Home"
+3. L'icona appare sulla home, apertura full-screen senza chrome browser
+
+**Android Chrome**:
+1. Apri il sito
+2. Banner automatico "Installa app" dopo qualche minuto, oppure
+   menu ⋮ → "Aggiungi a schermata Home"
+3. Apertura standalone
+
+### Limitazioni V1 (placeholder + follow-up)
+
+- **Icona PWA**: V1 usa un placeholder SVG con monogramma "S&B".
+  Sostituibile post-ship senza toccare manifest/SW.
+- **Phone landscape**: bloccato (overlay "Ruota in verticale"). Layout
+  landscape dedicato è un follow-up futuro.
+- **Vibration / haptic feedback**: scartato per V1, valutiamo dopo.
+- **Push notifications**: non implementate (richiederebbero backend).
+- **Cache versioning**: `sb-v1`. Bump in `sw.js` ad ogni deploy che
+  cambia asset critici.
+
+### Tabella feature parity
+
+| Feature | Desktop | Tablet | Phone |
+|---------|:------:|:------:|:----:|
+| Single-player end-to-end | ✅ | ✅ | ✅ |
+| Hot Seat 2-4 umani | ✅ | ✅ | ✅ |
+| P2P Multiplayer | ✅ | ✅ | ✅ |
+| Daily mode | ✅ | ✅ | ✅ |
+| Tap-to-detail card overlay | — | — | ✅ |
+| PWA installabile | ✅ | ✅ | ✅ |
+| Offline (single-player + HS) | ✅ | ✅ | ✅ |
+
+---
+
 ## 🧪 Test harness
 
 Aprire `tests/test.html` in un browser. I test girano automaticamente al load

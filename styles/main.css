@@ -2843,3 +2843,47 @@ button.primary:active:not(:disabled) {
   /* Splash tab-cards (recent runs / achievements) */
   .tab-card:hover { background: transparent; }
 }
+
+/* ============================================================
+   📱 PHASE 12 · PORTRAIT-LOCK (S12.6)
+   ────────────────────────────────────────────────────────────
+   Phone in landscape (≤900px short edge): mostra overlay
+   "Ruota in verticale" e nasconde l'app sotto. Su tablet
+   landscape (>900px) e desktop nessun overlay (l'orientamento
+   landscape è un layout valido lì). Manifest "orientation":
+   "portrait" lock-a la PWA installata; questo overlay è il
+   fallback per il browser tab.
+   ============================================================ */
+
+@media (max-width: 900px) and (orientation: landscape) {
+  body::before {
+    content: "📱  Ruota il telefono in verticale per giocare";
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 30% 30%, rgba(193, 154, 61, 0.08), transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(168, 50, 74, 0.05), transparent 50%);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 32px;
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+    /* env() per safe area su notch landscape */
+    padding-top: max(40px, env(safe-area-inset-top));
+    padding-left: max(32px, env(safe-area-inset-left));
+    padding-right: max(32px, env(safe-area-inset-right));
+  }
+  #app { display: none; }
+  /* Anche eventuali toast / modali aperti restano nascosti dietro l'overlay */
+  #toastContainer,
+  .modal-bg { display: none !important; }
+}
