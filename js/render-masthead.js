@@ -142,6 +142,44 @@ function renderProgress() {
   return root;
 }
 
+// ---------- MOBILE RESOURCES STRIP (S12 / mobile UX iter 4) ----------
+// Compact horizontal strip with the local POV player's 6 resources.
+// Visible only on phone (≤600px) via CSS; hidden on tablet/desktop.
+// Replaces the byline-strip (rivals) at the top of the board on mobile —
+// rationale: when picking on a thumb-sized pyramid you need to see your
+// own resources to plan, more than the rivals' user count. Rivals
+// info still accessible scrolling the tableau / sidebar below.
+function renderMobileResourcesStrip(p) {
+  const root = el("div", { class: "mobile-resources-strip" });
+  const talentoUsed = p.talentoUsed || 0;
+  const talentoAvailable = (p.talento || 0) - talentoUsed;
+
+  const items = [
+    { k: "budget",   icon: "💰", val: p.budget,
+      warn: p.budget < 2 },
+    { k: "tempo",    icon: "⏱",  val: p.tempo,
+      warn: p.tempo < 1 },
+    { k: "talento",  icon: "🧠",
+      val: talentoUsed > 0 ? `${talentoAvailable}/${p.talento}` : String(p.talento),
+      warn: talentoAvailable < 1 },
+    { k: "dati",     icon: "📊", val: p.dati,
+      warn: false },
+    { k: "morale",   icon: "🚀", val: p.morale,
+      warn: p.morale < 3 },
+    { k: "techDebt", icon: "🐞", val: p.techDebt,
+      warn: p.techDebt >= 4 },
+  ];
+
+  items.forEach(it => {
+    const cell = el("div", { class: "mrs-item" + (it.warn ? " warn" : "") });
+    cell.appendChild(el("span", { class: "icon" }, it.icon));
+    cell.appendChild(el("span", { class: "val" }, String(it.val)));
+    root.appendChild(cell);
+  });
+
+  return root;
+}
+
 // ---------- BYLINE STRIP (rivals) ----------
 function renderByline() {
   const root = el("div", { class: "byline-strip" });

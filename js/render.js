@@ -110,13 +110,18 @@ function render() {
 
   app.appendChild(renderMasthead());
   app.appendChild(renderProgress());
-  app.appendChild(renderByline());
-
-  const layout = el("div", { class: "layout" });
 
   // S10: localSlotIdx selects the local POV player (0 in single-player, 0-3 in MP)
   const localIdx = state.localSlotIdx ?? 0;
   const localPlayer = state.players[localIdx];
+
+  // Phase 12 mobile UX iter 4: compact resources strip ABOVE the pyramid,
+  // visible on phone only via CSS. Replaces byline-strip on mobile so you
+  // see your own resources at a glance while picking from thumb-sized cards.
+  app.appendChild(renderMobileResourcesStrip(localPlayer));
+  app.appendChild(renderByline());
+
+  const layout = el("div", { class: "layout" });
 
   const mainCol = el("div", { class: "main-col" });
   mainCol.appendChild(renderPyramid());

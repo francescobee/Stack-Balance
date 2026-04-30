@@ -16,13 +16,16 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v3";  // bump on each deploy
+const CACHE_VERSION = "sb-v4";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
 //                  + show eff-line on thumbs + aspect 0.72 to match
-//                  desktop. Old visitors with v1/v2 cache get v3 cache
-//                  on next reload via activate handler.
+//                  desktop.
+// v4 (2026-04-30): mobile UX iter 4 — compact resources strip above
+//                  the pyramid (renderMobileResourcesStrip), byline
+//                  hidden on phone. Touches main.css + board.css +
+//                  render-masthead.js + render.js.
 const ASSETS = [
   "./",
   "./index.html",

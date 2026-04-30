@@ -2487,6 +2487,51 @@ table.score-table .num {
 }
 
 /* ============================================================
+   📱 PHASE 12 · MOBILE RESOURCES STRIP (iter 4)
+   ────────────────────────────────────────────────────────────
+   Compact 6-column row of the local player's stats: budget, tempo,
+   talento, dati, morale, techDebt. Above the pyramid on phone.
+   Hidden on desktop/tablet (byline-strip remains the rivals header).
+   ============================================================ */
+
+.mobile-resources-strip { display: none; }   /* default: desktop hides it */
+
+@media (max-width: 600px) {
+  .mobile-resources-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    padding: 6px 4px;
+    margin: 0 calc(-1 * clamp(8px, 3vw, 28px)) 4px;   /* full-width breakout matches pyramid */
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper-3);
+    font-family: var(--mono);
+  }
+  .mobile-resources-strip .mrs-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 3px;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 2px 0;
+    line-height: 1;
+  }
+  .mobile-resources-strip .mrs-item .icon {
+    font-size: 14px;
+    line-height: 1;
+  }
+  .mobile-resources-strip .mrs-item .val {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .mobile-resources-strip .mrs-item.warn { color: var(--warn); }
+  .mobile-resources-strip .mrs-item.warn .val { font-weight: 700; }
+}
+
+/* ============================================================
    📱 PHASE 12 · CARD DETAIL OVERLAY (S12.3)
    ────────────────────────────────────────────────────────────
    Fullscreen card-preview shown when phone user taps a pyramid

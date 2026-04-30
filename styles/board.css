@@ -724,17 +724,12 @@
   .pcard.d2.face-up::before { font-size: 6px; padding: 0 1px; }
   .pcard.d3.face-up::before { font-size: 5px; padding: 0 1px; }
 
-  /* ---- Byline strip (3 opponents): collapse to vertical stack ---- */
-  .byline-list { grid-template-columns: 1fr; gap: 6px; }
-  .byline {
-    grid-template-columns: 28px 1fr auto;
-    padding: 4px 8px; gap: 8px;
-  }
-  .byline-avatar { width: 28px; height: 28px; font-size: 12px; }
-  .byline-name { font-size: 12px; }
-  .byline-role { font-size: 10px; }
-  .byline-stats .users { font-size: 14px; }
-  .byline-tableau { display: none; }   /* tableau pips lost in noise on small */
+  /* ---- Byline strip (3 opponents): hidden on phone (iter 4) ----
+     Replaced by the compact .mobile-resources-strip above the pyramid:
+     when picking from thumb cards your own budget/tempo matter more
+     than rivals' user count. Rivals info accessible via tableau/sidebar
+     below the pyramid. ---- */
+  .byline-strip { display: none; }
 
   /* ---- "The Board" stage label: hide on phone (saves vertical space) ---- */
   .pyramid-area > .stage-label { display: none; }
