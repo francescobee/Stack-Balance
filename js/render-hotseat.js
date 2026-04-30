@@ -49,6 +49,8 @@ function showHotSeatLobbyModal({ onComplete } = {}) {
           ${isHuman
             ? `<input type="text" class="hs-name-input" data-slot="${i}"
                       maxlength="24" value="${escapeHtml(slot.name)}"
+                      autocapitalize="words" autocomplete="off"
+                      enterkeyhint="next"
                       placeholder="Nome giocatore" />`
             : `<select class="hs-persona-select" data-slot="${i}">${personaOpts}</select>`
           }

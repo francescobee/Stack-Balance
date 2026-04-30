@@ -9,6 +9,78 @@ Le entry seguono la numerazione `S<phase>.<session>` da [`ROADMAP.md`](ROADMAP.m
 
 ---
 
+## [S12.4] — 2026-04-30 · Phase 12 · Modali + form + input mobile-friendly
+
+> **Phase 12 / S12.4** — tutte le modali (scenario, vision draft,
+> OKR draft, multiplayer entry, multiplayer join, multiplayer lobby,
+> Hot Seat lobby, market news, investor pitch, VC reaction, final
+> sequence, new achievements) ora si adattano a phone portrait senza
+> overflow. Form inputs hanno gli attributi mobile corretti per
+> evitare auto-zoom iOS e per istradare la tastiera nel modo giusto
+> (autocapitalize, inputmode, autocomplete, enterkeyhint).
+
+### What — Mobile CSS overrides
+- **Modal sizing**: `max-width: 95vw` su tutte le `.modal.<X>` con
+  max-width esplicito ≥ 560px. `max-height: 92vh`, padding ridotto a
+  22px×18px, `overscroll-behavior: contain` per evitare scroll
+  parassita del body sotto il modal su iOS.
+- **Option grids collapse**: `.scenario-options-grid`,
+  `.vision-options-grid`, `.okr-options-grid`, `.hs-slots-grid`,
+  `.preferences-list`, `.mp-options-grid:not(.mp-options-grid-1)`
+  → `grid-template-columns: 1fr` con gap 10px.
+- **Hot Seat lobby slot**: padding ridotto a 10px per fold-fit, gap 6px.
+- **Pass-screen modal su phone**: avatar 140×140 (era 100×100) per
+  impatto visivo + name `clamp(22px, 6vw, 32px)`. La schermata
+  "Tocca a te" è la più importante in HS, su phone diventa centrale.
+- **Splash actions row**: `flex-wrap: wrap`, padding ridotto su bottoni
+  (font-size 13, padding 8×12) per stare in 1-2 righe su iPhone SE.
+- **Action bar tap targets**: `min-height: 44px` su tutti i bottoni
+  dentro `.actions` + `.modal .actions`. Stessa altezza min su
+  `.mp-option-card`, `.vision-option-card`, `.okr-option-card`,
+  `.scenario-option-card` (Apple/Google guideline).
+- **Profile chip**: padding 4px×8px, avatar 24px, name max-width 80px
+  con ellissi.
+
+### What — Form inputs (HTML attributes)
+**Room code (`#mpRoomCodeInput`)**:
+- `inputmode="text"` + `autocapitalize="characters"` (tastiera mobile
+  con maiuscole)
+- `autocorrect="off"` + `autocomplete="off"` + `spellcheck="false"`
+  (no autocorrect su 4-letter random codes)
+- `enterkeyhint="go"` (CTA mobile keyboard = Go)
+
+**Player name** (`#mpJoinNameInput`, `#nameInput`, `#settingsNameInput`,
+`.hs-name-input`):
+- `autocapitalize="words"` (capitalizzazione automatica nomi)
+- `autocomplete="nickname"|"given-name"|"off"` (browser hint per
+  autofill rilevante)
+- `enterkeyhint="go"|"done"|"next"` (CTA contestuale)
+
+**iOS auto-zoom prevention**: tutti gli `input[type="text|email|number|tel"]`,
+`textarea`, `select` ricevono `font-size: 16px` sotto 600px. Sotto i 16px
+iOS auto-zooma il viewport al focus, rendendo il layout a quel punto
+inutilizzabile. Il room code conserva i suoi 24px tramite `!important`.
+
+### Files
+- `styles/main.css` — nuovo `@media (max-width: 600px)` block (~75 LOC)
+  in fondo, dopo `.cd-mystery-hint`.
+- `js/render-multiplayer.js` — attributi mobile su `#mpRoomCodeInput` +
+  `#mpJoinNameInput`.
+- `js/render-profile.js` — attributi su `#nameInput` (setup) +
+  `#settingsNameInput` (settings).
+- `js/render-hotseat.js` — attributi su `.hs-name-input`.
+- `MOBILE-ROADMAP.md` — S12.4 marked ✅ Done.
+
+### Tests
+58/58 pass.
+
+### Desktop
+Tutti i cambi vivono dentro `@media (max-width: 600px)` o sono attributi
+HTML non visivi (autocapitalize/inputmode che il desktop browser
+ignora). Bit-identical visualmente al ≥ 901px.
+
+---
+
 ## [S12.3] — 2026-04-30 · Phase 12 · Tap-to-detail card overlay
 
 > **Phase 12 / S12.3** — chiude il loop di gameplay mobile. Su phone

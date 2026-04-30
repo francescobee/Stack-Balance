@@ -25,7 +25,8 @@ function showProfileSetup({ onComplete } = {}) {
     <form class="profile-form" id="profileForm" autocomplete="off">
       <div>
         <label>Nome del fondatore</label>
-        <input type="text" id="nameInput" placeholder="es. Federica" maxlength="32" required />
+        <input type="text" id="nameInput" placeholder="es. Federica" maxlength="32" required
+               autocapitalize="words" autocomplete="given-name" enterkeyhint="go" />
         <div class="field-hint">Apparirà nelle classifiche e a fine partita.</div>
       </div>
       <div class="err" id="setupErr"></div>
@@ -94,7 +95,8 @@ function showProfileSettings() {
     <form class="profile-form" id="settingsForm" autocomplete="off">
       <div>
         <label>Nome</label>
-        <input type="text" id="settingsNameInput" value="${escapeHtml(profile.name)}" maxlength="32" required />
+        <input type="text" id="settingsNameInput" value="${escapeHtml(profile.name)}" maxlength="32" required
+               autocapitalize="words" autocomplete="given-name" enterkeyhint="done" />
         <div class="field-hint">Cambia in qualunque momento.</div>
       </div>
       <div class="err" id="settingsErr"></div>

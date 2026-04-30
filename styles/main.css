@@ -2630,3 +2630,89 @@ table.score-table .num {
   z-index: 6;
   pointer-events: none;
 }
+
+/* ============================================================
+   📱 PHASE 12 · MOBILE OVERRIDES — modali, form, tap targets (S12.4)
+   ────────────────────────────────────────────────────────────
+   Phone (≤600px): tutte le modali si stringono a 95vw, le option-grid
+   2/3 colonne collassano in 1, action bar bottoni 44px+, input 16px+
+   per evitare auto-zoom iOS al focus.
+   ============================================================ */
+
+@media (max-width: 600px) {
+  /* ---- Modal sizing ---- */
+  .modal {
+    max-width: 95vw;
+    max-height: 92vh;
+    padding: 22px 18px;
+    overscroll-behavior: contain;
+  }
+  /* Override per le modali con max-width esplicito — compattano su 95vw */
+  .modal.mp-entry,
+  .modal.mp-join,
+  .modal.mp-lobby,
+  .modal.hotseat-lobby,
+  .modal.scenario-chooser,
+  .modal.vision-draft,
+  .modal.okr-draft,
+  .modal.market-news,
+  .modal.investor-pitch,
+  .modal.vc-reaction,
+  .modal.final-sequence,
+  .modal.new-achievements { max-width: 95vw; }
+
+  /* card-detail keeps its own clamp — already mobile-optimal */
+
+  /* ---- Option grids: 2/3 col → 1 col ---- */
+  .scenario-options-grid,
+  .vision-options-grid,
+  .okr-options-grid,
+  .hs-slots-grid,
+  .preferences-list { grid-template-columns: 1fr !important; gap: 10px; }
+
+  /* mp-options-grid stays 2-col when not the 1-col variant; on phone
+     even the 2-col is fine for "Crea / Unisciti" but let's collapse for
+     consistent tap-target sizing */
+  .mp-options-grid:not(.mp-options-grid-1) { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Hot Seat lobby slot tweaks: vertical stack already collapsed via
+     grid-template-columns: 1fr above. Reduce padding for fold fit. */
+  .hs-slot { padding: 10px; gap: 6px; }
+  .hs-config { gap: 8px; }
+
+  /* Pass-screen modal: bigger avatar for impact (small screen, full-attention) */
+  .modal.pass-screen .ps-avatar-large {
+    width: 140px;
+    height: 140px;
+    font-size: 56px;
+  }
+  .modal.pass-screen .ps-name-large { font-size: clamp(22px, 6vw, 32px); }
+
+  /* Splash compact: title is already clamp() in S12.1 — also compact actions row */
+  .splash .actions { gap: 8px; flex-wrap: wrap; }
+  .splash .actions button { font-size: 13px; padding: 8px 12px; }
+
+  /* ---- Action bar tap targets (≥ 44px Apple/Google guideline) ---- */
+  .actions button,
+  .modal .actions button { min-height: 44px; padding: 10px 16px; }
+  .modal.mp-entry .mp-option-card,
+  .modal .vision-option-card,
+  .modal .okr-option-card,
+  .modal .scenario-option-card { min-height: 44px; }
+
+  /* ---- Inputs: 16px minimum to prevent iOS auto-zoom on focus ---- */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  textarea,
+  select { font-size: 16px; }
+
+  /* Room code stays bigger (already 24px), but lock min 16px */
+  #mpRoomCodeInput { font-size: 24px !important; }
+
+  /* ---- Profile chip: shrink avatar/text on phone ---- */
+  .profile-chip { padding: 4px 8px; gap: 6px; }
+  .profile-chip .pc-avatar { width: 24px; height: 24px; font-size: 12px; }
+  .profile-chip .pc-name { font-size: 12px; max-width: 80px; }
+}

@@ -109,6 +109,9 @@ function showMultiplayerJoinModal({ onComplete, prefilledCode } = {}) {
         <label>Room code</label>
         <input type="text" id="mpRoomCodeInput" maxlength="4"
                placeholder="ABCD" required
+               inputmode="text" autocapitalize="characters"
+               autocorrect="off" autocomplete="off" spellcheck="false"
+               enterkeyhint="go"
                style="text-transform: uppercase; letter-spacing: 0.4em; font-family: var(--mono); font-size: 24px;"
                value="${prefilledCode ? escapeHtml(prefilledCode) : ''}" />
         <div class="field-hint">4 caratteri (es. ABCD)</div>
@@ -116,6 +119,8 @@ function showMultiplayerJoinModal({ onComplete, prefilledCode } = {}) {
       <div>
         <label>Il tuo nome</label>
         <input type="text" id="mpJoinNameInput" maxlength="32" required
+               autocapitalize="words" autocomplete="nickname"
+               enterkeyhint="go"
                value="${escapeHtml(defaultName)}" placeholder="es. Marco" />
       </div>
       <div class="err" id="mpJoinErr"></div>
