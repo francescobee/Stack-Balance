@@ -1120,14 +1120,25 @@ function showEndGameModal() {
   // Persist career stats on the LOCAL player's profile
   // S6.1+S6.2+S6.3: record game with extended context
   const won = winner === you;  // did MY local player win?
+  let xpOutcome = null;
   if (typeof recordGameResult === "function") {
-    recordGameResult({
+    xpOutcome = recordGameResult({
       won,
       finalUsers: you.vp,
       scenarioId: state.scenario?.id || "standard",
       visionId: you.vision?.id || null,
       isDaily: !!state.isDaily,
       winConditionId: state.winCondition?.id || "mau",  // S17
+      isWeekly: !!state.weeklyChallenge,                 // S18.3
+    });
+  }
+  // S18.1: level-up toast (if the local player crossed a level threshold)
+  if (xpOutcome && xpOutcome.newLevel > xpOutcome.oldLevel
+      && typeof showToast === "function") {
+    showToast({
+      who: "🎉 LEVEL UP",
+      what: `Founder Level <em>${xpOutcome.newLevel}</em> raggiunto!`,
+      kind: "celebrate",
     });
   }
 

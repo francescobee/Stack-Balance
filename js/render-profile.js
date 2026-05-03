@@ -106,6 +106,25 @@ function showProfileSettings() {
     </form>
 
     <h3>Carriera</h3>
+    ${(function() {
+      // S18.1: Founder Level chip + progress bar (compatibility safe — falls
+      // back gracefully if computeLevel/xpProgressInLevel are not loaded).
+      if (typeof computeLevel !== "function" || typeof xpProgressInLevel !== "function") return "";
+      const xp = profile.xp || 0;
+      const prog = xpProgressInLevel(xp);
+      const nextLine = prog.capped
+        ? `Cap raggiunto · ${xp.toLocaleString()} XP totali`
+        : `${prog.current.toLocaleString()} / ${prog.needed.toLocaleString()} XP al Lv ${prog.level + 1}`;
+      return `
+        <div class="founder-level">
+          <div class="fl-row">
+            <span class="fl-chip">⭐ Founder Lv. <strong>${prog.level}</strong></span>
+            <span class="fl-xp">${xp.toLocaleString()} XP</span>
+          </div>
+          <div class="fl-bar"><span class="fl-fill" style="width: ${prog.pct}%"></span></div>
+          <div class="fl-hint">${nextLine}</div>
+        </div>`;
+    })()}
     <div class="stats-grid">
       <div class="stat">
         <span class="lbl">Partite giocate</span>

@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v11";  // bump on each deploy
+const CACHE_VERSION = "sb-v12";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -53,6 +53,11 @@ const CACHE_VERSION = "sb-v11";  // bump on each deploy
 //                   js/win-conditions.js (mau / survival / acquisition /
 //                   efficiency). Scenarios pin one each. End-game banner +
 //                   masthead badge use the active win condition.
+// v12 (2026-05-03): S18.1 — Founder Level (XP / levels). recordGameResult
+//                   now accrues XP and computes a derived level (cap 20).
+//                   Profile UI shows level chip + progress bar. Level-up
+//                   toast on threshold cross. Per-vision stats tracked
+//                   for the upcoming S18.2 vision-variant unlock.
 const ASSETS = [
   "./",
   "./index.html",

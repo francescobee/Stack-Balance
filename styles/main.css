@@ -433,6 +433,43 @@ button.ghost {
 }
 
 /* === Profile settings modal === */
+/* S18.1: Founder Level chip + progress bar */
+.profile-settings .founder-level {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--ink);
+  background: linear-gradient(180deg, rgba(201, 162, 39, 0.10), var(--paper-3));
+}
+.profile-settings .fl-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.profile-settings .fl-chip {
+  font-family: var(--serif-display); font-style: italic;
+  font-size: 14px; color: var(--ink);
+}
+.profile-settings .fl-chip strong {
+  font-size: 17px; font-style: normal; margin-left: 4px;
+}
+.profile-settings .fl-xp {
+  font-family: var(--mono); font-size: 11px; color: var(--ink-muted);
+}
+.profile-settings .fl-bar {
+  height: 6px; margin-top: 6px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  position: relative;
+}
+.profile-settings .fl-fill {
+  display: block;
+  height: 100%;
+  background: var(--gold, #c9a227);
+  transition: width 0.4s ease;
+}
+.profile-settings .fl-hint {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--ink-muted);
+  margin-top: 4px;
+}
 .profile-settings .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

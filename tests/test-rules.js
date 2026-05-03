@@ -648,6 +648,56 @@ describe("archetypes [S16]", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// S18.1: FOUNDER LEVEL — XP curve and computeLevel
+// ─────────────────────────────────────────────────────────────
+describe("founder level [S18.1]", () => {
+  it("xpToReachLevel curve: L1=0, L2=1000, L3=4000, L4=9000", () => {
+    assertEq(xpToReachLevel(1), 0);
+    assertEq(xpToReachLevel(2), 1000);
+    assertEq(xpToReachLevel(3), 4000);   // 1000 + 3000
+    assertEq(xpToReachLevel(4), 9000);   // 1000 + 3000 + 5000
+  });
+
+  it("computeLevel monotonic", () => {
+    assertEq(computeLevel(0), 1);
+    assertEq(computeLevel(999), 1);
+    assertEq(computeLevel(1000), 2);
+    assertEq(computeLevel(3999), 2);
+    assertEq(computeLevel(4000), 3);
+    assertEq(computeLevel(9000), 4);
+  });
+
+  it("computeLevel caps at FOUNDER_LEVEL_CAP (20)", () => {
+    // Way more XP than needed for L20 → still 20
+    assertEq(computeLevel(10_000_000), 20);
+  });
+
+  it("xpProgressInLevel reports current/needed/pct correctly", () => {
+    const at1500 = xpProgressInLevel(1500);  // L2 (base 1000), needs 3000 to reach L3
+    assertEq(at1500.level, 2);
+    assertEq(at1500.current, 500);
+    assertEq(at1500.needed, 3000);
+    assertEq(at1500.pct, Math.round((500 / 3000) * 100));
+    assertEq(at1500.capped, false);
+  });
+
+  it("computeXP base = 100; +300 win; +finalUsers/10; daily/weekly +50; difficulty mult", () => {
+    // Loss, no daily, senior diff
+    assertEq(computeXP({ won: false, finalUsers: 0, difficulty: "senior" }), 100);
+    // Win, no extras: 100 + 300 = 400
+    assertEq(computeXP({ won: true, finalUsers: 0, difficulty: "senior" }), 400);
+    // Win + 50 MAU: 100 + 300 + 5 = 405
+    assertEq(computeXP({ won: true, finalUsers: 50, difficulty: "senior" }), 405);
+    // Daily bonus: +50
+    assertEq(computeXP({ won: true, finalUsers: 0, isDaily: true, difficulty: "senior" }), 450);
+    // Director multiplier 1.5 → floor(400 * 1.5) = 600
+    assertEq(computeXP({ won: true, finalUsers: 0, difficulty: "director" }), 600);
+    // Junior multiplier 0.8 → floor(400 * 0.8) = 320
+    assertEq(computeXP({ won: true, finalUsers: 0, difficulty: "junior" }), 320);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // S17: WIN CONDITIONS (scenario-locked alternative victory rules)
 // ─────────────────────────────────────────────────────────────
 describe("win conditions [S17]", () => {
