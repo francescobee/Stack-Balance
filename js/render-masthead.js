@@ -260,6 +260,13 @@ function renderByline() {
     const nameEl = el("div", { class: "byline-name" }, cleanName);
     info.appendChild(nameEl);
     if (role) info.appendChild(el("span", { class: "byline-role" }, role));
+    // S16: archetype badge accanto al ruolo (icona + nome, tooltip con descrizione)
+    if (p.archetype) {
+      info.appendChild(el("span", {
+        class: "byline-archetype",
+        title: `${p.archetype.name} — ${p.archetype.description}`,
+      }, `${p.archetype.icon} ${p.archetype.name}`));
+    }
     cell.appendChild(info);
 
     const stats = el("div", { class: "byline-stats" });

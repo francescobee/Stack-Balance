@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v9";  // bump on each deploy
+const CACHE_VERSION = "sb-v10";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -45,6 +45,10 @@ const CACHE_VERSION = "sb-v9";  // bump on each deploy
 //                  js/synergies.js (24 synergies, scenario flavour),
 //                  refactored rules.js, new showcase modal. Existing
 //                  PWAs get the new file + cleared old cache.
+// v10 (2026-05-03): S16 — AI archetype layer. New js/archetypes.js
+//                   (5 archetypes layered on top of dept-bias personas).
+//                   ai.js scoring updated to apply archetype multipliers
+//                   + cardTypeBias + blockModifier + riskMultiplier.
 const ASSETS = [
   "./",
   "./index.html",
@@ -63,6 +67,7 @@ const ASSETS = [
   "./js/achievements.js",
   "./js/balance.js",
   "./js/synergies.js",
+  "./js/archetypes.js",
   "./js/state.js",
   "./js/rules.js",
   "./js/ai.js",

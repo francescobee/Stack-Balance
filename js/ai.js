@@ -86,6 +86,15 @@ function personaTargetAwardBonus(persona, card, e) {
   return bonus;
 }
 
+// === S16: archetype card-type bias ===
+// Returns extra score from the AI's archetype layered on top of persona.
+// archetype.cardTypeBias is a flat additive bonus per card.type — positive
+// to seek a type, negative to avoid (e.g. Bootstrapper has Funding: -3).
+function archetypeCardTypeBonus(archetype, card) {
+  if (!archetype || !archetype.cardTypeBias) return 0;
+  return archetype.cardTypeBias[card.type] || 0;
+}
+
 // === S5.2: lookahead 1-step ===
 // Estimate the value of the card that'd be revealed by taking (row, col),
 // from the perspective of *who picks next*.
@@ -153,7 +162,10 @@ function aiSelectBlocker(actingIdx, toReveal) {
     const value = (c.effect?.vp || 0) + (c.effect?.dati || 0) * 0.5 + (c.effect?.talento || 0) * 0.5;
     const picker = state.players[actingIdx];
     if (value >= valueThreshold && picker.vp >= ai.vp) {
-      if (Math.random() < blockProb) return i;
+      // S16: archetype-driven block aggressiveness
+      const archMod = ai.archetype?.blockModifier ?? 1;
+      const effectiveProb = Math.min(1, blockProb * archMod);
+      if (Math.random() < effectiveProb) return i;
     }
   }
   return null;
@@ -230,6 +242,11 @@ function decideAIPickFromPyramid(playerIdx) {
   const myDept = persona?.dept || AI_DEPT_BIAS[playerIdx];
   // S5.2: lookahead enabled in Senior+
   const useLookahead = state.difficulty !== "junior";
+  // S16: archetype overlay — null in Junior (skip), or pre-S16 saves
+  const archetype = (state.difficulty !== "junior") ? player.archetype : null;
+  const am = archetype?.weightMultipliers || {};
+  // Helper: persona weight × archetype multiplier (default 1.0)
+  const w = (key, fallback) => (pw[key] ?? fallback) * (am[key] ?? 1);
 
   // Score visible (face-up) pickable cards
   const scored = pickable.map(({ row, col, slot }) => {
@@ -238,14 +255,14 @@ function decideAIPickFromPyramid(playerIdx) {
     // S4.1: AI looks at effective effect (after Vision + active Event modifiers)
     const e = effectiveCardEffect(player, card);
 
-    // S5.1: persona-resolved weights (override defaults from BALANCE.AI)
-    s += (e.vp      || 0) * (pw.vp        ?? W.VP_WEIGHT);
-    s += (e.dati    || 0) * (pw.dati      ?? W.DATI_WEIGHT);
-    s += (e.talento || 0) * (pw.talento   ?? W.TALENTO_WEIGHT);
-    s += (e.budget  || 0) * (pw.budget    ?? W.BUDGET_WEIGHT);
-    s += (e.morale  || 0) * (pw.morale    ?? W.MORALE_WEIGHT);
-    s += card.permanent  ?  (pw.permanent ?? W.PERMANENT_BONUS) : 0;
-    if (isChainTriggered(player, card)) s += (pw.chain ?? W.CHAIN_BONUS);
+    // S5.1 + S16: persona weights × archetype multipliers (defaults from BALANCE.AI)
+    s += (e.vp      || 0) * w("vp",        W.VP_WEIGHT);
+    s += (e.dati    || 0) * w("dati",      W.DATI_WEIGHT);
+    s += (e.talento || 0) * w("talento",   W.TALENTO_WEIGHT);
+    s += (e.budget  || 0) * w("budget",    W.BUDGET_WEIGHT);
+    s += (e.morale  || 0) * w("morale",    W.MORALE_WEIGHT);
+    s += card.permanent  ?  w("permanent", W.PERMANENT_BONUS) : 0;
+    if (isChainTriggered(player, card)) s += w("chain", W.CHAIN_BONUS);
 
     // Need-driven adjustments (universal, not persona-bound)
     if (player.budget  < W.LOW_BUDGET_THRESHOLD  && e.budget)  s += W.LOW_BUDGET_BONUS;
@@ -257,15 +274,20 @@ function decideAIPickFromPyramid(playerIdx) {
       s += Math.abs(e.techDebt) * W.BUGFIX_NEEDED_MULT;
     }
 
-    // S1.1 + S5.1: Crunch Card penalty scaled by persona risk tolerance
+    // S1.1 + S5.1 + S16: Crunch Card penalty scaled by persona risk tolerance
+    // and modulated by archetype.riskMultiplier (>1 = more cautious).
     if (e.techDebt && e.techDebt > 0) {
-      const riskMult = persona ? (1 / (persona.riskTolerance + 0.15)) : 2;
+      const baseRisk = persona ? (1 / (persona.riskTolerance + 0.15)) : 2;
+      const riskMult = baseRisk * (archetype?.riskMultiplier ?? 1);
       s -= e.techDebt * W.DEBT_PENALTY_MULT * (riskMult / 2);
       if (player.techDebt >= W.DEBT_AMPLIFY_THRESHOLD) s -= e.techDebt * W.DEBT_AMPLIFY_MULT;
     }
 
     // S5.1: persona target awards bias
     if (persona) s += personaTargetAwardBonus(persona, card, e);
+
+    // S16: archetype card-type bias (flat add per card.type)
+    s += archetypeCardTypeBonus(archetype, card);
 
     // S5.1: persona reject types — strong negative
     if (persona?.rejectTypes?.includes(card.type)) s -= 10;

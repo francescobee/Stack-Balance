@@ -38,6 +38,9 @@ function startGame(scenarioId = "standard", isDaily = false) {
   // S15: pesca le sinergie attive per la partita (game-wide). Va prima
   // del Vision draft così il giocatore le vede nella showcase modal.
   state.synergies = drawSynergies(state.scenario, BALANCE.SYNERGIES.PER_GAME);
+  // S16: pesca un archetype per ciascun AI (random per partita,
+  // deterministico sotto Daily seed). Layer di personalità sopra le persona.
+  assignArchetypesToAIs(state);
   // S2.3: Vision draft happens BEFORE the first quarter (game-start identity).
   // After the human picks (and AI auto-pick), starting modifiers apply,
   // then we proceed to Q1 setup and OKR draft.
@@ -99,6 +102,8 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
   // S15: host pesca le sinergie; verranno serializzate e ricevute dai client
   // via stateUpdate. Vedi serializeState/deserializeState in multiplayer.js.
   state.synergies = drawSynergies(state.scenario, BALANCE.SYNERGIES.PER_GAME);
+  // S16: archetypes per AI (host-only; clients ricevono via stateUpdate)
+  assignArchetypesToAIs(state);
   // Vision draft: all humans in parallel + AI auto-pick.
   // S10 fix: wrap the chain in explicit error handlers — silent promise
   // rejections were causing "stuck after Vision pick" hangs (no visible error,

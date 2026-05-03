@@ -82,6 +82,22 @@
   font-weight: 400;
   margin-top: 1px;
 }
+/* S16: archetype tag accanto al ruolo del rivale */
+.byline-archetype {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 6px;
+  border: 1px dashed var(--rule);
+  background: var(--paper-2);
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
 .byline-stats {
   font-family: var(--mono);
   font-size: 10px;

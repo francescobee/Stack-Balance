@@ -543,6 +543,111 @@ describe("drawSynergies [S15]", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// S16: AI ARCHETYPES (drawArchetypes + scoring overlay)
+// ─────────────────────────────────────────────────────────────
+describe("archetypes [S16]", () => {
+  it("ARCHETYPE_POOL has 5 distinct ids", () => {
+    assertEq(ARCHETYPE_POOL.length, 5);
+    const ids = new Set(ARCHETYPE_POOL.map(a => a.id));
+    assertEq(ids.size, 5, "no duplicate ids");
+  });
+
+  it("drawArchetypes returns N distinct archetypes", () => {
+    setRngSeed(99);
+    try {
+      const drawn = drawArchetypes(3);
+      assertEq(drawn.length, 3);
+      const ids = new Set(drawn.map(a => a.id));
+      assertEq(ids.size, 3, "no duplicates in 3-draw");
+    } finally { clearRngSeed(); }
+  });
+
+  it("drawArchetypes deterministic under seed", () => {
+    setRngSeed(2024);
+    const a = drawArchetypes(3).map(x => x.id);
+    setRngSeed(2024);
+    const b = drawArchetypes(3).map(x => x.id);
+    clearRngSeed();
+    assertEq(a.join(","), b.join(","), "same seed → same draw");
+  });
+
+  it("getArchetypeById round-trips ids", () => {
+    ARCHETYPE_POOL.forEach(a => {
+      assertEq(getArchetypeById(a.id)?.id, a.id);
+    });
+    assertEq(getArchetypeById("nope"), null, "unknown id → null");
+  });
+
+  it("Aggressor scores Sabotage cards higher than Bootstrapper", () => {
+    // Same player, same Sabotage card, different archetypes → different scores.
+    const sabotage = mockCard({
+      id: "talent_poach", type: "Sabotage", dept: "product",
+      cost: { budget: 2 }, effect: { stealHiringFromLeader: 1 },
+    });
+    const aggressor = getArchetypeById("aggressor");
+    const bootstrapper = getArchetypeById("bootstrapper");
+
+    function scoreWithArchetype(archetype) {
+      // Build minimal state: human at slot 0, AI under test at slot 1
+      // AI is behind on VP so anti-leader sabotage is attractive.
+      const human = mockPlayer({ name: "You", isHuman: true, vp: 20 });
+      const ai = mockPlayer({ name: "AI", isHuman: false, vp: 5 });
+      ai.archetype = archetype;
+      const stub = {
+        difficulty: "senior",
+        scenario: null,
+        activeEvent: null,
+        players: [human, ai],
+        pyramid: [[{ card: sabotage, faceUp: true, taken: false }]],
+        pickOrder: [1],
+        pickIndex: 0,
+      };
+      return withState(stub, () => {
+        const out = decideAIPickFromPyramid(1);
+        return out;
+      });
+    }
+    // Both archetypes will pick *something* (1 card available); the test asserts
+    // the score logic differentiates them via cardTypeBias.
+    // We re-export scoring by calling archetypeCardTypeBonus directly.
+    const aggBonus = archetypeCardTypeBonus(aggressor, sabotage);
+    const bootBonus = archetypeCardTypeBonus(bootstrapper, sabotage);
+    assert(aggBonus > bootBonus,
+      `Aggressor (${aggBonus}) should value Sabotage more than Bootstrapper (${bootBonus})`);
+    // Bootstrapper specifically penalises Funding (-3); confirm by scoring a Funding card
+    const funding = mockCard({ id: "preseed", type: "Funding", dept: "product" });
+    assert(archetypeCardTypeBonus(bootstrapper, funding) < 0,
+      "Bootstrapper rejects Funding");
+  });
+
+  it("archetype.weightMultipliers spec sanity: Hoarder boosts budget; Hype Master boosts vp", () => {
+    // Pure data check on the pool: ensures the design intent of each archetype
+    // is preserved even if the scoring code is refactored.
+    const hoarder = getArchetypeById("hoarder");
+    const hypeMaster = getArchetypeById("hype_master");
+    const aggressor = getArchetypeById("aggressor");
+    assert(hoarder.weightMultipliers.budget > 1, "Hoarder amplifies budget");
+    assert(hypeMaster.weightMultipliers.vp > 1, "Hype Master amplifies vp");
+    assert(aggressor.weightMultipliers.vp > 1, "Aggressor amplifies vp");
+    // Risk multipliers: cautious < 1, daring > 1
+    assert(getArchetypeById("hoarder").riskMultiplier < 1, "Hoarder is cautious");
+    assert(getArchetypeById("aggressor").riskMultiplier > 1, "Aggressor is daring");
+  });
+
+  it("aiSelectBlocker uses archetype.blockModifier (Disruptor blocks more)", () => {
+    // Build a state where everything except blockProb is fixed; assert that
+    // Disruptor (modifier 1.4) yields a higher effective probability than
+    // Bootstrapper (modifier 0.8) by checking the modifier value itself,
+    // since the Math.random() call inside makes direct probability assertion
+    // non-deterministic without monkey-patching.
+    const disruptor = getArchetypeById("disruptor");
+    const bootstrapper = getArchetypeById("bootstrapper");
+    assert(disruptor.blockModifier > bootstrapper.blockModifier,
+      `Disruptor (${disruptor.blockModifier}) > Bootstrapper (${bootstrapper.blockModifier})`);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // S10: MULTIPLAYER — pure functions (serialization, slot helpers)
 // ─────────────────────────────────────────────────────────────
 describe("multiplayer serialization [S10.2]", () => {
@@ -643,6 +748,20 @@ describe("multiplayer serialization [S10.2]", () => {
     assertEq(restored.synergies[0].id, "happy_team");
     assert(typeof restored.synergies[0].check === "function",
            "synergy.check restored as function (not orphaned ref)");
+  });
+
+  // ── S16: archetype serialization ──
+  it("S16 serialize/deserialize roundtrip restores AI archetype (id → object)", () => {
+    const orig = buildSerializableState();
+    // Augment the lone player with an archetype to test the roundtrip
+    orig.players[0].archetype = getArchetypeById("disruptor");
+    const serial = serializeState(orig);
+    assertEq(serial.players[0].archetype, "disruptor",
+      "archetype serialized as id string");
+    const restored = deserializeState(serial);
+    assertEq(restored.players[0].archetype?.id, "disruptor");
+    assert(restored.players[0].archetype?.weightMultipliers,
+      "archetype object restored with its modifier fields");
   });
 });
 

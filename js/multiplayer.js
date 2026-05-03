@@ -386,6 +386,8 @@ function serializeState(s) {
       okrOptions: (p.okrOptions || []).map(o => o.id),
       // Vision is pure data (modifiers obj has no fns) — passthrough
       // visionOptions same
+      // S16: archetype → id only; client re-binds via getArchetypeById
+      archetype: p.archetype ? p.archetype.id : null,
     })),
     log: (s.log || []).slice(0, 10),  // bandwidth: only last 10 entries
     phase: s.phase,
@@ -425,6 +427,9 @@ function deserializeState(serialized) {
       OKR_POOL.find(o => o.id === id)).filter(Boolean),
     okrOptions: (p.okrOptions || []).map(id =>
       OKR_POOL.find(o => o.id === id)).filter(Boolean),
+    // S16: rebind archetype ref (with its modifier objects) from local pool
+    archetype: p.archetype && typeof getArchetypeById === "function"
+      ? getArchetypeById(p.archetype) : null,
   }));
   s.activeEvent = serialized.activeEvent
     ? (EVENT_POOL.find(e => e.id === serialized.activeEvent.id) || serialized.activeEvent)
