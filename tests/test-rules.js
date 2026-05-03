@@ -648,6 +648,76 @@ describe("archetypes [S16]", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// S18.3: WEEKLY CHALLENGE
+// ─────────────────────────────────────────────────────────────
+describe("weekly challenge [S18.3]", () => {
+  it("WEEKLY_POOL has 6 distinct challenges with required fields", () => {
+    assertEq(WEEKLY_POOL.length, 6);
+    const ids = new Set(WEEKLY_POOL.map(c => c.id));
+    assertEq(ids.size, 6);
+    WEEKLY_POOL.forEach(c => {
+      assert(c.id && c.name && c.icon && c.description, `${c.id} has metadata`);
+      assert(c.modifiers, `${c.id} has modifiers`);
+      assert(typeof c.winBonusXP === "number", `${c.id} has winBonusXP`);
+    });
+  });
+
+  it("getWeeklyChallengeById round-trips", () => {
+    WEEKLY_POOL.forEach(c => {
+      assertEq(getWeeklyChallengeById(c.id)?.id, c.id);
+    });
+    assertEq(getWeeklyChallengeById("nope"), null);
+  });
+
+  it("currentWeekKey returns ISO format YYYY-Www", () => {
+    const key = currentWeekKey();
+    // matches "YYYY-Www" with 4-digit year and 2-digit week
+    assert(/^\d{4}-W\d{2}$/.test(key), `key "${key}" matches ISO format`);
+  });
+
+  it("weeklySeed is deterministic within the same week", () => {
+    const a = weeklySeed();
+    const b = weeklySeed();
+    assertEq(a, b, "two calls in the same week return identical seed");
+    assert(a > 0, "seed is positive");
+  });
+
+  it("getCurrentWeeklyChallenge returns a challenge in the pool", () => {
+    const challenge = getCurrentWeeklyChallenge();
+    assert(challenge && challenge.id, "returns a challenge");
+    assert(WEEKLY_POOL.some(c => c.id === challenge.id), "challenge is in pool");
+  });
+
+  it("weekly modifiers compose with the existing engine (cost pass)", () => {
+    // Simulate a weekly challenge that adds +1 tempo to Feature cards.
+    withState({
+      activeEvent: null,
+      scenario: null,
+      weeklyChallenge: { modifiers: { costModifiersByType: { Feature: { tempo: 1 } } } },
+    }, () => {
+      const p = mockPlayer();
+      const card = mockCard({ type: "Feature", cost: { budget: 2, tempo: 1 } });
+      const c = adjustedCost(p, card);
+      assertEq(c.tempo, 2, "weekly modifier added +1 tempo to Feature");
+      assertEq(c.budget, 2, "non-targeted resource unchanged");
+    });
+  });
+
+  it("weekly modifiers compose with the existing engine (effect pass)", () => {
+    withState({
+      activeEvent: null,
+      scenario: null,
+      weeklyChallenge: { modifiers: { effectMultipliersByType: { Discovery: { dati: 0.5 } } } },
+    }, () => {
+      const p = mockPlayer();
+      const card = mockCard({ type: "Discovery", effect: { dati: 4 } });
+      const e = effectiveCardEffect(p, card);
+      assertEq(e.dati, 2, "Discovery dati halved by weekly modifier");
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // S18.2: VISION VARIANTS (earn-by-mastery)
 // ─────────────────────────────────────────────────────────────
 describe("vision variants [S18.2]", () => {

@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v13";  // bump on each deploy
+const CACHE_VERSION = "sb-v14";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -62,6 +62,10 @@ const CACHE_VERSION = "sb-v13";  // bump on each deploy
 //                   visions + 8 v2 variants in VISION_POOL. Each variant
 //                   unlocks after 3 wins with its base. Profile shows
 //                   Vision Mastery panel; draft modal flags v2 cards.
+// v14 (2026-05-03): S18.3 — Weekly Challenge mode. New js/weekly-challenges.js
+//                   (6 challenges rotated by ISO week). Splash button +
+//                   intro modal + masthead badge. Mutators applied via the
+//                   existing modifier engine (4th pass after Scenario).
 const ASSETS = [
   "./",
   "./index.html",
@@ -82,6 +86,7 @@ const ASSETS = [
   "./js/synergies.js",
   "./js/archetypes.js",
   "./js/win-conditions.js",
+  "./js/weekly-challenges.js",
   "./js/state.js",
   "./js/rules.js",
   "./js/ai.js",

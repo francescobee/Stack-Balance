@@ -211,6 +211,39 @@ function showOKRDraftModal(onComplete, opts) {
   document.body.appendChild(root);
 }
 
+// ---------- S18.3: WEEKLY CHALLENGE INTRO MODAL ----------
+function showWeeklyChallengeIntroModal(challenge, onStart) {
+  const safeStart = () => { if (typeof onStart === "function") onStart(); };
+  if (!challenge) { safeStart(); return; }
+
+  const root = el("div", { class: "modal-bg", id: "weeklyIntroBg" });
+  const modal = el("div", { class: "modal weekly-intro" });
+  const weekKey = (typeof currentWeekKey === "function") ? currentWeekKey() : "";
+  const note = challenge.noteBeforeStart
+    ? `<div class="weekly-note">${challenge.noteBeforeStart}</div>`
+    : "";
+  modal.innerHTML = `
+    <div class="modal-eyebrow">⚡ Weekly Challenge${weekKey ? " · " + weekKey : ""}</div>
+    <div class="weekly-icon">${challenge.icon}</div>
+    <h2 class="weekly-name">${challenge.name}</h2>
+    <p class="weekly-desc">${challenge.description}</p>
+    ${note}
+    <div class="weekly-bonus">+${challenge.winBonusXP || 0} XP bonus se vinci</div>
+    <div class="actions">
+      <button class="ghost" id="cancelWeeklyBtn" type="button">Indietro</button>
+      <button class="primary" id="startWeeklyBtn" type="button">Inizia →</button>
+    </div>
+  `;
+  root.appendChild(modal);
+  document.body.appendChild(root);
+
+  modal.querySelector("#cancelWeeklyBtn").onclick = () => root.remove();
+  modal.querySelector("#startWeeklyBtn").onclick = () => {
+    root.remove();
+    safeStart();
+  };
+}
+
 // ---------- S15: SYNERGY SHOWCASE MODAL ----------
 // Mostra le 5 sinergie pescate per la partita corrente. Triggerato dopo
 // Vision draft, prima OKR draft. One-shot informativo: il giocatore le

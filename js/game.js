@@ -5,9 +5,12 @@
 //            end-game (modal HTML lives here for cohesion)
 // =============================================================
 
-function startGame(scenarioId = "standard", isDaily = false) {
-  // S6.3: Daily mode uses a deterministic seed derived from today's date
+function startGame(scenarioId = "standard", isDaily = false, isWeekly = false) {
+  // S6.3: Daily mode uses a deterministic seed from today's date.
+  // S18.3: Weekly mode uses a deterministic seed from the ISO week key.
+  // (Daily wins over Weekly if both flags somehow set — should not happen.)
   if (isDaily) setRngSeed(dailySeed());
+  else if (isWeekly) setRngSeed(weeklySeed());
   else clearRngSeed();
   const profile = getProfile() || newProfile("Tu");
   state = {
@@ -35,9 +38,14 @@ function startGame(scenarioId = "standard", isDaily = false) {
     localSlotIdx: 0,               // S10: which slot is this client (0 in single-player)
     synergies: [],                 // S15: drawn at game start, see drawSynergies()
     winCondition: null,            // S17: scenario-locked alternative win rule
+    weeklyChallenge: null,         // S18.3: active iff isWeekly === true
   };
   // S17: lock the win condition based on scenario.winConditionId (default "mau")
   state.winCondition = getWinConditionById(state.scenario?.winConditionId || "mau");
+  // S18.3: weekly challenge — load active mutator if requested
+  if (isWeekly && typeof getCurrentWeeklyChallenge === "function") {
+    state.weeklyChallenge = getCurrentWeeklyChallenge();
+  }
   // S15: pesca le sinergie attive per la partita (game-wide). Va prima
   // del Vision draft così il giocatore le vede nella showcase modal.
   state.synergies = drawSynergies(state.scenario, BALANCE.SYNERGIES.PER_GAME);
@@ -194,8 +202,10 @@ function draftVisionsFlow(onComplete) {
 
 // S2.3: apply Vision starting-state modifiers (after draft, before Q1)
 function applyStartingModifiers() {
-  state.players.forEach(p => {
-    const m = p.vision?.modifiers;
+  // Apply starting deltas from any modifier source (Vision today, Weekly Challenge
+  // tomorrow). All optional fields, all stacking. Helper isolates the math so
+  // we don't repeat the clamp/permanent logic per source.
+  function applyOne(p, m) {
     if (!m) return;
     if (m.startingBudget)  p.budget  += m.startingBudget;
     if (m.startingTalento) p.talento += m.startingTalento;
@@ -203,6 +213,11 @@ function applyStartingModifiers() {
     if (m.startingPermanents) {
       m.startingPermanents.forEach(perm => { p.permanents[perm] = true; });
     }
+  }
+  state.players.forEach(p => {
+    applyOne(p, p.vision?.modifiers);
+    // S18.3: weekly challenge starting modifiers apply to ALL players (game-wide).
+    applyOne(p, state.weeklyChallenge?.modifiers);
   });
 }
 
@@ -262,8 +277,9 @@ function startQuarter() {
   // row 1: face-up
   // row 2: face-down
   // row 3 (front, pickable): face-up
-  // S2.3: pool filtered by HUMAN's vision (excludeCardTypes / excludeCardIds)
-  // AI visions don't filter — pool is shared, asymmetric filtering would break draft
+  // S2.3: pool filtered by HUMAN's vision (excludeCardTypes / excludeCardIds).
+  // S18.3: weekly challenge filters apply to ALL players (game-wide pool).
+  // AI visions don't filter — pool is shared, asymmetric filtering would break draft.
   let pool = [...getCatalog(state.quarter)];
   const humanVision = state.players[0]?.vision?.modifiers || {};
   if (humanVision.excludeCardTypes) {
@@ -271,6 +287,13 @@ function startQuarter() {
   }
   if (humanVision.excludeCardIds) {
     pool = pool.filter(c => !humanVision.excludeCardIds.includes(c.id));
+  }
+  const weekly = state.weeklyChallenge?.modifiers || {};
+  if (weekly.excludeCardTypes) {
+    pool = pool.filter(c => !weekly.excludeCardTypes.includes(c.type));
+  }
+  if (weekly.excludeCardIds) {
+    pool = pool.filter(c => !weekly.excludeCardIds.includes(c.id));
   }
   pool = shuffle(pool);
   // S9.1.e: dedup di "precious cards" — permanent OR vp ≥ 5 OR budget ≥ 5.
@@ -1136,6 +1159,23 @@ function showEndGameModal() {
       winConditionId: state.winCondition?.id || "mau",  // S17
       isWeekly: !!state.weeklyChallenge,                 // S18.3
     });
+    // S18.3: per-challenge winBonusXP (separate from the flat +50 weekly bonus
+    // already in computeXP) — only when the local player won AND was playing
+    // the weekly run. Stored as bonus on top of the just-recorded XP delta.
+    if (won && state.weeklyChallenge?.winBonusXP && typeof updateProfile === "function") {
+      const bonusXp = state.weeklyChallenge.winBonusXP;
+      updateProfile(p => {
+        p.xp = (p.xp || 0) + bonusXp;
+        p.level = computeLevel(p.xp);
+      });
+      if (typeof showToast === "function") {
+        showToast({
+          who: "⚡ WEEKLY BONUS",
+          what: `<em>+${bonusXp} XP</em> per la challenge ${state.weeklyChallenge.name}`,
+          kind: "celebrate",
+        });
+      }
+    }
   }
   // S18.1: level-up toast (if the local player crossed a level threshold)
   if (xpOutcome && xpOutcome.newLevel > xpOutcome.oldLevel

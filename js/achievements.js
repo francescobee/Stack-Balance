@@ -152,6 +152,35 @@ const ACHIEVEMENTS = [
       return baseIds.every(id => (vs[id]?.wins || 0) >= 1);
     },
   },
+  // ── S18.3 chain achievement ──
+  {
+    id: "weekly_warrior",
+    icon: "⚡",
+    name: "Weekly Warrior",
+    description: "Vinci 4 Weekly Challenge nella tua carriera.",
+    check: (ctx) => (ctx.profile?.stats?.weeklyWins || 0) >= 4,
+  },
+  // ── S18.1 founder level milestones ──
+  {
+    id: "founder_lvl_5",
+    icon: "⭐",
+    name: "Founder Lv. 5",
+    description: "Raggiungi il Founder Level 5.",
+    check: (ctx) => {
+      if (typeof computeLevel !== "function") return false;
+      return computeLevel(ctx.profile?.xp || 0) >= 5;
+    },
+  },
+  {
+    id: "founder_lvl_10",
+    icon: "🌟",
+    name: "Founder Lv. 10",
+    description: "Raggiungi il Founder Level 10.",
+    check: (ctx) => {
+      if (typeof computeLevel !== "function") return false;
+      return computeLevel(ctx.profile?.xp || 0) >= 10;
+    },
+  },
 ];
 
 // Compute per-game context counters

@@ -52,6 +52,8 @@ function adjustedCost(player, card) {
   applyCostModifiers(c, card, state?.activeEvent?.modifiers);
   // S6.1: Scenario cost modifiers (whole game)
   applyCostModifiers(c, card, state?.scenario?.modifiers);
+  // S18.3: Weekly Challenge cost modifiers (whole game, only when active)
+  applyCostModifiers(c, card, state?.weeklyChallenge?.modifiers);
   return c;
 }
 
@@ -102,12 +104,13 @@ function applyEffectModifiers(e, card, modifiers) {
   });
 }
 
-// S4.1+S6.1: compute the effective effect after Vision + Event + Scenario modifiers
+// S4.1+S6.1+S18.3: compute the effective effect after Vision + Event + Scenario + Weekly modifiers
 function effectiveCardEffect(player, card) {
   const e = { ...(card.effect || {}) };
   applyEffectModifiers(e, card, player.vision?.modifiers);
   applyEffectModifiers(e, card, state?.activeEvent?.modifiers);
   applyEffectModifiers(e, card, state?.scenario?.modifiers);
+  applyEffectModifiers(e, card, state?.weeklyChallenge?.modifiers);
   return e;
 }
 
@@ -121,11 +124,12 @@ function applyScenarioStatCaps(player) {
 }
 
 function applyEffect(player, card, allPlayers) {
-  // S2.3+S4.1+S6.1: clone effect and apply Vision + Event + Scenario modifiers
+  // S2.3+S4.1+S6.1+S18.3: clone effect and apply Vision + Event + Scenario + Weekly modifiers
   const e = { ...(card.effect || {}) };
   applyEffectModifiers(e, card, player.vision?.modifiers);
   applyEffectModifiers(e, card, state?.activeEvent?.modifiers);
   applyEffectModifiers(e, card, state?.scenario?.modifiers);
+  applyEffectModifiers(e, card, state?.weeklyChallenge?.modifiers);
 
   // S3.1: Counter-Marketing reaction — if this is a Launch by an opponent
   // of someone who played Counter-Marketing earlier, neutralise the MAU gain.

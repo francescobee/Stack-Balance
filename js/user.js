@@ -116,6 +116,17 @@ function recordGameResult({ won, finalUsers, scenarioId, visionId, isDaily, winC
       if (won) p.visionStats[visionId].wins += 1;
     }
 
+    // S18.3: weekly challenge history (one-shot per ISO week)
+    if (isWeekly && typeof currentWeekKey === "function") {
+      p.weeklyHistory = p.weeklyHistory || {};
+      const wk = currentWeekKey();
+      p.weeklyHistory[wk] = {
+        week: wk, won, finalUsers, scenarioId, visionId, ts: Date.now(),
+      };
+      // Track total weekly wins (for "Weekly Warrior" achievement)
+      if (won) p.stats.weeklyWins = (p.stats.weeklyWins || 0) + 1;
+    }
+
     // S18.1: Founder Level — XP awarded per match, level derived from total
     const oldXp = p.xp || 0;
     const oldLevel = computeLevel(oldXp);

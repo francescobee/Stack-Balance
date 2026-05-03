@@ -108,6 +108,16 @@ function renderMasthead() {
     dailyBadge.innerHTML = `🌅 <span class="db-name">Daily</span>`;
     meta.appendChild(dailyBadge);
   }
+  // S18.3: Weekly Challenge badge
+  if (state.weeklyChallenge) {
+    const wk = state.weeklyChallenge;
+    const wkBadge = el("div", {
+      class: "weekly-badge",
+      title: `${wk.name} — ${wk.description}`,
+    });
+    wkBadge.innerHTML = `${wk.icon} <span class="wk-name">Weekly: ${wk.name}</span>`;
+    meta.appendChild(wkBadge);
+  }
 
   const chip = renderProfileChip();
   if (chip) meta.appendChild(chip);

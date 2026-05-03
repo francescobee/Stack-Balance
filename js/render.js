@@ -76,6 +76,30 @@ function renderSplash() {
     if (playedToday) dailyBtn.style.opacity = "0.55";
     actions.appendChild(dailyBtn);
 
+    // S18.3: Weekly Challenge button (one shot per ISO week, mutator + bonus XP)
+    if (typeof getCurrentWeeklyChallenge === "function") {
+      const challenge = getCurrentWeeklyChallenge();
+      const playedThisWeek = hasPlayedWeeklyThisWeek();
+      const weeklyBtn = el("button", {
+        class: "ghost weekly-btn",
+        title: playedThisWeek
+          ? "Weekly Challenge: già giocata questa settimana"
+          : `${challenge.name} — ${challenge.description}`,
+        onclick: () => {
+          if (hasPlayedWeeklyThisWeek()) {
+            showToast({ who: "WEEKLY", what: "Hai già giocato la challenge di questa settimana.", kind: "discard" });
+            return;
+          }
+          showWeeklyChallengeIntroModal(challenge, () => {
+            startGame("standard", false, true);
+          });
+        }
+      });
+      weeklyBtn.innerHTML = `${challenge.icon} Weekly Challenge ${playedThisWeek ? '· ✓' : ''}`;
+      if (playedThisWeek) weeklyBtn.style.opacity = "0.55";
+      actions.appendChild(weeklyBtn);
+    }
+
     // S10 + S11.9: Multiplayer button (P2P online + Hot Seat locale unified)
     actions.appendChild(el("button", {
       class: "ghost",

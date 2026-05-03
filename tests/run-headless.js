@@ -66,6 +66,7 @@ function load(rel) {
   "js/synergies.js",    // S15: synergy pool + drawSynergies
   "js/archetypes.js",   // S16: AI archetype pool + drawArchetypes
   "js/win-conditions.js", // S17: scenario-locked alternative win rules
+  "js/weekly-challenges.js", // S18.3: weekly challenge pool + week key/seed
   "js/user.js",         // S18.1: pure XP/level helpers (loadProfile etc. require localStorage stub — not used by tests)
   "js/state.js",
   "js/rules.js",
