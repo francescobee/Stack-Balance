@@ -648,6 +648,108 @@ describe("archetypes [S16]", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// S17: WIN CONDITIONS (scenario-locked alternative victory rules)
+// ─────────────────────────────────────────────────────────────
+describe("win conditions [S17]", () => {
+  it("WIN_CONDITION_POOL has the 4 expected ids", () => {
+    const ids = WIN_CONDITION_POOL.map(w => w.id).sort();
+    assertEq(ids.join(","), "acquisition,efficiency,mau,survival");
+  });
+
+  it("getWinConditionById falls back to mau on unknown id", () => {
+    assertEq(getWinConditionById("nope")?.id, "mau");
+    assertEq(getWinConditionById("survival")?.id, "survival");
+  });
+
+  it("each scenario in SCENARIO_POOL has a winConditionId that exists", () => {
+    SCENARIO_POOL.forEach(sc => {
+      assert(sc.winConditionId, `scenario ${sc.id} missing winConditionId`);
+      const wc = getWinConditionById(sc.winConditionId);
+      assertEq(wc.id, sc.winConditionId, `scenario ${sc.id} winConditionId resolves`);
+    });
+  });
+
+  // ---- mau ----
+  it("mau: highest vp wins", () => {
+    const players = [
+      mockPlayer({ name: "A", vp: 30 }),
+      mockPlayer({ name: "B", vp: 50 }),
+      mockPlayer({ name: "C", vp: 40 }),
+    ];
+    const winner = getWinConditionById("mau").selectWinner(players, {});
+    assertEq(winner?.name, "B");
+  });
+
+  // ---- survival ----
+  it("survival: only morale > 0 are eligible; tiebreak by vp", () => {
+    const survival = getWinConditionById("survival");
+    const players = [
+      mockPlayer({ name: "Dead",  morale: 0, vp: 80 }),  // out
+      mockPlayer({ name: "Live1", morale: 2, vp: 15 }),
+      mockPlayer({ name: "Live2", morale: 1, vp: 30 }),  // wins (higher vp)
+    ];
+    assertEq(survival.selectWinner(players, {}).name, "Live2");
+  });
+
+  it("survival: returns null when nobody survives", () => {
+    const survival = getWinConditionById("survival");
+    const players = [
+      mockPlayer({ name: "A", morale: 0, vp: 50 }),
+      mockPlayer({ name: "B", morale: 0, vp: 30 }),
+    ];
+    assertEq(survival.selectWinner(players, {}), null,
+      "no survivors → no winner");
+  });
+
+  // ---- acquisition ----
+  it("acquisition: 40K+ MAU triggers earlyTermination", () => {
+    const acq = getWinConditionById("acquisition");
+    const stateLow = { players: [mockPlayer({ vp: 30 }), mockPlayer({ vp: 20 })] };
+    const stateHit = { players: [mockPlayer({ vp: 40 }), mockPlayer({ vp: 20 })] };
+    assertEq(acq.earlyTermination(stateLow), false);
+    assertEq(acq.earlyTermination(stateHit), true);
+  });
+
+  it("acquisition: prefers a 40K+ player over a higher non-qualifier", () => {
+    // Edge case: defensive scoring puts vp=42 below vp=50 for ranking, but
+    // acquisition only considers >=40 candidates.
+    const acq = getWinConditionById("acquisition");
+    const players = [
+      mockPlayer({ name: "Qualifier", vp: 42 }),
+      mockPlayer({ name: "Bigger",    vp: 50 }),
+    ];
+    // Both are >= 40, so the higher-vp one still wins.
+    assertEq(acq.selectWinner(players, {}).name, "Bigger");
+    // But if only one qualifies, it wins regardless of others.
+    const players2 = [
+      mockPlayer({ name: "Qualifier", vp: 41 }),
+      mockPlayer({ name: "Almost",    vp: 39 }),
+    ];
+    assertEq(acq.selectWinner(players2, {}).name, "Qualifier");
+  });
+
+  // ---- efficiency ----
+  it("efficiency: best MAU / spent ratio wins", () => {
+    const eff = getWinConditionById("efficiency");
+    // Player A: 50 vp, spent 10 (ratio 5.0)
+    // Player B: 30 vp, spent 3  (ratio 10.0) — wins despite less MAU
+    const cardCheap = mockCard({ id: "c1", cost: { budget: 1, talento: 0 }, effect: {} });
+    const cardExp   = mockCard({ id: "c2", cost: { budget: 5, talento: 1 }, effect: {} });
+    const a = mockPlayer({ name: "A", vp: 50, played: [cardExp, cardExp] });   // spent 12
+    const b = mockPlayer({ name: "B", vp: 30, played: [cardCheap, cardCheap, cardCheap] }); // spent 3
+    assertEq(eff.selectWinner([a, b], {}).name, "B",
+      "B has better ratio (30/3 = 10) than A (50/12 ≈ 4.2)");
+  });
+
+  it("efficiency: defaults spent to 1 when player has no played cards", () => {
+    const eff = getWinConditionById("efficiency");
+    const a = mockPlayer({ name: "A", vp: 5, played: [] }); // 5 / 1 = 5
+    const b = mockPlayer({ name: "B", vp: 4, played: [] }); // 4 / 1 = 4
+    assertEq(eff.selectWinner([a, b], {}).name, "A");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // S10: MULTIPLAYER — pure functions (serialization, slot helpers)
 // ─────────────────────────────────────────────────────────────
 describe("multiplayer serialization [S10.2]", () => {
@@ -762,6 +864,18 @@ describe("multiplayer serialization [S10.2]", () => {
     assertEq(restored.players[0].archetype?.id, "disruptor");
     assert(restored.players[0].archetype?.weightMultipliers,
       "archetype object restored with its modifier fields");
+  });
+
+  // ── S17: winCondition serialization ──
+  it("S17 serialize/deserialize roundtrip restores winCondition (id → object)", () => {
+    const orig = buildSerializableState();
+    orig.winCondition = getWinConditionById("survival");
+    const serial = serializeState(orig);
+    assertEq(serial.winCondition?.id, "survival");
+    const restored = deserializeState(serial);
+    assertEq(restored.winCondition?.id, "survival");
+    assert(typeof restored.winCondition?.selectWinner === "function",
+      "winCondition.selectWinner restored as function");
   });
 });
 

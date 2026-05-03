@@ -71,7 +71,7 @@ function updateProfile(mutator) {
 }
 
 // Called by game flow at end of a match
-function recordGameResult({ won, finalUsers, scenarioId, visionId, isDaily }) {
+function recordGameResult({ won, finalUsers, scenarioId, visionId, isDaily, winConditionId }) {
   return updateProfile(p => {
     p.stats.games = (p.stats.games || 0) + 1;
     if (won) {
@@ -92,10 +92,17 @@ function recordGameResult({ won, finalUsers, scenarioId, visionId, isDaily }) {
       p.dailyHistory = p.dailyHistory || {};
       const dayKey = todayKey();
       p.dailyHistory[dayKey] = {
-        date: dayKey, won, finalUsers, scenarioId, visionId, ts: Date.now(),
+        date: dayKey, won, finalUsers, scenarioId, visionId, winConditionId, ts: Date.now(),
       };
       // recompute streak (consecutive days played up to today)
       p.stats.dailyStreak = computeDailyStreak(p.dailyHistory);
+    }
+
+    // S17: track per-win-condition victories (used for "Versatile" achievement
+    // and any future meta-progression tied to win condition mastery).
+    if (won && winConditionId) {
+      p.winConditionWins = p.winConditionWins || {};
+      p.winConditionWins[winConditionId] = (p.winConditionWins[winConditionId] || 0) + 1;
     }
   });
 }

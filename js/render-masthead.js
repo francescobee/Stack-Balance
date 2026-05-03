@@ -88,6 +88,20 @@ function renderMasthead() {
     scBadge.appendChild(el("span", { class: "sb-name" }, sc.name));
     meta.appendChild(scBadge);
   }
+  // S17: Win Condition badge (visibile solo se non standard MAU)
+  const wc = state.winCondition;
+  if (wc && wc.id !== "mau") {
+    const wcHint = (wc.masthead && typeof wc.masthead.hint === "function")
+      ? wc.masthead.hint(state) : wc.description;
+    const wcBadge = el("div", {
+      class: "wincond-badge",
+      title: `${wc.name} — ${wc.description}`
+    });
+    wcBadge.appendChild(el("span", { class: "wcb-icon" }, wc.icon));
+    wcBadge.appendChild(el("span", { class: "wcb-name" }, wc.name));
+    if (wcHint) wcBadge.appendChild(el("span", { class: "wcb-hint" }, wcHint));
+    meta.appendChild(wcBadge);
+  }
   // S6.3: Daily Run badge
   if (state.isDaily) {
     const dailyBadge = el("div", { class: "daily-badge", title: "Daily Run · seed condiviso" });

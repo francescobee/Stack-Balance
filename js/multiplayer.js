@@ -396,6 +396,8 @@ function serializeState(s) {
     scenario: s.scenario ? { id: s.scenario.id } : null,
     // S15: synergies → array of ids; clients re-bind via getSynergyById
     synergies: (s.synergies || []).map(syn => syn.id),
+    // S17: winCondition → id; client re-binds via getWinConditionById
+    winCondition: s.winCondition ? { id: s.winCondition.id } : null,
     counterMarketingPending: (s.counterMarketingPending || []).length, // count only
     deferredReveals: [],  // Block & React disabled in MP, ignore
     aiHighlight: s.aiHighlight,
@@ -441,6 +443,10 @@ function deserializeState(serialized) {
   s.synergies = (serialized.synergies || [])
     .map(id => (typeof getSynergyById === "function" ? getSynergyById(id) : null))
     .filter(Boolean);
+  // S17: rebind winCondition (with selectWinner/earlyTermination fns) from local pool
+  s.winCondition = serialized.winCondition && typeof getWinConditionById === "function"
+    ? getWinConditionById(serialized.winCondition.id)
+    : null;
   // counterMarketingPending: re-construct as empty array (client doesn't
   // need the actual queue, host manages it)
   s.counterMarketingPending = [];

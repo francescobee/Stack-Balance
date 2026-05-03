@@ -34,7 +34,10 @@ function startGame(scenarioId = "standard", isDaily = false) {
     dominanceSweepsByPlayer: {},   // S6.2: tracker for "Dominator" achievement
     localSlotIdx: 0,               // S10: which slot is this client (0 in single-player)
     synergies: [],                 // S15: drawn at game start, see drawSynergies()
+    winCondition: null,            // S17: scenario-locked alternative win rule
   };
+  // S17: lock the win condition based on scenario.winConditionId (default "mau")
+  state.winCondition = getWinConditionById(state.scenario?.winConditionId || "mau");
   // S15: pesca le sinergie attive per la partita (game-wide). Va prima
   // del Vision draft così il giocatore le vede nella showcase modal.
   state.synergies = drawSynergies(state.scenario, BALANCE.SYNERGIES.PER_GAME);
@@ -98,7 +101,10 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
     localSlotIdx,
     isMultiplayer: true,           // S10 flag
     synergies: [],                 // S15: drawn below (host only — clients hydrate from broadcast)
+    winCondition: null,            // S17: locked from scenario; clients re-bind via id
   };
+  // S17: lock the win condition based on scenario.winConditionId (default "mau")
+  state.winCondition = getWinConditionById(state.scenario?.winConditionId || "mau");
   // S15: host pesca le sinergie; verranno serializzate e ricevute dai client
   // via stateUpdate. Vedi serializeState/deserializeState in multiplayer.js.
   state.synergies = drawSynergies(state.scenario, BALANCE.SYNERGIES.PER_GAME);
@@ -792,9 +798,13 @@ function endOfQuarter() {
 
   // S1.2: Budget pressure — fra Q1/Q2 e Q2/Q3 il budget si dimezza,
   // la metà evaporata si converte in K MAU. Q3→end-game salta (full conversion in endGame).
+  // S17: salta anche quando una win condition triggera early termination — il
+  // resto del budget verrà convertito al rate /3 in endGame, invece che dimezzato.
+  const earlyEnd = !!(state.winCondition && state.winCondition.earlyTermination
+    && state.winCondition.earlyTermination(state));
   const B = BALANCE.BUDGET;
   const budgetEvents = {};
-  if (state.quarter < NUM_QUARTERS) {
+  if (state.quarter < NUM_QUARTERS && !earlyEnd) {
     state.players.forEach((p, idx) => {
       if (p.budget > 0) {
         const halved = Math.floor(p.budget / B.Q_CARRYOVER_DIVISOR);
@@ -835,7 +845,12 @@ function endOfQuarter() {
 function showQuarterModal(breakdown, dominanceBonuses, okrResults, budgetEvents) {
   const ql = QUARTER_LABELS[state.quarter - 1];
   budgetEvents = budgetEvents || {};
-  const isLastQ = state.quarter >= NUM_QUARTERS;
+  // S17: la win condition può terminare la partita prima di Q3 (es. Acquisition
+  // se qualcuno arriva a 40K MAU). In quel caso il modal mostra il bottone
+  // "Investor Pitch" invece di "Next quarter".
+  const earlyEnd = !!(state.winCondition && state.winCondition.earlyTermination
+    && state.winCondition.earlyTermination(state));
+  const isLastQ = state.quarter >= NUM_QUARTERS || earlyEnd;
 
   // S1.2: budget halving info banner (only between Q)
   const budgetBanner = isLastQ ? "" : `
@@ -1083,8 +1098,15 @@ function endGame() {
 }
 
 function showEndGameModal() {
+  // S17: classifica usata per la tabella (sempre per MAU finale, indipendentemente
+  // dalla win condition). Il VINCITORE è invece scelto da winCondition.selectWinner,
+  // così "Survival" può scegliere un superstite anche se non è il top di MAU.
   const ranked = [...state.players].sort((a, b) => b.vp - a.vp);
-  const winner = ranked[0];
+  const winCond = state.winCondition || (typeof getWinConditionById === "function"
+    ? getWinConditionById("mau") : null);
+  const winner = winCond
+    ? winCond.selectWinner(state.players, state)
+    : ranked[0];
   // S10: use localSlotIdx (host=0, client=1/2/3) so each player sees their
   // own awards / rank / "did I win?" message.
   const localIdx = state.localSlotIdx ?? 0;
@@ -1105,6 +1127,7 @@ function showEndGameModal() {
       scenarioId: state.scenario?.id || "standard",
       visionId: you.vision?.id || null,
       isDaily: !!state.isDaily,
+      winConditionId: state.winCondition?.id || "mau",  // S17
     });
   }
 
@@ -1135,12 +1158,22 @@ function showEndGameModal() {
 
   // S10 fix: in MP both humans are isHuman=true. The winner banner needs to
   // reflect "did I win" not "did any human win".
+  // S17: titles vengono dalla winCondition (es. "Sopravvissuto" per Survival,
+  // "Acquisita" per Acquisition). Fallback su MAU race se per qualche ragione
+  // mancasse la winCondition.
   const iWon = winner === you;
+  const titleYou   = winCond?.endGameTitleYou?.()           || "🎉 Promosso a CTO!";
+  const titleOther = (winner && winCond?.endGameTitleOther?.(winner))
+                  || (winner ? `🏆 ${winner.name} promosso a CTO` : "💀 Nessun vincitore");
+  const subtitleWon = "La tua run è andata in porto.";
+  const subtitleLost = winner
+    ? `Hai chiuso ${youRank}° su ${NUM_PLAYERS}.`
+    : "Nessun manager ha soddisfatto la condizione di vittoria.";
   const html = `
     <div class="modal-bg"><div class="modal">
       <div class="winner-banner">
-        <h2>${iWon ? "🎉 Promosso a CTO!" : `🏆 ${winner.name} promosso a CTO`}</h2>
-        <div>${iWon ? "La tua app ha conquistato il mercato con più utenti." : `Hai chiuso ${youRank}° su ${NUM_PLAYERS}.`}</div>
+        <h2>${iWon ? titleYou : titleOther}</h2>
+        <div>${iWon ? subtitleWon : subtitleLost}</div>
       </div>
 
       <h3 style="color: var(--accent); margin-top: 20px; margin-bottom: 8px;">I tuoi premi finali</h3>
@@ -1152,7 +1185,7 @@ function showEndGameModal() {
         <thead><tr><th>#</th><th>Manager</th><th class="num">Utenti base</th><th class="num">Awards</th><th class="num">Budget</th><th class="num">Debt</th><th class="num">Totale</th></tr></thead>
         <tbody>
           ${ranked.map((p, i) => `
-            <tr class="${i===0 ? 'winner' : ''}">
+            <tr class="${winner && p === winner ? 'winner' : ''}">
               <td>${i+1}</td><td><strong>${p.name}</strong></td>
               <td class="num">${p._preAwardVp}K</td>
               <td class="num">+${p._awardsTotal}K</td>

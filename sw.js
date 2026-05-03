@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v10";  // bump on each deploy
+const CACHE_VERSION = "sb-v11";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -49,6 +49,10 @@ const CACHE_VERSION = "sb-v10";  // bump on each deploy
 //                   (5 archetypes layered on top of dept-bias personas).
 //                   ai.js scoring updated to apply archetype multipliers
 //                   + cardTypeBias + blockModifier + riskMultiplier.
+// v11 (2026-05-03): S17 — scenario-locked win conditions. New
+//                   js/win-conditions.js (mau / survival / acquisition /
+//                   efficiency). Scenarios pin one each. End-game banner +
+//                   masthead badge use the active win condition.
 const ASSETS = [
   "./",
   "./index.html",
@@ -68,6 +72,7 @@ const ASSETS = [
   "./js/balance.js",
   "./js/synergies.js",
   "./js/archetypes.js",
+  "./js/win-conditions.js",
   "./js/state.js",
   "./js/rules.js",
   "./js/ai.js",

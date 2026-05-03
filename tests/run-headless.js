@@ -65,6 +65,7 @@ function load(rel) {
   "js/balance.js",
   "js/synergies.js",    // S15: synergy pool + drawSynergies
   "js/archetypes.js",   // S16: AI archetype pool + drawArchetypes
+  "js/win-conditions.js", // S17: scenario-locked alternative win rules
   "js/state.js",
   "js/rules.js",
   "js/ai.js",

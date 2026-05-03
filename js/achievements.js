@@ -104,6 +104,39 @@ const ACHIEVEMENTS = [
     description: "Vinci tutte e 3 le dominanze (Product / Eng / Data) in un singolo Q.",
     check: (ctx) => ctx.dominanceSweeps >= 1,
   },
+  // ── S17 chain achievements ──
+  {
+    id: "survivor",
+    icon: "🩺",
+    name: "Survivor",
+    description: "Vinci una run con la win condition Survival (Bear Market).",
+    check: (ctx) => ctx.won && ctx.winConditionId === "survival",
+  },
+  {
+    id: "acquirer",
+    icon: "💼",
+    name: "Acquired",
+    description: "Vinci con la win condition Acquisition (40K+ MAU).",
+    check: (ctx) => ctx.won && ctx.winConditionId === "acquisition",
+  },
+  {
+    id: "efficient_op",
+    icon: "⚖️",
+    name: "Efficient Operator",
+    description: "Vinci con la win condition Efficiency (Remote First).",
+    check: (ctx) => ctx.won && ctx.winConditionId === "efficiency",
+  },
+  {
+    id: "versatile",
+    icon: "🎲",
+    name: "Versatile",
+    description: "Vinci almeno una volta con tutte e 4 le win conditions.",
+    check: (ctx) => {
+      const w = ctx.profile?.winConditionWins || {};
+      return ["mau", "survival", "acquisition", "efficiency"]
+        .every(id => (w[id] || 0) >= 1);
+    },
+  },
 ];
 
 // Compute per-game context counters
@@ -116,6 +149,7 @@ function buildAchievementContext(state, won, you) {
     finalUsers: you.vp,
     scenarioId: state.scenario?.id || "standard",
     visionId: you.vision?.id || null,
+    winConditionId: state.winCondition?.id || "mau",   // S17
     bugfixCount: you.played.filter(c => c.type === "BugFix").length,
     // chainCount: count of cards we played that triggered a chain (we cached on play)
     chainCount: you._chainsTriggered || 0,

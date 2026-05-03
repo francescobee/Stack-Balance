@@ -40,12 +40,20 @@ function showScenarioChooser({ onPick }) {
     const lockHtml = s.isLocked
       ? `<div class="scenario-lock">🔒 Vinci ${s.winsNeeded} ${s.winsNeeded === 1 ? "partita" : "partite"} per sbloccare</div>`
       : `<div class="scenario-cta">Scegli →</div>`;
+    // S17: show the win condition pinned to this scenario
+    const wc = (typeof getWinConditionById === "function")
+      ? getWinConditionById(s.winConditionId || "mau")
+      : null;
+    const wcHtml = (wc && wc.id !== "mau")
+      ? `<div class="scenario-wincond" title="${wc.description}">${wc.icon} ${wc.name}: ${wc.description}</div>`
+      : "";
     card.innerHTML = `
       <div class="scenario-icon">${s.icon}</div>
       <div class="scenario-name">${s.name}</div>
       <div class="scenario-desc">${s.description}</div>
       <div class="scenario-bonus">+ ${s.bonus}</div>
       <div class="scenario-malus">− ${s.malus}</div>
+      ${wcHtml}
       ${lockHtml}
     `;
     if (!s.isLocked) {

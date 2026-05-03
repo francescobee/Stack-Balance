@@ -1798,6 +1798,32 @@ body.reduced-motion .ach-autodismiss {
 }
 .scenario-bonus { background: rgba(61, 107, 74, 0.10); color: var(--good); border-left-color: var(--good); }
 .scenario-malus { background: rgba(168, 50, 74, 0.08); color: var(--warn); border-left-color: var(--warn); }
+/* S17: pinned win condition shown inside the scenario card */
+.scenario-wincond {
+  font-family: var(--mono); font-size: 10.5px;
+  padding: 3px 8px;
+  border-left: 3px solid var(--ink);
+  background: rgba(31, 29, 25, 0.06);
+  color: var(--ink);
+  line-height: 1.35;
+}
+/* S17: in-game masthead badge for the active win condition */
+.wincond-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border: 1px dashed var(--ink);
+  background: var(--paper-2);
+  font-family: var(--serif-display);
+  font-size: 12px; color: var(--ink);
+}
+.wincond-badge .wcb-icon { font-size: 14px; }
+.wincond-badge .wcb-name { font-style: italic; font-weight: 700; }
+.wincond-badge .wcb-hint {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--ink-muted);
+  border-left: 1px solid var(--rule);
+  padding-left: 6px; margin-left: 4px;
+}
 .scenario-cta {
   font-family: var(--serif-display); font-size: 11px;
   text-transform: uppercase; letter-spacing: 0.22em;

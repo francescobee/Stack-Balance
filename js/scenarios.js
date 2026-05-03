@@ -32,6 +32,7 @@ const SCENARIO_POOL = [
     minWinsToUnlock: 0,
     modifiers: {},
     synergyFlavor: {},
+    winConditionId: "mau",                  // S17: standard MAU race
   },
   {
     id: "bear_market_2008",
@@ -50,6 +51,7 @@ const SCENARIO_POOL = [
       guaranteed: ["bootstrapped_run"],
       boostedTags: ["lean", "frugal", "capital"],
     },
+    winConditionId: "survival",             // S17: la crisi del 2008 è sopravvivenza
   },
   {
     id: "ai_hype_wave",
@@ -68,6 +70,7 @@ const SCENARIO_POOL = [
       guaranteed: ["ai_first"],
       boostedTags: ["data", "ai", "launch"],
     },
+    winConditionId: "acquisition",          // S17: hype = grab the market fast
   },
   {
     id: "remote_first",
@@ -91,6 +94,7 @@ const SCENARIO_POOL = [
       guaranteed: ["remote_unity"],
       boostedTags: ["team", "morale", "remote"],
     },
+    winConditionId: "efficiency",           // S17: distributed teams ottimizzano
   },
 ];
 
