@@ -476,6 +476,39 @@ button.ghost {
   gap: 14px 22px;
   margin-top: 10px;
 }
+/* S18.2: Vision Mastery panel */
+.profile-settings .vm-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin-top: 6px;
+}
+.profile-settings .vm-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border-bottom: 1px dashed var(--rule);
+  font-family: var(--serif-display);
+  font-size: 12px;
+}
+.profile-settings .vm-icon { font-size: 16px; line-height: 1; }
+.profile-settings .vm-name { font-weight: 600; color: var(--ink); }
+.profile-settings .vm-stats {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--ink-muted);
+}
+.profile-settings .vm-unlocked {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--gold, #c9a227);
+  letter-spacing: 0.04em;
+}
+.profile-settings .vm-locked {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
 .profile-settings .stat {
   border-bottom: 1px solid var(--rule);
   padding-bottom: 8px;
@@ -2128,6 +2161,22 @@ body.reduced-motion .ach-autodismiss {
   inset: 4px;
   border: 1px solid rgba(31, 28, 24, 0.05);
   pointer-events: none;
+}
+/* S18.2: variant Vision badge + accent for unlocked v2 cards */
+.vision-option-card.variant {
+  border-top-color: var(--gold, #c9a227);
+  background: linear-gradient(180deg, rgba(201, 162, 39, 0.06), var(--paper-3));
+}
+.vision-variant-badge {
+  position: absolute;
+  top: 6px; right: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--gold, #c9a227);
+  background: var(--paper-3);
+  padding: 1px 6px;
+  border: 1px solid var(--gold, #c9a227);
 }
 /* S2.3 fix: explicit bg + color override the global button:hover (which would
    turn the card ink-black, hiding the text). Prefixing with .modal also bumps

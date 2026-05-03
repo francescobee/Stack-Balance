@@ -165,7 +165,8 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
     });
 }
 
-// S2.3 + S5.1: orchestrate the Vision draft for all players
+// S2.3 + S5.1 + S18.2: orchestrate the Vision draft for all players.
+// Variants (S18.2) are only present in the human's pool when unlocked.
 function draftVisionsFlow(onComplete) {
   // AI auto-pick from filtered pool — Senior+ uses persona alignment
   state.players.forEach((p, idx) => {
@@ -175,9 +176,13 @@ function draftVisionsFlow(onComplete) {
       p.vision = chooseAIVision(idx, p.visionOptions);
     }
   });
-  // Human draft via modal (any 3 from full pool)
+  // Human draft: pool inflected by unlocked variants (S18.2)
   const human = state.players[0];
-  human.visionOptions = pickRandom(VISION_POOL, 3);
+  const profile = (typeof getProfile === "function") ? getProfile() : null;
+  const humanPool = (typeof visionsForHumanDraft === "function")
+    ? visionsForHumanDraft(profile)
+    : VISION_POOL;
+  human.visionOptions = pickRandom(humanPool, 3);
   showVisionDraftModal({
     options: human.visionOptions,
     onPick: (vision) => {

@@ -167,6 +167,34 @@ function showProfileSettings() {
       ${renderAchievementsHtml(profile)}
     </div>
 
+    ${(function() {
+      // S18.2: Vision Mastery panel — wins per base Vision + variant unlock state
+      if (typeof getAvailableVisions !== "function") return "";
+      const vs = profile.visionStats || {};
+      const all = getAvailableVisions(profile);
+      const baseVisions = all.filter(v => !v.baseId);
+      const rows = baseVisions.map(v => {
+        const stats = vs[v.id] || { wins: 0, plays: 0 };
+        const variant = all.find(x => x.baseId === v.id);
+        const variantTag = variant && variant.isUnlocked
+          ? `<span class="vm-unlocked">⭐ v2 sbloccata</span>`
+          : variant
+            ? `<span class="vm-locked">🔒 ${variant.winsNeeded} ${variant.winsNeeded === 1 ? "vittoria" : "vittorie"} alla v2</span>`
+            : "";
+        return `
+          <div class="vm-row">
+            <span class="vm-icon">${v.icon}</span>
+            <span class="vm-name">${v.name}</span>
+            <span class="vm-stats">${stats.wins || 0}W · ${stats.plays || 0}P</span>
+            ${variantTag}
+          </div>`;
+      }).join("");
+      return `
+        <h3>Vision Mastery</h3>
+        <div class="vm-grid">${rows}</div>
+      `;
+    })()}
+
     <h3>Difficoltà AI</h3>
     <div class="difficulty-selector" id="diffSelector">
       <button class="diff-btn ${getDifficulty() === 'junior' ? 'active' : ''}" data-level="junior" type="button">

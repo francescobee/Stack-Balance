@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v12";  // bump on each deploy
+const CACHE_VERSION = "sb-v13";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -58,6 +58,10 @@ const CACHE_VERSION = "sb-v12";  // bump on each deploy
 //                   Profile UI shows level chip + progress bar. Level-up
 //                   toast on threshold cross. Per-vision stats tracked
 //                   for the upcoming S18.2 vision-variant unlock.
+// v13 (2026-05-03): S18.2 — Vision variants (earn-by-mastery). 8 base
+//                   visions + 8 v2 variants in VISION_POOL. Each variant
+//                   unlocks after 3 wins with its base. Profile shows
+//                   Vision Mastery panel; draft modal flags v2 cards.
 const ASSETS = [
   "./",
   "./index.html",

@@ -137,6 +137,21 @@ const ACHIEVEMENTS = [
         .every(id => (w[id] || 0) >= 1);
     },
   },
+  // ── S18.2 chain achievement ──
+  {
+    id: "vision_master",
+    icon: "📚",
+    name: "Vision Master",
+    description: "Vinci almeno una volta con ognuna delle 8 Vision base.",
+    check: (ctx) => {
+      const vs = ctx.profile?.visionStats || {};
+      const baseIds = (typeof VISION_POOL !== "undefined")
+        ? VISION_POOL.filter(v => !v.baseId).map(v => v.id)
+        : [];
+      if (baseIds.length === 0) return false;
+      return baseIds.every(id => (vs[id]?.wins || 0) >= 1);
+    },
+  },
 ];
 
 // Compute per-game context counters

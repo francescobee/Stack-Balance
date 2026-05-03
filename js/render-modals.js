@@ -108,8 +108,14 @@ function showVisionDraftModal({ options, onPick, mpWaiting }) {
 
   const grid = el("div", { class: "vision-options-grid" });
   options.forEach((v) => {
-    const card = el("button", { class: "vision-option-card", type: "button" });
+    const isVariant = !!v.baseId;  // S18.2
+    const card = el("button", {
+      class: `vision-option-card${isVariant ? " variant" : ""}`,
+      type: "button",
+    });
+    const variantBadge = isVariant ? `<div class="vision-variant-badge">v2 ⭐</div>` : "";
     card.innerHTML = `
+      ${variantBadge}
       <div class="vision-icon">${v.icon}</div>
       <div class="vision-name">${v.name}</div>
       <div class="vision-desc">${v.description}</div>

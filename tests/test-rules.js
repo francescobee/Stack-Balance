@@ -648,6 +648,65 @@ describe("archetypes [S16]", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// S18.2: VISION VARIANTS (earn-by-mastery)
+// ─────────────────────────────────────────────────────────────
+describe("vision variants [S18.2]", () => {
+  it("VISION_POOL has 8 base + 8 variant entries", () => {
+    const base = VISION_POOL.filter(v => !v.baseId);
+    const variants = VISION_POOL.filter(v => v.baseId);
+    assertEq(base.length, 8, "8 base visions");
+    assertEq(variants.length, 8, "8 variants (one per base)");
+  });
+
+  it("each variant points to a real base vision", () => {
+    VISION_POOL.filter(v => v.baseId).forEach(v => {
+      const base = getVisionById(v.baseId);
+      assert(base && !base.baseId, `variant ${v.id} → base ${v.baseId} exists`);
+    });
+  });
+
+  it("getAvailableVisions: with no profile → all variants locked", () => {
+    const avail = getAvailableVisions(null);
+    const variants = avail.filter(v => v.baseId);
+    assertEq(variants.every(v => v.isLocked), true, "all variants locked");
+    assertEq(variants[0].winsNeeded, 3, "winsNeeded defaults to 3");
+  });
+
+  it("getAvailableVisions: 3 wins on tech_first → tech_first_v2 unlocked", () => {
+    const profile = { visionStats: { tech_first: { wins: 3, plays: 5, totalMau: 200 } } };
+    const v2 = getAvailableVisions(profile).find(v => v.id === "tech_first_v2");
+    assertEq(v2.isLocked, false);
+    assertEq(v2.isUnlocked, true);
+    assertEq(v2.winsNeeded, 0);
+  });
+
+  it("getAvailableVisions: 2 wins on tech_first → tech_first_v2 still locked, 1 win needed", () => {
+    const profile = { visionStats: { tech_first: { wins: 2, plays: 4, totalMau: 100 } } };
+    const v2 = getAvailableVisions(profile).find(v => v.id === "tech_first_v2");
+    assertEq(v2.isLocked, true);
+    assertEq(v2.winsNeeded, 1);
+  });
+
+  it("visionsForHumanDraft excludes locked variants but keeps base visions", () => {
+    const profile = { visionStats: {} };
+    const draftable = visionsForHumanDraft(profile);
+    assertEq(draftable.length, 8, "only 8 base visions when nothing unlocked");
+    assertEq(draftable.every(v => !v.baseId), true);
+
+    const profileWithUnlock = { visionStats: { lean_startup: { wins: 3, plays: 3, totalMau: 0 } } };
+    const draftable2 = visionsForHumanDraft(profileWithUnlock);
+    assertEq(draftable2.length, 9, "8 base + 1 variant");
+    assert(draftable2.some(v => v.id === "lean_startup_v2"),
+      "unlocked variant in draftable pool");
+  });
+
+  it("visionsForAI never includes variants", () => {
+    const aiPool = visionsForAI();
+    assertEq(aiPool.every(v => !v.baseId), true, "AI never sees variants");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // S18.1: FOUNDER LEVEL — XP curve and computeLevel
 // ─────────────────────────────────────────────────────────────
 describe("founder level [S18.1]", () => {
