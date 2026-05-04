@@ -46,6 +46,8 @@ function newPlayer(name, isHuman) {
     _quarterStartMorale: 0,       // S2.1: snapshot for morale_boost OKR check
     _chainsTriggeredThisQ: 0,     // S9.3: per-Q counter per OKR synergy_chaser
     _quarterDiscards: 0,          // S9.3: per-Q counter per OKR lean_quarter
+    _dataSpent: 0,                // S20.2: cumulative dati spesi per game (data_driven synergy)
+    _quarterDataSpent: 0,         // S20.2: per-Q dati spesi (data_spender OKR), reset in startQuarter
     vision: null,                 // S2.3: chosen Vision Card (game-wide identity)
     visionOptions: [],            // S2.3: 3 options drafted at game start
     archetype: null,              // S16: AI archetype assigned at game start (null for humans)

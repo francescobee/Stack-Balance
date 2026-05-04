@@ -425,6 +425,35 @@ const SYNERGY_POOL = [
   },
 
   // ───────────────────────────────────────────────────────────
+  // S20.2 — DATA-COUPLED (Phase 20 mechanic, in tensione tra loro)
+  // ───────────────────────────────────────────────────────────
+  {
+    id: "data_driven", name: "Data Driven", icon: "📊",
+    points: 9, tags: ["data", "spend"], difficulty: "medium",
+    detailInactive: "Sinergia: hai investito attivamente in data ops",
+    detailActive: (p) => `${p._dataSpent || 0} Dati spesi durante il game`,
+    check(p) {
+      const spent = p._dataSpent || 0;
+      const reqs = [
+        { label: "Dati spesi ≥ 8", current: spent, target: 8, met: spent >= 8 },
+      ];
+      return { requirements: reqs, active: reqs.every(r => r.met) };
+    },
+  },
+  {
+    id: "insight_hoarder", name: "Insight Hoarder", icon: "💎",
+    points: 11, tags: ["data", "passive"], difficulty: "hard",
+    detailInactive: "Sinergia: hai accumulato un patrimonio di dati",
+    detailActive: (p) => `Dati finali: ${p.dati}`,
+    check(p) {
+      const reqs = [
+        { label: "Dati finali ≥ 12", current: p.dati, target: 12, met: p.dati >= 12 },
+      ];
+      return { requirements: reqs, active: reqs.every(r => r.met) };
+    },
+  },
+
+  // ───────────────────────────────────────────────────────────
   // S19.2 — MORALE-COUPLED (Phase 19 mechanic)
   // ───────────────────────────────────────────────────────────
   {

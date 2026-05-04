@@ -124,6 +124,12 @@ const CATALOG_Q1 = [
     cost: { tempo: 1 },
     effect: { morale: 3, vp: -1 },
     desc: "Ferie obbligatorie. +3 Morale, -1K (qualcuno se ne va)." },
+
+  // === S20.2 — Phase 20 Q1 data-spend mechanic (1 card) ===
+  { id: "user_survey_analysis", name: "User Survey Analysis", dept: "data", type: "Discovery",
+    cost: { dati: 2, tempo: 1 },
+    effect: { vp: 2, morale: 1 },
+    desc: "Trasforma i dati in insight. +2K, +1 Morale. Spendi 2 Dati." },
 ];
 
 // === Q2 BUILD: infrastructure, dev work, scaling, refactoring ===
@@ -256,6 +262,17 @@ const CATALOG_Q2 = [
     cost: { budget: 2 },
     effect: { morale: 2, dati: 1 },
     desc: "Workshop wellness. +2 Morale, +1 Dati." },
+
+  // === S20.2 — Phase 20 Q2 data-spend mechanic (2 cards) ===
+  { id: "data_driven_decision", name: "Data-Driven Decision", dept: "product", type: "Meeting",
+    cost: { dati: 3, tempo: 1 },
+    effect: { vp: 3, talento: 1 },
+    desc: "Decisione informata. +3K, +1 Talento. Spendi 3 Dati." },
+  { id: "personalization_engine", name: "Personalization Engine", dept: "data", type: "Tool",
+    cost: { dati: 4, tempo: 2 },
+    chainFrom: ["data_lake"], chainDiscount: { dati: 2 },
+    effect: { vp: 3 }, permanent: "personalization",
+    desc: "Personalizziamo l'app. +3K + permanent. -2 Dati con Data Lake." },
 ];
 
 // === Q3 LAUNCH: marketing, scaling, optimization, sales ===
@@ -420,6 +437,21 @@ const CATALOG_Q3 = [
     cost: { budget: 2, tempo: 1 },
     effect: { morale: 3, talento: 1 },
     desc: "Offsite di cultura. +3 Morale, +1 Talento." },
+
+  // === S20.2 — Phase 20 Q3 data-spend mechanic (3 cards) ===
+  { id: "targeted_ad_campaign", name: "Targeted Ad Campaign", dept: "product", type: "Launch",
+    cost: { dati: 3, budget: 2 },
+    chainFrom: ["growth_hacker"], chainDiscount: { budget: 1 },
+    effect: { vp: 5, morale: 1 },
+    desc: "Ad super-targeted. +5K, +1 Morale. Spendi 3 Dati." },
+  { id: "predictive_model", name: "Predictive Model", dept: "data", type: "Feature",
+    cost: { dati: 4, tempo: 2 },
+    effect: { vp: 4, dati: 1 },
+    desc: "Modello predittivo. +4K, riciclo 1 Dato (net spend 3)." },
+  { id: "data_sale", name: "Data Sale", dept: "data", type: "Funding",
+    cost: { dati: 5, morale: 1 },
+    effect: { budget: 8 },
+    desc: "Vendi dati a un terzo. +8💰. Eticamente ambiguo (-1 Morale)." },
 ];
 
 function getCatalog(quarter) {
@@ -616,4 +648,10 @@ const OKR_POOL = [
     reward: 4,
     check: (p) => p.morale >= 6
                   && !p._quarterPlays.some(c => (c.cost?.morale || 0) > 0) },
+
+  // ── S20.2 — data-spend OKR (premia uso ATTIVO dei dati) ──
+  { id: "data_spender",
+    text: "Spendi ≥ 4 Dati questo Q",
+    reward: 4,
+    check: (p) => (p._quarterDataSpent || 0) >= 4 },
 ];

@@ -74,6 +74,13 @@ function payCost(player, card) {
   player.tempo  -= (c.tempo  || 0);
   // S1.2: il talento usato si accumula per Q (resettato a inizio Q)
   player.talentoUsed = (player.talentoUsed || 0) + (c.talento || 0);
+  // S20.2: track dati spent (cumulative for game + per-Q) for data_driven
+  // synergy and data_spender OKR. Done before the actual deduction so
+  // even partial-cap-at-0 spending counts toward the metric.
+  if (c.dati) {
+    player._dataSpent = (player._dataSpent || 0) + c.dati;
+    player._quarterDataSpent = (player._quarterDataSpent || 0) + c.dati;
+  }
   player.dati   -= (c.dati   || 0);
   // S19.1: defensive clamp on morale floor — canAfford should prevent it,
   // but if payCost is ever called without prior check (e.g. tests, edge cases),

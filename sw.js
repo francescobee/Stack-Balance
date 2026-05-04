@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v17";  // bump on each deploy
+const CACHE_VERSION = "sb-v18";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -84,6 +84,12 @@ const CACHE_VERSION = "sb-v17";  // bump on each deploy
 //                   field), balance.js (BLOCK namespace), main.css (~95 LOC of
 //                   .block-* + 2 keyframes), tests (1 test removed). Mechanic
 //                   was effectively dead code (disabled in P2P/HS/morale≤3).
+// v18 (2026-05-04): S20.2 — Dati come risorsa spendibile. +6 carte data-spend
+//                   (User Survey Q1, Data-Driven Decision + Personalization
+//                   Engine Q2 [permanent], Targeted Ad + Predictive Model +
+//                   Data Sale Q3). +2 sinergie (data_driven, insight_hoarder).
+//                   +1 OKR (data_spender). Tracking _dataSpent + _quarterData-
+//                   Spent in payCost. NO soft cap (designed cards strong enough).
 const ASSETS = [
   "./",
   "./index.html",

@@ -242,6 +242,7 @@ function startQuarter() {
     p._quarterStartMorale = p.morale; // S2.1: snapshot for morale_boost OKR
     p._chainsTriggeredThisQ = 0; // S9.3: reset for synergy_chaser OKR
     p._quarterDiscards = 0;      // S9.3: reset for lean_quarter OKR
+    p._quarterDataSpent = 0;     // S20.2: reset for data_spender OKR
 
     // S2.1: each player drafts an OKR from N random options
     p.okrOptions = pickRandom(OKR_POOL, Q.OKR_DRAFT_SIZE);

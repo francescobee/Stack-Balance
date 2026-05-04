@@ -1610,3 +1610,66 @@ describe("morale synergies [S19.2]", () => {
     assertEq(utopia.check(p).active, false);
   });
 });
+
+// ─────────────────────────────────────────────────────────────
+// DATA SPEND MECHANIC [S20.2]
+// ─────────────────────────────────────────────────────────────
+describe("data spend mechanic [S20.2]", () => {
+  it("payCost increments _dataSpent cumulative", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ dati: 10, _dataSpent: 0 });
+      payCost(p, mockCard({ cost: { dati: 3 } }));
+      assertEq(p.dati, 7, "dati 10-3=7");
+      assertEq(p._dataSpent, 3, "tracking +3");
+      payCost(p, mockCard({ cost: { dati: 2 } }));
+      assertEq(p._dataSpent, 5, "cumulative +2 more");
+    });
+  });
+  it("payCost increments _quarterDataSpent (per Q tracking)", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ dati: 10, _quarterDataSpent: 0 });
+      payCost(p, mockCard({ cost: { dati: 4 } }));
+      assertEq(p._quarterDataSpent, 4);
+    });
+  });
+  it("payCost on card without dati cost doesn't increment tracking", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ _dataSpent: 0, _quarterDataSpent: 0 });
+      payCost(p, mockCard({ cost: { tempo: 1, budget: 2 } }));
+      assertEq(p._dataSpent, 0);
+      assertEq(p._quarterDataSpent, 0);
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// DATA SYNERGIES + DATA SPENDER OKR [S20.2]
+// ─────────────────────────────────────────────────────────────
+describe("data synergies + OKR [S20.2]", () => {
+  const dataDriven = SYNERGY_POOL.find(s => s.id === "data_driven");
+  const insightHoarder = SYNERGY_POOL.find(s => s.id === "insight_hoarder");
+  const spenderOkr = OKR_POOL.find(o => o.id === "data_spender");
+
+  it("data_driven active at 8+ dati spent cumulative", () => {
+    const p = mockPlayer({ _dataSpent: 8 });
+    assertEq(dataDriven.check(p).active, true);
+  });
+  it("data_driven inactive below 8 spent", () => {
+    const p = mockPlayer({ _dataSpent: 7 });
+    assertEq(dataDriven.check(p).active, false);
+  });
+  it("insight_hoarder active at 12+ final dati", () => {
+    const p = mockPlayer({ dati: 12 });
+    assertEq(insightHoarder.check(p).active, true);
+  });
+  it("insight_hoarder rewards more than data_driven (hard tier)", () => {
+    assert(insightHoarder.points > dataDriven.points,
+      `hoarder ${insightHoarder.points} > driven ${dataDriven.points}`);
+  });
+  it("data_spender OKR fires at 4+ dati spent in Q", () => {
+    assert(spenderOkr, "OKR registered");
+    assertEq(spenderOkr.reward, 4);
+    assertEq(spenderOkr.check(mockPlayer({ _quarterDataSpent: 4 })), true);
+    assertEq(spenderOkr.check(mockPlayer({ _quarterDataSpent: 3 })), false);
+  });
+});
