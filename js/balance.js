@@ -134,19 +134,10 @@ const BALANCE = Object.freeze({
   DOMINANCE_THIRD_VP: 1,         // S3.1: bronze prize for 3° posto
 
   // ────────────────────────────────────────────
-  // Block & React mechanic (S3.2)
+  // S20.1: BLOCK namespace removed (was S3.2 + S9.7).
+  // Block & React mechanic retired entirely after design review
+  // identified it was effectively dead code (disabled in MP / HS / morale ≤ 3).
   // ────────────────────────────────────────────
-  BLOCK: Object.freeze({
-    COST_BUDGET: 2,
-    COST_TEMPO: 1,
-    // S9.7: 2500 → 4000ms. Il review post-launch ha rilevato che 2.5s sono
-    // troppo pochi per un giocatore casual che sta leggendo bacheca / forecast
-    // mentre l'AI gioca. Block è attivo solo per reveals high-value (filtro
-    // affordability già applicato), quindi una finestra più larga non lo
-    // rende abusabile. 4s = ~lettura di una notification panel.
-    WINDOW_MS: 4000,             // human reaction window in ms
-    REVEAL_DELAY_TURNS: 2,       // blocked reveal fires N picks later
-  }),
 
   // ────────────────────────────────────────────
   // AI scoring weights (used by decideAIPickFromPyramid)

@@ -529,8 +529,9 @@ function getPickableSlots() {
 function takeFromPyramid(playerIdx, row, col, action) {
   const slot = state.pyramid[row][col];
   slot.taken = true;
-  // S3.2: identify what WOULD be revealed but DON'T flip yet —
-  // caller decides after the block window (offerBlockOpportunity)
+  // Identify what WOULD be revealed but DON'T flip yet — caller flips it
+  // after collecting any visual sequencing (S3.2 Block & React used to
+  // queue this; removed in S20.1, but split-of-responsibility kept).
   let toReveal = null;
   if (row > 0) {
     const above = state.pyramid[row - 1][col];

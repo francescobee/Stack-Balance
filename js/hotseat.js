@@ -12,7 +12,7 @@
 //   • Single-human degrade — 1 human + 3 AI = no pass-screen, plays
 //     like single-player
 //   • Block & React disabled (consistent with P2P MP) — enforced in
-//     offerBlockOpportunity by short-circuiting on state.isSharedScreen
+//     (S20.1: Block & React removed entirely; this comment kept for history)
 //   • Single global AI difficulty selector (not per-slot)
 //   • Mini-classifica in pass-screen
 //
@@ -76,7 +76,6 @@ function startGameSharedScreen(slotConfig, scenarioId, difficulty) {
     seenTutorial: false,
     gameOver: false,
     counterMarketingPending: [],
-    deferredReveals: [],
     activeEvent: null,
     difficulty: difficulty || "senior",
     scenario: getScenarioById(scenarioId || "standard"),

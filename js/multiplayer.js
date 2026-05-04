@@ -399,7 +399,6 @@ function serializeState(s) {
     // S17: winCondition → id; client re-binds via getWinConditionById
     winCondition: s.winCondition ? { id: s.winCondition.id } : null,
     counterMarketingPending: (s.counterMarketingPending || []).length, // count only
-    deferredReveals: [],  // Block & React disabled in MP, ignore
     aiHighlight: s.aiHighlight,
     justPlayedCardId: s.justPlayedCardId,
     aiJustPlayed: s.aiJustPlayed,
@@ -450,7 +449,6 @@ function deserializeState(serialized) {
   // counterMarketingPending: re-construct as empty array (client doesn't
   // need the actual queue, host manages it)
   s.counterMarketingPending = [];
-  s.deferredReveals = [];
   s.log = serialized.log || [];
   return s;
 }

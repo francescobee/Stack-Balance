@@ -18,7 +18,6 @@ function mockPlayer(over = {}) {
     okrs: [], okrOptions: [], okrCompleted: [],
     _quarterPlays: [], _quarterStartMorale: 5,
     vision: null, visionOptions: [],
-    blockUsedThisQ: false,
   }, over);
 }
 
@@ -634,17 +633,9 @@ describe("archetypes [S16]", () => {
     assert(getArchetypeById("aggressor").riskMultiplier > 1, "Aggressor is daring");
   });
 
-  it("aiSelectBlocker uses archetype.blockModifier (Disruptor blocks more)", () => {
-    // Build a state where everything except blockProb is fixed; assert that
-    // Disruptor (modifier 1.4) yields a higher effective probability than
-    // Bootstrapper (modifier 0.8) by checking the modifier value itself,
-    // since the Math.random() call inside makes direct probability assertion
-    // non-deterministic without monkey-patching.
-    const disruptor = getArchetypeById("disruptor");
-    const bootstrapper = getArchetypeById("bootstrapper");
-    assert(disruptor.blockModifier > bootstrapper.blockModifier,
-      `Disruptor (${disruptor.blockModifier}) > Bootstrapper (${bootstrapper.blockModifier})`);
-  });
+  // Note: aiSelectBlocker test was removed in S20.1 along with the
+  // Block & React mechanic. Archetype blockModifier field is now
+  // vestigial (kept for save-compat, no runtime effect).
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -952,7 +943,6 @@ describe("multiplayer serialization [S10.2]", () => {
       activeEvent: EVENT_POOL[0],   // has onActivate fn
       scenario: SCENARIO_POOL[1],   // has modifiers
       counterMarketingPending: [],
-      deferredReveals: [],
       isDaily: false,
       gameOver: false,
       difficulty: "senior",

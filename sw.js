@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v16";  // bump on each deploy
+const CACHE_VERSION = "sb-v17";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -78,6 +78,12 @@ const CACHE_VERSION = "sb-v16";  // bump on each deploy
 //                   Sprint, anti-crunch). +1 base Vision (Crunch Culture, 9th
 //                   slot — i v2 erano tutti già occupati). New modifier
 //                   effectBonusByCondition.cardHasCost (rules.js).
+// v17 (2026-05-04): S20.1 — Block & React removal. ~250 LOC removed across
+//                   game.js (3 functions + 2 callsites), ai.js (aiSelectBlocker),
+//                   render-modals.js (showBlockOverlay), state.js (blockUsedThisQ
+//                   field), balance.js (BLOCK namespace), main.css (~95 LOC of
+//                   .block-* + 2 keyframes), tests (1 test removed). Mechanic
+//                   was effectively dead code (disabled in P2P/HS/morale≤3).
 const ASSETS = [
   "./",
   "./index.html",

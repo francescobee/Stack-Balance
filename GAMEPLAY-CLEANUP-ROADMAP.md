@@ -39,7 +39,7 @@ analoghi o di altra natura:
 
 | Session | Tema | Effort | Stato |
 |---------|------|-------:|------:|
-| **S20.1** | Block & React removal (subtractive cleanup) | M (~1h) | ⬜ |
+| **S20.1** | Block & React removal (subtractive cleanup) | M (~1h) | ✅ Done · 2026-05-04 |
 | **S20.2** | Dati spendable: schema + content | L (~3h) | ⬜ |
 | **S20.3** | VC Pitch Quality (stats-weighted picker) | S (~1h) | ⬜ |
 | **S20.4** | Permanents expansion (+3 tools) | S (~1h) | ⬜ |

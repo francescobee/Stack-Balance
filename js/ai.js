@@ -129,47 +129,9 @@ const AI_OKR_PREFERENCES = {
   data: ["data_target", "permanent_collector", "diversification", "ship_features", "dept_purist"],
 };
 
-// S3.2 + S5.2 + S9.6.b: AI decides whether to block a pending reveal.
-// Junior: never blocks. Senior: 0.45 prob. Director: 0.7 prob (default).
-// S9.6.b: Director adatta threshold+prob quando l'umano è leader (pressure mode):
-//   - blockProb 0.7 → 0.85 (più aggressivo nel denying gold)
-//   - value threshold 4 → 3 (blocca anche reveal medi-alti)
-function aiSelectBlocker(actingIdx, toReveal) {
-  if (!toReveal) return null;
-  if (state.difficulty === "junior") return null;
-
-  const isDirector = state.difficulty === "director";
-  // Detect human-leader for adaptive block (Director only)
-  const human = state.players[0];
-  const isHumanLeading = isDirector
-    && state.players.every(pp => pp === human || pp.vp <= human.vp);
-
-  let blockProb = isDirector ? 0.7 : 0.45;
-  let valueThreshold = 4;
-  if (isHumanLeading) {
-    blockProb = 0.85;
-    valueThreshold = 3;
-  }
-
-  for (let i = 1; i < state.players.length; i++) {
-    if (i === actingIdx) continue;
-    const ai = state.players[i];
-    if (ai.blockUsedThisQ) continue;
-    if (ai.budget < BALANCE.BLOCK.COST_BUDGET) continue;
-    if (ai.tempo  < BALANCE.BLOCK.COST_TEMPO)  continue;
-
-    const c = toReveal.card;
-    const value = (c.effect?.vp || 0) + (c.effect?.dati || 0) * 0.5 + (c.effect?.talento || 0) * 0.5;
-    const picker = state.players[actingIdx];
-    if (value >= valueThreshold && picker.vp >= ai.vp) {
-      // S16: archetype-driven block aggressiveness
-      const archMod = ai.archetype?.blockModifier ?? 1;
-      const effectiveProb = Math.min(1, blockProb * archMod);
-      if (Math.random() < effectiveProb) return i;
-    }
-  }
-  return null;
-}
+// S20.1: aiSelectBlocker removed (was S3.2 + S5.2 + S9.6.b). Block & React
+// mechanic was disabled in P2P MP, Hot Seat, and morale ≤ 3 — effective only
+// in single-player edge case. Removed entirely per design review (Phase 20).
 
 // S2.1: AI drafts an OKR from the offered options.
 // Score = base reward + persona bias + tiny noise.

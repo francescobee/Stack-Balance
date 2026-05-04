@@ -12,7 +12,9 @@
 //   description                          — UX tooltip
 //   weightMultipliers: { resKey: factor } — multiplied with persona weights
 //   cardTypeBias: { TypeName: number }   — extra score per card.type
-//   blockModifier: number                 — multiplied with base blockProb
+//   blockModifier: number                 — DEPRECATED S20.1 (Block & React
+//                                           removed). Kept as vestigial field;
+//                                           no runtime effect.
 //   riskMultiplier: number                — multiplied with crunch penalty
 //                                           (>1 = more cautious; <1 = more daring)
 //

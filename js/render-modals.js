@@ -13,7 +13,7 @@
 // In-game / climax:
 //   • showMarketNewsModal     — Breaking News inter-quarter (S4.1)
 //   • showFinalSequenceModal  — Pitch + VC reaction unified (S4.2 + S9.5.b)
-//   • showBlockOverlay        — finestra di reazione 2-3s (S3.2)
+//   • showBlockOverlay        — REMOVED in S20.1 (Block & React retired)
 //   • showHelpModal           — regole in 6 step
 // =============================================================
 
@@ -522,51 +522,9 @@ function showFinalSequenceModal(sortedPlayers, leader, vc, onComplete) {
   };
 }
 
-// ---------- S3.2: BLOCK OVERLAY (reaction window) ----------
-// Float bottom-center button with countdown timer. Player has WINDOW_MS ms
-// to click "BLOCK" or auto-resolves to no-block.
-function showBlockOverlay({ actingIdx, toReveal, onBlock, onTimeout }) {
-  const human = state.players[0];
-  const canAffordBlock = !human.blockUsedThisQ
-    && human.budget >= BALANCE.BLOCK.COST_BUDGET
-    && human.tempo  >= BALANCE.BLOCK.COST_TEMPO;
-
-  if (!canAffordBlock) {
-    // Player can't block at all — auto-pass after a short pause for visual rhythm
-    setTimeout(onTimeout, 200);
-    return;
-  }
-
-  const overlay = el("div", { class: "block-overlay" });
-  const ms = BALANCE.BLOCK.WINDOW_MS;
-  overlay.innerHTML = `
-    <div class="block-content">
-      <div class="block-info">
-        <div class="block-title">Reveal in arrivo</div>
-        <div class="block-detail">${state.players[actingIdx].name} sta per scoprire <em>${toReveal.card.name}</em></div>
-      </div>
-      <button class="block-btn" type="button">
-        <span class="block-icon">🛡</span>
-        <span class="block-label">BLOCK</span>
-        <span class="block-cost">−${BALANCE.BLOCK.COST_BUDGET}💰 −${BALANCE.BLOCK.COST_TEMPO}⏱</span>
-        <span class="block-timer" style="animation-duration: ${ms}ms;"></span>
-      </button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  let resolved = false;
-  const finish = (cb) => {
-    if (resolved) return;
-    resolved = true;
-    overlay.classList.add("dismiss");
-    setTimeout(() => overlay.remove(), 220);
-    cb();
-  };
-
-  overlay.querySelector(".block-btn").addEventListener("click", () => finish(onBlock));
-  setTimeout(() => finish(onTimeout), ms);
-}
+// S20.1: showBlockOverlay removed (was S3.2). Block & React mechanic
+// retired entirely — was disabled in P2P MP / Hot Seat / morale ≤ 3,
+// effective only in single-player edge case.
 
 // ---------- S10: MULTIPLAYER MODALI ----------
 // Estratti in `js/render-multiplayer.js` per rispettare il vincolo

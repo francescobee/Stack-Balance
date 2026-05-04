@@ -48,7 +48,6 @@ function newPlayer(name, isHuman) {
     _quarterDiscards: 0,          // S9.3: per-Q counter per OKR lean_quarter
     vision: null,                 // S2.3: chosen Vision Card (game-wide identity)
     visionOptions: [],            // S2.3: 3 options drafted at game start
-    blockUsedThisQ: false,        // S3.2: 1 block per quarter limit
     archetype: null,              // S16: AI archetype assigned at game start (null for humans)
   };
 }

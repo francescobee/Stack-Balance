@@ -29,7 +29,6 @@ function startGame(scenarioId = "standard", isDaily = false, isWeekly = false) {
     seenTutorial: false,
     gameOver: false,
     counterMarketingPending: [],   // S3.1: queue of players who played Counter-Marketing
-    deferredReveals: [],           // S3.2: blocked reveals to fire later
     activeEvent: null,             // S4.1: market event active for current Q (null in Q1)
     difficulty: getDifficulty(),   // S5.2: junior | senior | director, from profile.prefs
     scenario: getScenarioById(scenarioId), // S6.1: game-wide ruleset
@@ -100,7 +99,6 @@ function startGameMultiplayer(scenarioId, slotConfig, localSlotIdx) {
     seenTutorial: false,
     gameOver: false,
     counterMarketingPending: [],
-    deferredReveals: [],
     activeEvent: null,
     difficulty: mp.difficulty || "senior",
     scenario: getScenarioById(scenarioId),
@@ -244,7 +242,6 @@ function startQuarter() {
     p._quarterStartMorale = p.morale; // S2.1: snapshot for morale_boost OKR
     p._chainsTriggeredThisQ = 0; // S9.3: reset for synergy_chaser OKR
     p._quarterDiscards = 0;      // S9.3: reset for lean_quarter OKR
-    p.blockUsedThisQ = false; // S3.2: 1 block / Q limit
 
     // S2.1: each player drafts an OKR from N random options
     p.okrOptions = pickRandom(OKR_POOL, Q.OKR_DRAFT_SIZE);
@@ -366,9 +363,8 @@ function startQuarter() {
   state.aiJustPlayed = null;
   state.justPlayedCardId = null;
   state.prevResources = null;
-  // S3.1/S3.2: queues are per-Q (carry-over across Q would be confusing)
+  // S3.1: queues are per-Q (carry-over across Q would be confusing)
   state.counterMarketingPending = [];
-  state.deferredReveals = [];
 
   log(`— ${QUARTER_LABELS[state.quarter - 1].name} —`, "event");
   log(`Piramide pronta: ${TOTAL_PICKS} carte (${PYR_ROWS}×${PYR_COLS}). Front face-up, retro coperto.`);
@@ -429,8 +425,7 @@ function celebrateChanges(player, before, opts = {}) {
 // ---------- TURN LOOP ----------
 async function processNextPick() {
   // S3.2: process due deferred reveals at start of each pick
-  // S10: in multiplayer, Block & React is disabled — skip the deferred queue
-  if (!state.isMultiplayer) flushDueDeferredReveals();
+  // S20.1: Block & React removed — no more deferred reveals queue.
 
   // S10 diagnostic: log every entry to processNextPick. Critical for tracing
   // multiplayer sync issues where flow stalls between phases.
@@ -523,12 +518,8 @@ async function processNextPick() {
     kind: "steal"
   });
 
-  // S3.2: human can block the AI's reveal
-  // S10: disabled in P2P multiplayer · S11.8: also disabled in Hot Seat
-  const blockResult = (state.isMultiplayer || state.isSharedScreen)
-    ? { blocked: false }
-    : await offerBlockOpportunity(playerIdx, toReveal);
-  if (toReveal && !blockResult.blocked) {
+  // S20.1: Block & React removed (was S3.2). Reveal AI's next card immediately.
+  if (toReveal) {
     toReveal.slot.faceUp = true;
     showToast({
       who: "CARTA RIVELATA",
@@ -626,12 +617,8 @@ async function humanPickCard(row, col, cardEl) {
     showToast({ who: "TU SCARTI", what: `<em>${card.name}</em> · +2 💰, +1 🐞`, kind: "discard" });
   }
 
-  // S3.2: AI can react/block the human's reveal
-  // S10: disabled in P2P multiplayer · S11.8: also disabled in Hot Seat
-  const blockResult = (state.isMultiplayer || state.isSharedScreen)
-    ? { blocked: false }
-    : await offerBlockOpportunity(playerIdx, toReveal);
-  if (toReveal && !blockResult.blocked) {
+  // S20.1: Block & React removed (was S3.2). Reveal next card immediately.
+  if (toReveal) {
     toReveal.slot.faceUp = true;
     showToast({
       who: "CARTA RIVELATA",
@@ -650,88 +637,6 @@ async function humanPickCard(row, col, cardEl) {
   state.pickIndex++;
   if (state.isMultiplayer) mpBroadcastState();
   processNextPick();
-}
-
-// ---------- S3.2: BLOCK & REACT ----------
-
-// Defer reveal queue: blocked reveals fire N picks later
-function flushDueDeferredReveals() {
-  if (!state.deferredReveals || state.deferredReveals.length === 0) return;
-  const due = state.deferredReveals.filter(r => state.pickIndex >= r.revealAtPick);
-  due.forEach(r => {
-    const slot = state.pyramid[r.row][r.col];
-    if (slot && !slot.taken && !slot.faceUp) {
-      slot.faceUp = true;
-      showToast({
-        who: "REVEAL DELAYED",
-        what: `Si scopre: <em>${r.card?.name || "carta"}</em>`,
-        kind: "reveal"
-      });
-    }
-  });
-  state.deferredReveals = state.deferredReveals.filter(r => state.pickIndex < r.revealAtPick);
-}
-
-// Offer block opportunity to opponents of the picker.
-// Returns { blocked, byIdx? }.
-function offerBlockOpportunity(actingIdx, toReveal) {
-  return new Promise((resolve) => {
-    if (!toReveal) return resolve({ blocked: false });
-    // S10: Block & React disabled in P2P multiplayer (MVP simplification)
-    // S11.8: also disabled in Hot Seat — design validated in Phase 11 (the
-    // overlay assumes a single human at slot 0; with multi-human the prompt
-    // would surface to the wrong player and the reveal-delay mechanic
-    // confuses sequential turns).
-    if (state.isMultiplayer || state.isSharedScreen) return resolve({ blocked: false });
-
-    // S19.1: Block disabled at morale ≤ 3. Team disengaged, no energy
-    // to intercept. Single-player only (already short-circuited above for MP/HS).
-    const localPlayer = state.players[state.localSlotIdx ?? 0];
-    if (localPlayer && localPlayer.morale <= 3) return resolve({ blocked: false });
-
-    if (actingIdx === 0) {
-      // Human picked — AI may react (auto-decide)
-      const blockerIdx = aiSelectBlocker(actingIdx, toReveal);
-      if (blockerIdx !== null) {
-        executeBlock(blockerIdx, toReveal);
-        resolve({ blocked: true, byIdx: blockerIdx });
-      } else {
-        resolve({ blocked: false });
-      }
-    } else {
-      // AI picked — show block button to human (with countdown)
-      showBlockOverlay({
-        actingIdx,
-        toReveal,
-        onBlock: () => {
-          executeBlock(0, toReveal);
-          resolve({ blocked: true, byIdx: 0 });
-        },
-        onTimeout: () => resolve({ blocked: false }),
-      });
-    }
-  });
-}
-
-// Pay block cost, mark used-this-Q, schedule deferred reveal
-function executeBlock(blockerIdx, toReveal) {
-  const blocker = state.players[blockerIdx];
-  blocker.budget = Math.max(0, blocker.budget - BALANCE.BLOCK.COST_BUDGET);
-  blocker.tempo  = Math.max(0, blocker.tempo  - BALANCE.BLOCK.COST_TEMPO);
-  blocker.blockUsedThisQ = true;
-  state.deferredReveals.push({
-    row: toReveal.row,
-    col: toReveal.col,
-    card: toReveal.card,
-    revealAtPick: state.pickIndex + BALANCE.BLOCK.REVEAL_DELAY_TURNS,
-  });
-  log(`${blocker.name} BLOCKS reveal di ${toReveal.card.name}`,
-      blocker.isHuman ? "you" : "");
-  showToast({
-    who: `${blocker.name} BLOCKS`,
-    what: `Reveal posticipato di 1 turno`,
-    kind: "sabotage"
-  });
 }
 
 // ---------- END OF QUARTER ----------
