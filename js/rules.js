@@ -184,9 +184,21 @@ function applyEffect(player, card, allPlayers) {
   let moraleGain = (e.morale || 0);
   if (player.permanents.design_system && card.type === "Hiring") moraleGain += 1;
   player.morale = clamp(player.morale + moraleGain, 0, 10);
-  player.techDebt = Math.max(0, player.techDebt + (e.techDebt || 0));
+  // S20.4: feature_flags permanent reduces debt -1 on Feature/Launch (gradual rollouts).
+  let techDebtDelta = (e.techDebt || 0);
+  if (player.permanents.feature_flags
+      && (card.type === "Feature" || card.type === "Launch")
+      && techDebtDelta > 0) {
+    techDebtDelta = Math.max(0, techDebtDelta - 1);
+  }
+  player.techDebt = Math.max(0, player.techDebt + techDebtDelta);
+  // S20.4: growth_dashboard permanent +1 vp on Launch (stack with other bonuses).
+  let vpDelta = (e.vp || 0);
+  if (player.permanents.growth_dashboard && card.type === "Launch") {
+    vpDelta += 1;
+  }
   // S4.1: VP can now decrease via event modifiers (e.g. VC Drought -1) — clamp ≥ 0
-  player.vp = Math.max(0, player.vp + (e.vp || 0));
+  player.vp = Math.max(0, player.vp + vpDelta);
   if (e.opponentsTempo) {
     allPlayers.forEach(o => {
       if (o !== player) o.tempo = Math.max(0, o.tempo + e.opponentsTempo);

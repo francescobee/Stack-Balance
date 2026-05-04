@@ -273,6 +273,17 @@ const CATALOG_Q2 = [
     chainFrom: ["data_lake"], chainDiscount: { dati: 2 },
     effect: { vp: 3 }, permanent: "personalization",
     desc: "Personalizziamo l'app. +3K + permanent. -2 Dati con Data Lake." },
+
+  // === S20.4 — Phase 20 Q2 new permanents (2 cards) ===
+  { id: "feature_flags", name: "Feature Flags", dept: "eng", type: "Tool",
+    cost: { budget: 3, tempo: 1 },
+    chainFrom: ["ci_cd"], chainDiscount: { tempo: 1 },
+    effect: { vp: 1 }, permanent: "feature_flags",
+    desc: "Rollout graduali. +1K + permanent: Feature/Launch -1🐞." },
+  { id: "incident_runbook", name: "Incident Runbook", dept: "eng", type: "Tool",
+    cost: { budget: 2, tempo: 2 },
+    effect: { techDebt: -1 }, permanent: "incident_runbook",
+    desc: "Procedure standard. -1🐞 + permanent: ignora burnout debt scaling." },
 ];
 
 // === Q3 LAUNCH: marketing, scaling, optimization, sales ===
@@ -452,6 +463,13 @@ const CATALOG_Q3 = [
     cost: { dati: 5, morale: 1 },
     effect: { budget: 8 },
     desc: "Vendi dati a un terzo. +8💰. Eticamente ambiguo (-1 Morale)." },
+
+  // === S20.4 — Phase 20 Q3 new permanent (1 card) ===
+  { id: "growth_dashboard", name: "Growth Dashboard", dept: "data", type: "Tool",
+    cost: { budget: 4 },
+    chainFrom: ["data_lake"], chainDiscount: { budget: 2 },
+    effect: { dati: 2, vp: 2 }, permanent: "growth_dashboard",
+    desc: "Dashboard growth. +2 Dati, +2K + permanent: ogni Launch +1K MAU." },
 ];
 
 function getCatalog(quarter) {

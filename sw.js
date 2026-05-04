@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v19";  // bump on each deploy
+const CACHE_VERSION = "sb-v20";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -95,6 +95,11 @@ const CACHE_VERSION = "sb-v19";  // bump on each deploy
 //                   black-swan via min weight 1. Pitch Readiness panel in
 //                   final sequence modal (eyebrow + stats + STRONG/MIXED/WEAK
 //                   label + hint) prima del VC reveal — trasparenza.
+// v20 (2026-05-04): S20.4 — Permanents +3. feature_flags (Q2 eng, -1🐞 su
+//                   Feature/Launch), incident_runbook (Q2 eng, skip burnout
+//                   debt scaling), growth_dashboard (Q3 data chains data_lake,
+//                   +1K MAU su Launch). Pool permanents 4 → 8 (incl.
+//                   personalization da S20.2). Phase 20 complete.
 const ASSETS = [
   "./",
   "./index.html",

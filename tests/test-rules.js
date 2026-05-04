@@ -1643,6 +1643,65 @@ describe("data spend mechanic [S20.2]", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// NEW PERMANENTS [S20.4]
+// ─────────────────────────────────────────────────────────────
+describe("new permanents [S20.4]", () => {
+  it("feature_flags reduces debt -1 on Feature with debt", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ techDebt: 0, permanents: { feature_flags: true } });
+      const card = mockCard({ type: "Feature", effect: { vp: 4, techDebt: 2 } });
+      applyEffect(p, card, [p]);
+      assertEq(p.techDebt, 1, "techDebt 2 → 1 with feature_flags on Feature");
+    });
+  });
+  it("feature_flags reduces debt -1 on Launch too", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ techDebt: 0, permanents: { feature_flags: true } });
+      const card = mockCard({ type: "Launch", effect: { vp: 5, techDebt: 3 } });
+      applyEffect(p, card, [p]);
+      assertEq(p.techDebt, 2, "techDebt 3 → 2 with feature_flags on Launch");
+    });
+  });
+  it("feature_flags has no effect on cards without debt or other types", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ techDebt: 0, permanents: { feature_flags: true } });
+      // BugFix card with techDebt: -2 — should NOT be touched
+      const card = mockCard({ type: "BugFix", effect: { techDebt: -2 } });
+      applyEffect(p, card, [p]);
+      assertEq(p.techDebt, 0, "no clamp on negative debt (BugFix), and 0 base + (-2) clamped at 0");
+    });
+  });
+  it("growth_dashboard +1 vp on Launch", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ vp: 0, permanents: { growth_dashboard: true } });
+      const card = mockCard({ type: "Launch", effect: { vp: 4 } });
+      applyEffect(p, card, [p]);
+      assertEq(p.vp, 5, "vp 4 → 5 with growth_dashboard");
+    });
+  });
+  it("growth_dashboard does NOT trigger on Feature/BugFix", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ vp: 0, permanents: { growth_dashboard: true } });
+      applyEffect(p, mockCard({ type: "Feature", effect: { vp: 4 } }), [p]);
+      assertEq(p.vp, 4, "Feature: no bonus");
+    });
+  });
+  it("incident_runbook (formula): permanent skips burnout slope", () => {
+    // Mirror endOfQuarter formula directly (no full state simulation).
+    function burnoutDebt(p) {
+      if (p.permanents.incident_runbook) return 0;
+      if (p.morale >= 4) return 0;
+      const mult = p.vision?.modifiers?.burnoutDebtMultiplier || 1;
+      return (4 - p.morale) * mult;
+    }
+    const protected_ = mockPlayer({ morale: 0, permanents: { incident_runbook: true } });
+    const exposed = mockPlayer({ morale: 0 });
+    assertEq(burnoutDebt(protected_), 0, "runbook → 0 burnout debt");
+    assertEq(burnoutDebt(exposed), 4, "no runbook → 4 burnout debt");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // VC PITCH QUALITY [S20.3]
 // ─────────────────────────────────────────────────────────────
 describe("VC pitch quality [S20.3]", () => {

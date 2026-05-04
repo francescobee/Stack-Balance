@@ -76,7 +76,17 @@ function renderAssets(p) {
   if (perms.length === 0) {
     permsDiv.appendChild(el("div", { class: "permanents-empty" }, "Nessuno ancora"));
   } else {
-    const lookup = { ci_cd: "CI/CD Pipeline", data_lake: "Data Lake", design_system: "Design System", monitoring: "Monitoring" };
+    const lookup = {
+      ci_cd: "CI/CD Pipeline",
+      data_lake: "Data Lake",
+      design_system: "Design System",
+      monitoring: "Monitoring",
+      // S20.2 + S20.4: new permanents
+      personalization: "Personalization Engine",
+      feature_flags: "Feature Flags",
+      incident_runbook: "Incident Runbook",
+      growth_dashboard: "Growth Dashboard",
+    };
     perms.forEach(k => {
       permsDiv.appendChild(el("div", { class: "perm-item" }, lookup[k] || k));
     });

@@ -726,7 +726,11 @@ function endOfQuarter() {
     // No effect at morale ≥ 4. Vision modifier `burnoutDebtMultiplier` (S19.2
     // Crunch Culture v2) can amplify this. Applied BEFORE monitoring removal
     // so Monitoring still helps mitigate.
-    if (p.morale < 4) {
+    // S20.4: incident_runbook permanent skips this entirely — runbook protegge
+    // il team da scaling burnout (insurance contro morale low builds).
+    if (p.permanents.incident_runbook) {
+      // Skip burnout — runbook covers operational continuity
+    } else if (p.morale < 4) {
       const burnoutMult = p.vision?.modifiers?.burnoutDebtMultiplier || 1;
       const burnoutDebt = (4 - p.morale) * burnoutMult;
       p.techDebt += burnoutDebt;
