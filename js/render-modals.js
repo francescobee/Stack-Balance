@@ -435,6 +435,30 @@ function showFinalSequenceModal(sortedPlayers, leader, vc, onComplete) {
     `;
   }).join("");
 
+  // ── S20.3: Pitch Readiness preview — shows leader's stats + label
+  // BEFORE the VC reveal, so the player understands the weighted picker.
+  const score = (typeof pitchScore === "function") ? pitchScore(leader) : 0;
+  const qualityLabel = score >= 6 ? "STRONG" : score >= 0 ? "MIXED" : "WEAK";
+  const qualityClass = score >= 6 ? "strong" : score >= 0 ? "mixed" : "weak";
+  const qualityHint = score >= 6
+    ? "Statistiche solide → reazioni positive favorite"
+    : score >= 0
+    ? "Statistiche miste → reazione bilanciata"
+    : "Tech debt o morale basso → favorisce reazioni negative";
+  const readinessHtml = `
+    <div class="pitch-readiness ${qualityClass}">
+      <div class="pr-eyebrow">Pitch Readiness · ${leader.name}</div>
+      <div class="pr-stats">
+        <span>🚀 ${leader.morale}</span>
+        <span>📊 ${leader.dati}</span>
+        <span>🐞 ${leader.techDebt}</span>
+        <span>🃏 ${leader.played?.length || 0}</span>
+      </div>
+      <div class="pr-quality">${qualityLabel}</div>
+      <div class="pr-hint">${qualityHint}</div>
+    </div>
+  `;
+
   // ── VC REVEAL section (hidden initially, slides in via class toggle) ──
   const sign = vc.vpDelta > 0 ? "+" : (vc.vpDelta < 0 ? "" : "±");
   const tier = vc.vpDelta >= 5 ? "great" : vc.vpDelta > 0 ? "good" : vc.vpDelta < 0 ? "bad" : "neutral";
@@ -455,6 +479,7 @@ function showFinalSequenceModal(sortedPlayers, leader, vc, onComplete) {
     <h2>The Pitch</h2>
     <p class="pitch-blurb">In ordine di MAU corrente, ogni manager presenta la sua carta migliore. Il leader chiude con la pitch decisiva.</p>
     <div class="pitch-stage">${pitchRows}</div>
+    ${readinessHtml}
     <div class="vc-reveal">${vcHtml}</div>
     <div class="actions">
       <button class="ghost" id="skipFinalBtn" type="button">Salta →</button>

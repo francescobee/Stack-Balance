@@ -1643,6 +1643,43 @@ describe("data spend mechanic [S20.2]", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// VC PITCH QUALITY [S20.3]
+// ─────────────────────────────────────────────────────────────
+describe("VC pitch quality [S20.3]", () => {
+  it("pitchScore: high morale + low debt + tableau → positive", () => {
+    const p = mockPlayer({
+      morale: 8, dati: 6, techDebt: 1,
+      played: [mockCard(), mockCard(), mockCard(), mockCard(), mockCard()],
+    });
+    // (8-5)*2 + (6-5)*1 - 0 + min(5,8)*0.5 = 6 + 1 + 0 + 2.5 = 9.5
+    assertEq(pitchScore(p), 9.5);
+  });
+  it("pitchScore: low morale + high debt → negative", () => {
+    const p = mockPlayer({ morale: 3, dati: 4, techDebt: 7, played: [] });
+    // 0 + 0 - (7-3)*2 + 0 = -8
+    assertEq(pitchScore(p), -8);
+  });
+  it("pitchScore: neutral baseline player → 0 + tableau bonus", () => {
+    const p = mockPlayer({ morale: 5, dati: 5, techDebt: 3, played: [] });
+    assertEq(pitchScore(p), 0, "all under thresholds, empty tableau");
+  });
+  it("pickWeightedVC always returns a valid VC (no crash, all weights ≥ 1)", () => {
+    // Run multiple times across extreme scores; verify return is in pool.
+    const players = [
+      mockPlayer({ morale: 0, techDebt: 10 }),  // very negative score
+      mockPlayer({ morale: 10, techDebt: 0, played: Array(8).fill(mockCard()) }),  // very positive
+      mockPlayer({ morale: 5, techDebt: 3 }),    // neutral
+    ];
+    for (const p of players) {
+      for (let i = 0; i < 20; i++) {
+        const vc = pickWeightedVC(p);
+        assert(VC_POOL.includes(vc), `vc returned is in pool (player score=${pitchScore(p)})`);
+      }
+    }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // DATA SYNERGIES + DATA SPENDER OKR [S20.2]
 // ─────────────────────────────────────────────────────────────
 describe("data synergies + OKR [S20.2]", () => {

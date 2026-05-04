@@ -981,16 +981,16 @@ function pickAndShowMarketEvent(onComplete) {
   });
 }
 
-// S4.2 + S9.5.b: Final Investor Pitch sequence before end-game.
+// S4.2 + S9.5.b + S20.3: Final Investor Pitch sequence before end-game.
 // Players present in ascending MAU order; the last (= leader) draws a VC
-// reaction. Pitch + VC reaction sono ora collassati in un singolo modal
-// (showFinalSequenceModal) — il modal applica leader.vp += vc.vpDelta
-// internamente quando l'utente clicca "Avanti — VC reaction →" (phase 0)
-// oppure "Salta →" (skip path, applica silently).
+// reaction WEIGHTED by their pitch quality (S20.3 — was uniform random).
+// Pitch + VC reaction collassati in un singolo modal (showFinalSequenceModal)
+// — il modal applica leader.vp += vc.vpDelta internamente quando l'utente
+// clicca "Avanti — VC reaction →" (phase 0) oppure "Salta →" (skip path).
 function showInvestorPitch(onComplete) {
   const sorted = [...state.players].sort((a, b) => a.vp - b.vp);
   const leader = sorted[sorted.length - 1];
-  const vc = pickRandom(VC_POOL, 1)[0];
+  const vc = pickWeightedVC(leader);
   // S10: broadcast final sequence trigger so clients show the same pitch + VC.
   // Send slot indices (resolved on client to current state.players[i]) and the
   // VC data inline (vc has no fns, fully serializable).

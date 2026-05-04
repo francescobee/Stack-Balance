@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v18";  // bump on each deploy
+const CACHE_VERSION = "sb-v19";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -90,6 +90,11 @@ const CACHE_VERSION = "sb-v18";  // bump on each deploy
 //                   Data Sale Q3). +2 sinergie (data_driven, insight_hoarder).
 //                   +1 OKR (data_spender). Tracking _dataSpent + _quarterData-
 //                   Spent in payCost. NO soft cap (designed cards strong enough).
+// v19 (2026-05-04): S20.3 — VC Pitch Quality. Stats-weighted VC picker
+//                   (pitchScore = morale + dati − debt + tableau). Preserve
+//                   black-swan via min weight 1. Pitch Readiness panel in
+//                   final sequence modal (eyebrow + stats + STRONG/MIXED/WEAK
+//                   label + hint) prima del VC reveal — trasparenza.
 const ASSETS = [
   "./",
   "./index.html",

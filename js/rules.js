@@ -562,3 +562,42 @@ function takeFromPyramid(playerIdx, row, col, action) {
   }
   return { card, toReveal };
 }
+
+// =============================================================
+// S20.3 — VC PITCH QUALITY
+// =============================================================
+// Pure helpers used by game.js (showInvestorPitch) and render-modals.js
+// (showFinalSequenceModal pitch readiness preview). Live in rules.js
+// so they're available in headless tests (game.js is excluded from
+// the Node test runner because of DOM dependencies).
+
+// pitchScore(player) → number. Higher = favor positive VC reactions,
+// lower = favor negative. Score 0 ≈ uniform (back-compat baseline).
+// Range typical -8 .. +14 across extreme builds.
+function pitchScore(player) {
+  return (
+    Math.max(0, (player.morale   || 0) - 5) * 2     // morale > 5 = healthy team
+    + Math.max(0, (player.dati     || 0) - 5) * 1   // dati > 5 = compelling numbers
+    - Math.max(0, (player.techDebt || 0) - 3) * 2   // debt > 3 = code red flag
+    + Math.min(player.played?.length || 0, 8) * 0.5 // tableau size = traction proxy
+  );
+}
+
+// pickWeightedVC(player) → VC entry. Weighted random over VC_POOL based
+// on pitchScore(player). All weights clamped to ≥ 1 so every outcome
+// remains possible (preserves "black swan walk_out on great build").
+function pickWeightedVC(player) {
+  const score = pitchScore(player);
+  const weights = VC_POOL.map(vc => {
+    if (vc.vpDelta > 0) return Math.max(1, 5 + score);
+    if (vc.vpDelta < 0) return Math.max(1, 5 - score);
+    return 5;
+  });
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = rng() * total;
+  for (let i = 0; i < VC_POOL.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return VC_POOL[i];
+  }
+  return VC_POOL[VC_POOL.length - 1];   // float-rounding safeguard
+}

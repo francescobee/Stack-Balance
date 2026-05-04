@@ -41,7 +41,7 @@ analoghi o di altra natura:
 |---------|------|-------:|------:|
 | **S20.1** | Block & React removal (subtractive cleanup) | M (~1h) | ✅ Done · 2026-05-04 |
 | **S20.2** | Dati spendable: schema + content | L (~3h) | ✅ Done · 2026-05-04 |
-| **S20.3** | VC Pitch Quality (stats-weighted picker) | S (~1h) | ⬜ |
+| **S20.3** | VC Pitch Quality (stats-weighted picker) | S (~1h) | ✅ Done · 2026-05-04 |
 | **S20.4** | Permanents expansion (+3 tools) | S (~1h) | ⬜ |
 
 **Critical path**: S20.1 → S20.2 → S20.3 → S20.4 (sequenziali, ognuna
