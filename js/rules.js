@@ -105,6 +105,23 @@ function applyEffectModifiers(e, card, modifiers) {
   if (deptBonus) Object.keys(deptBonus).forEach(k => {
     e[k] = (e[k] || 0) + deptBonus[k];
   });
+  // S19.2: conditional effect bonus — applies when the card matches a
+  // condition. Currently only "cardHasCost" supported (used by Crunch
+  // Culture vision: +1 vp when card has morale-cost). Schema:
+  //   effectBonusByCondition: {
+  //     cardHasCost: { resource: "morale", amount: 1 },
+  //     bonus: { vp: 1 }
+  //   }
+  // Extensible: add more condition types here as new modifiers need them.
+  const cond = modifiers.effectBonusByCondition;
+  if (cond) {
+    const c = cond.cardHasCost;
+    if (c && (card.cost?.[c.resource] || 0) >= (c.amount || 1)) {
+      Object.keys(cond.bonus || {}).forEach(k => {
+        e[k] = (e[k] || 0) + cond.bonus[k];
+      });
+    }
+  }
 }
 
 // S4.1+S6.1+S18.3: compute the effective effect after Vision + Event + Scenario + Weekly modifiers

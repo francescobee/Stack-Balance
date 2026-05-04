@@ -721,11 +721,11 @@ describe("weekly challenge [S18.3]", () => {
 // S18.2: VISION VARIANTS (earn-by-mastery)
 // ─────────────────────────────────────────────────────────────
 describe("vision variants [S18.2]", () => {
-  it("VISION_POOL has 8 base + 8 variant entries", () => {
+  it("VISION_POOL has 9 base + 8 variant entries (S19.2 added crunch_culture base)", () => {
     const base = VISION_POOL.filter(v => !v.baseId);
     const variants = VISION_POOL.filter(v => v.baseId);
-    assertEq(base.length, 8, "8 base visions");
-    assertEq(variants.length, 8, "8 variants (one per base)");
+    assertEq(base.length, 9, "9 base visions (8 originali + crunch_culture)");
+    assertEq(variants.length, 8, "8 variants (one per ORIGINAL base)");
   });
 
   it("each variant points to a real base vision", () => {
@@ -760,12 +760,12 @@ describe("vision variants [S18.2]", () => {
   it("visionsForHumanDraft excludes locked variants but keeps base visions", () => {
     const profile = { visionStats: {} };
     const draftable = visionsForHumanDraft(profile);
-    assertEq(draftable.length, 8, "only 8 base visions when nothing unlocked");
+    assertEq(draftable.length, 9, "9 base visions when nothing unlocked");
     assertEq(draftable.every(v => !v.baseId), true);
 
     const profileWithUnlock = { visionStats: { lean_startup: { wins: 3, plays: 3, totalMau: 0 } } };
     const draftable2 = visionsForHumanDraft(profileWithUnlock);
-    assertEq(draftable2.length, 9, "8 base + 1 variant");
+    assertEq(draftable2.length, 10, "9 base + 1 variant");
     assert(draftable2.some(v => v.id === "lean_startup_v2"),
       "unlocked variant in draftable pool");
   });
@@ -1491,6 +1491,132 @@ describe("burnout debt formula [S19.1]", () => {
       vision: { modifiers: { burnoutDebtMultiplier: 2 } },
     });
     // (4 - 1) * 2 = 6
-    assertEq(burnoutDebt(p), 6, "Crunch Culture v2 amplifies burnout 2×");
+    assertEq(burnoutDebt(p), 6, "Crunch Culture amplifies burnout 2×");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// CRUNCH CULTURE VISION + effectBonusByCondition [S19.2]
+// ─────────────────────────────────────────────────────────────
+describe("Crunch Culture vision [S19.2]", () => {
+  it("crunch_culture vision exists in VISION_POOL", () => {
+    const cc = getVisionById("crunch_culture");
+    assert(cc, "Crunch Culture vision is registered");
+    assertEq(cc.baseId, undefined, "is a base vision (not v2)");
+    assertEq(cc.modifiers.burnoutDebtMultiplier, 2);
+    assertEq(cc.modifiers.startingMorale, -1);
+  });
+  it("effectBonusByCondition.cardHasCost adds bonus when card has morale-cost", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({
+        morale: 5,
+        vision: { modifiers: {
+          effectBonusByCondition: {
+            cardHasCost: { resource: "morale", amount: 1 },
+            bonus: { vp: 1 },
+          },
+        } },
+      });
+      // Card with morale cost
+      const crunchCard = mockCard({
+        id: "all_nighter_sprint",
+        cost: { morale: 2 },
+        effect: { vp: 4 },
+      });
+      const e = effectiveCardEffect(p, crunchCard);
+      assertEq(e.vp, 5, "+1 vp bonus from cardHasCost morale match");
+    });
+  });
+  it("effectBonusByCondition does NOT trigger on cards without morale-cost", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({
+        morale: 5,
+        vision: { modifiers: {
+          effectBonusByCondition: {
+            cardHasCost: { resource: "morale", amount: 1 },
+            bonus: { vp: 1 },
+          },
+        } },
+      });
+      const normalCard = mockCard({
+        cost: { tempo: 1, budget: 2 },
+        effect: { vp: 3 },
+      });
+      const e = effectiveCardEffect(p, normalCard);
+      assertEq(e.vp, 3, "no bonus when no morale-cost");
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// HEALTHY SPRINT OKR [S19.2]
+// ─────────────────────────────────────────────────────────────
+describe("healthy_sprint OKR [S19.2]", () => {
+  // Find the OKR by id (defensive — pool ordering may shift)
+  const healthy = OKR_POOL.find(o => o.id === "healthy_sprint");
+
+  it("healthy_sprint OKR exists with reward 4", () => {
+    assert(healthy, "OKR registered");
+    assertEq(healthy.reward, 4);
+  });
+  it("active when morale ≥ 6 AND no crunch cards played this Q", () => {
+    const p = mockPlayer({
+      morale: 7,
+      _quarterPlays: [
+        mockCard({ cost: { tempo: 1, budget: 2 } }),     // no morale cost
+        mockCard({ cost: { budget: 3 } }),
+      ],
+    });
+    assertEq(healthy.check(p), true);
+  });
+  it("inactive when morale < 6", () => {
+    const p = mockPlayer({ morale: 5, _quarterPlays: [] });
+    assertEq(healthy.check(p), false);
+  });
+  it("inactive if any played card has morale-cost", () => {
+    const p = mockPlayer({
+      morale: 8,
+      _quarterPlays: [
+        mockCard({ cost: { morale: 1 } }),  // crunch card
+      ],
+    });
+    assertEq(healthy.check(p), false, "any morale-cost card disables OKR");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// MORALE-COUPLED SYNERGIES [S19.2]
+// ─────────────────────────────────────────────────────────────
+describe("morale synergies [S19.2]", () => {
+  const burnoutSurv = SYNERGY_POOL.find(s => s.id === "burnout_survivor");
+  const utopia = SYNERGY_POOL.find(s => s.id === "workplace_utopia");
+
+  it("burnout_survivor active at morale 6 + debt 5", () => {
+    const p = mockPlayer({ morale: 6, techDebt: 5 });
+    assertEq(burnoutSurv.check(p).active, true);
+  });
+  it("burnout_survivor inactive when debt < 5", () => {
+    const p = mockPlayer({ morale: 8, techDebt: 4 });
+    assertEq(burnoutSurv.check(p).active, false);
+  });
+  it("workplace_utopia counts recovery cards correctly", () => {
+    const p = mockPlayer({
+      morale: 9,
+      played: [
+        mockCard({ id: "sabbatical_day" }),
+        mockCard({ id: "team_building" }),
+        mockCard({ id: "mvp_proto" }),    // not a recovery card
+      ],
+    });
+    const result = utopia.check(p);
+    assertEq(result.active, true, "morale 9 + 2 recovery → active");
+    assertEq(result.requirements[1].current, 2, "exactly 2 recovery counted");
+  });
+  it("workplace_utopia inactive without 2 recovery cards", () => {
+    const p = mockPlayer({
+      morale: 10,
+      played: [mockCard({ id: "sabbatical_day" })],   // only 1 recovery
+    });
+    assertEq(utopia.check(p).active, false);
   });
 });

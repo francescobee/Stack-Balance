@@ -114,6 +114,16 @@ const CATALOG_Q1 = [
     cost: { tempo: 1, dati: 1 },
     effect: { budget: 4, techDebt: 1 },
     desc: "Prestito ponte. +4 Budget, +1 Tech Debt. Costa 1 Dati." },
+
+  // === S19.2 — Phase 19 Q1 morale mechanic (1 crunch + 1 recovery) ===
+  { id: "pivot_sprint", name: "Pivot Sprint", dept: "product", type: "Discovery",
+    cost: { morale: 2, tempo: 1 },
+    effect: { dati: 3, vp: 2 },
+    desc: "Cambia direzione in corsa. +3 Dati, +2K. Esauriente (-2 morale)." },
+  { id: "sabbatical_day", name: "Sabbatical Day", dept: "product", type: "Meeting",
+    cost: { tempo: 1 },
+    effect: { morale: 3, vp: -1 },
+    desc: "Ferie obbligatorie. +3 Morale, -1K (qualcuno se ne va)." },
 ];
 
 // === Q2 BUILD: infrastructure, dev work, scaling, refactoring ===
@@ -232,6 +242,20 @@ const CATALOG_Q2 = [
     chainFrom: ["ux_designer", "design_system"], chainDiscount: { tempo: 1 },
     effect: { vp: 3, dati: 1, morale: 1 },
     desc: "Flow di onboarding. +3K utenti, +1 Dati, +1 Morale." },
+
+  // === S19.2 — Phase 19 Q2 morale mechanic (2 crunch + 1 recovery) ===
+  { id: "all_nighter_sprint", name: "All-Nighter Sprint", dept: "eng", type: "Feature",
+    cost: { morale: 2 },
+    effect: { vp: 4, dati: 1, techDebt: 1 },
+    desc: "Notte in ufficio. +4K, +1 Dati, +1🐞. Spreme il team (-2 morale)." },
+  { id: "emergency_hire", name: "Emergency Hire", dept: "eng", type: "Hiring",
+    cost: { morale: 1, budget: 5 },
+    effect: { talento: 2, techDebt: 1 },
+    desc: "Hire frettoloso. +2 Talento, +1🐞 (-1 morale)." },
+  { id: "mental_health_workshop", name: "Mental Health Workshop", dept: "product", type: "Meeting",
+    cost: { budget: 2 },
+    effect: { morale: 2, dati: 1 },
+    desc: "Workshop wellness. +2 Morale, +1 Dati." },
 ];
 
 // === Q3 LAUNCH: marketing, scaling, optimization, sales ===
@@ -382,6 +406,20 @@ const CATALOG_Q3 = [
     cost: { tempo: 2 },
     effect: { morale: 2, talento: 1, dati: 1 },
     desc: "Talk a conferenza. +2 Morale, +1 Talento, +1 Dati." },
+
+  // === S19.2 — Phase 19 Q3 morale mechanic (2 crunch + 1 recovery) ===
+  { id: "weekend_push", name: "Weekend Push", dept: "product", type: "Launch",
+    cost: { morale: 3, budget: 1 },
+    effect: { vp: 6, techDebt: 1 },
+    desc: "Sprint nel weekend. +6K, +1🐞. Devasta il team (-3 morale)." },
+  { id: "ship_at_any_cost", name: "Ship at Any Cost", dept: "product", type: "Feature",
+    cost: { morale: 2, tempo: 2, talento: 1 },
+    effect: { vp: 7, techDebt: 3 },
+    desc: "Spedisci tutto. +7K, +3🐞 (-2 morale)." },
+  { id: "culture_day", name: "Culture Day", dept: "product", type: "Meeting",
+    cost: { budget: 2, tempo: 1 },
+    effect: { morale: 3, talento: 1 },
+    desc: "Offsite di cultura. +3 Morale, +1 Talento." },
 ];
 
 function getCatalog(quarter) {
@@ -571,4 +609,11 @@ const OKR_POOL = [
     check: (p) => (p._chainsTriggeredThisQ || 0) >= 2 },
   { id: "lean_quarter", text: "Chiudi il Q senza scartare carte", reward: 4,
     check: (p) => (p._quarterDiscards || 0) === 0 },
+
+  // ── S19.2 — anti-crunch OKR (premia disciplina morale) ──
+  { id: "healthy_sprint",
+    text: "Chiudi il Q con morale ≥ 6 e zero carte morale-cost giocate",
+    reward: 4,
+    check: (p) => p.morale >= 6
+                  && !p._quarterPlays.some(c => (c.cost?.morale || 0) > 0) },
 ];

@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v15";  // bump on each deploy
+const CACHE_VERSION = "sb-v16";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -70,6 +70,14 @@ const CACHE_VERSION = "sb-v15";  // bump on each deploy
 //                   burnout debt scaling at end-of-Q (slope 4-morale, +0 at ≥4,
 //                   +4 at morale 0), block disabled at morale ≤ 3 (single-player).
 //                   Schema-only change; no carte morale-cost ancora (S19.2).
+// v16 (2026-05-04): S19.2 — Content per la mechanic morale. +5 crunch cards
+//                   (Pivot Sprint Q1, All-Nighter+Emergency Hire Q2, Weekend
+//                   Push+Ship at Any Cost Q3) + 3 recovery (Sabbatical Day Q1,
+//                   Mental Health Workshop Q2, Culture Day Q3). +2 synergies
+//                   (Burnout Survivor, Workplace Utopia). +1 OKR (Healthy
+//                   Sprint, anti-crunch). +1 base Vision (Crunch Culture, 9th
+//                   slot — i v2 erano tutti già occupati). New modifier
+//                   effectBonusByCondition.cardHasCost (rules.js).
 const ASSETS = [
   "./",
   "./index.html",

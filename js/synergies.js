@@ -423,6 +423,43 @@ const SYNERGY_POOL = [
       return { requirements: reqs, active: reqs.every(r => r.met) };
     },
   },
+
+  // ───────────────────────────────────────────────────────────
+  // S19.2 — MORALE-COUPLED (Phase 19 mechanic)
+  // ───────────────────────────────────────────────────────────
+  {
+    id: "burnout_survivor", name: "Burnout Survivor", icon: "🔥",
+    points: 8, tags: ["crunch", "resilience"], difficulty: "medium",
+    detailInactive: "Sinergia: hai retto la pressione fino in fondo",
+    detailActive: (p) => `Crunchato senza cedere: morale ${p.morale}, debt ${p.techDebt}`,
+    check(p) {
+      const reqs = [
+        { label: "Morale finale ≥ 6", current: p.morale,   target: 6, met: p.morale   >= 6 },
+        { label: "Tech Debt ≥ 5",     current: p.techDebt, target: 5, met: p.techDebt >= 5 },
+      ];
+      return { requirements: reqs, active: reqs.every(r => r.met) };
+    },
+  },
+  {
+    id: "workplace_utopia", name: "Workplace Utopia", icon: "☮️",
+    points: 10, tags: ["lean", "morale", "team"], difficulty: "medium",
+    detailInactive: "Sinergia: cultura aziendale al top + investimento attivo",
+    detailActive: (p) => `Squadra felice e investita: morale ${p.morale}`,
+    check(p) {
+      // Recovery cards: gli "esciti dal pozzo" del morale (cura attiva del team).
+      // Include S19.2 + le morale-recovery storiche (team_building, sprint_retro).
+      const RECOVERY_IDS = new Set([
+        "sabbatical_day", "mental_health_workshop", "culture_day",
+        "team_building", "sprint_retro", "pair_programming",
+      ]);
+      const recoveryCount = p.played.filter(c => RECOVERY_IDS.has(c.id)).length;
+      const reqs = [
+        { label: "Morale finale ≥ 9",    current: p.morale,      target: 9, met: p.morale      >= 9 },
+        { label: "Recovery cards ≥ 2",   current: recoveryCount, target: 2, met: recoveryCount >= 2 },
+      ];
+      return { requirements: reqs, active: reqs.every(r => r.met) };
+    },
+  },
 ];
 
 // Lookup helper, used by deserializeState() in multiplayer.js

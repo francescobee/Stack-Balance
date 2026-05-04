@@ -166,6 +166,29 @@ const VISION_POOL = [
   },
 
   // ───────────────────────────────────────────────────────────
+  // S19.2: 9th BASE Vision — premia il gameplay morale-cost.
+  // (Originally roadmapped as a v2; promoted to base since all 8
+  // base→v2 slots were already occupied. Doesn't gate on mastery.)
+  // ───────────────────────────────────────────────────────────
+  {
+    id: "crunch_culture",
+    icon: "⚡",
+    name: "Crunch Culture",
+    description: "Lo sprint costante è la cultura. Premio per chi paga in morale, ma il burnout fa più male.",
+    bonus: "+1K MAU su carte morale-cost · +1 starting Talento",
+    malus: "Burnout debt 2× (morale ≤ 3) · −1 starting morale",
+    modifiers: {
+      effectBonusByCondition: {
+        cardHasCost: { resource: "morale", amount: 1 },
+        bonus: { vp: 1 },
+      },
+      burnoutDebtMultiplier: 2,
+      startingMorale: -1,
+      startingTalento: 1,
+    },
+  },
+
+  // ───────────────────────────────────────────────────────────
   // S18.2: VISION VARIANTS (v2) — earn-by-mastery
   // Each variant unlocks after the player has won 3 times with the base
   // Vision (profile.visionStats[baseId].wins >= 3). Variants are tematic
