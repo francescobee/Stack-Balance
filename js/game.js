@@ -684,6 +684,11 @@ function offerBlockOpportunity(actingIdx, toReveal) {
     // confuses sequential turns).
     if (state.isMultiplayer || state.isSharedScreen) return resolve({ blocked: false });
 
+    // S19.1: Block disabled at morale ≤ 3. Team disengaged, no energy
+    // to intercept. Single-player only (already short-circuited above for MP/HS).
+    const localPlayer = state.players[state.localSlotIdx ?? 0];
+    if (localPlayer && localPlayer.morale <= 3) return resolve({ blocked: false });
+
     if (actingIdx === 0) {
       // Human picked — AI may react (auto-decide)
       const blockerIdx = aiSelectBlocker(actingIdx, toReveal);
@@ -810,6 +815,18 @@ function endOfQuarter() {
 
   const D = BALANCE.DEBT;
   state.players.forEach(p => {
+    // S19.1: Burnout debt scaling — tired teams write buggier code.
+    // Slope (4 - morale) clamped to 0: morale 3 → +1 debt, morale 0 → +4 debt.
+    // No effect at morale ≥ 4. Vision modifier `burnoutDebtMultiplier` (S19.2
+    // Crunch Culture v2) can amplify this. Applied BEFORE monitoring removal
+    // so Monitoring still helps mitigate.
+    if (p.morale < 4) {
+      const burnoutMult = p.vision?.modifiers?.burnoutDebtMultiplier || 1;
+      const burnoutDebt = (4 - p.morale) * burnoutMult;
+      p.techDebt += burnoutDebt;
+      log(`${p.name}: +${burnoutDebt}🐞 burnout (morale ${p.morale})`,
+          p.isHuman ? "you" : "");
+    }
     if (p.permanents.monitoring && p.techDebt > 0) {
       p.techDebt = Math.max(0, p.techDebt - D.MONITORING_REMOVAL);
     }

@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v14";  // bump on each deploy
+const CACHE_VERSION = "sb-v15";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -66,6 +66,10 @@ const CACHE_VERSION = "sb-v14";  // bump on each deploy
 //                   (6 challenges rotated by ISO week). Splash button +
 //                   intro modal + masthead badge. Mutators applied via the
 //                   existing modifier engine (4th pass after Scenario).
+// v15 (2026-05-04): S19.1 — Morale as cost. payCost defensive clamp at 0,
+//                   burnout debt scaling at end-of-Q (slope 4-morale, +0 at ≥4,
+//                   +4 at morale 0), block disabled at morale ≤ 3 (single-player).
+//                   Schema-only change; no carte morale-cost ancora (S19.2).
 const ASSETS = [
   "./",
   "./index.html",

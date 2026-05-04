@@ -75,7 +75,10 @@ function payCost(player, card) {
   // S1.2: il talento usato si accumula per Q (resettato a inizio Q)
   player.talentoUsed = (player.talentoUsed || 0) + (c.talento || 0);
   player.dati   -= (c.dati   || 0);
-  player.morale -= (c.morale || 0);
+  // S19.1: defensive clamp on morale floor — canAfford should prevent it,
+  // but if payCost is ever called without prior check (e.g. tests, edge cases),
+  // morale must not go negative.
+  player.morale = Math.max(0, player.morale - (c.morale || 0));
 }
 
 // S4.1+S6.1: shared effect-modifier application. Supports type/cardId/dept keys.

@@ -1408,3 +1408,89 @@ describe("isPickable / getDepth / getPickableSlots", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────
+// MORALE COST MECHANIC [S19.1]
+// ─────────────────────────────────────────────────────────────
+describe("morale as cost [S19.1]", () => {
+  it("canAfford rejects when morale insufficient", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ morale: 1 });
+      const c = mockCard({ cost: { morale: 2 } });
+      assertEq(canAfford(p, c), false, "morale 1 cannot pay morale 2");
+    });
+  });
+  it("canAfford accepts at exact morale", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ morale: 2 });
+      const c = mockCard({ cost: { morale: 2 } });
+      assertEq(canAfford(p, c), true, "morale 2 == cost 2 ok");
+    });
+  });
+  it("payCost deducts morale (clamped at 0)", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ morale: 3 });
+      payCost(p, mockCard({ cost: { morale: 2 } }));
+      assertEq(p.morale, 1, "morale 3 - 2 = 1");
+    });
+  });
+  it("payCost defensive clamps morale floor at 0", () => {
+    // canAfford should prevent this, but the clamp guards against direct misuse.
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({ morale: 1 });
+      payCost(p, mockCard({ cost: { morale: 5 } }));
+      assertEq(p.morale, 0, "clamped at 0, no negative");
+    });
+  });
+  it("morale-cost respects chain discount", () => {
+    // Chain discount applies to any resource via card.chainDiscount, including morale.
+    withState({ activeEvent: null, scenario: null }, () => {
+      const p = mockPlayer({
+        morale: 3,
+        played: [mockCard({ id: "junior_dev" })],
+      });
+      const c = mockCard({
+        cost: { morale: 3 },
+        chainFrom: ["junior_dev"], chainDiscount: { morale: 1 },
+      });
+      const adj = adjustedCost(p, c);
+      assertEq(adj.morale, 2, "chain reduces morale cost 3 → 2");
+      assertEq(canAfford(p, c), true, "morale 3 covers adjusted morale 2");
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// BURNOUT DEBT SCALING [S19.1]
+// ─────────────────────────────────────────────────────────────
+// We can't call endOfQuarter() in unit tests (it touches DOM/state heavily),
+// so we test the formula directly. The actual integration is exercised by
+// playtest. The formula: burnoutDebt = (4 - morale) * (vision.modifiers.
+// burnoutDebtMultiplier || 1), only fires at morale < 4.
+describe("burnout debt formula [S19.1]", () => {
+  // Helper that mimics the formula in game.js endOfQuarter
+  function burnoutDebt(p) {
+    if (p.morale >= 4) return 0;
+    const mult = p.vision?.modifiers?.burnoutDebtMultiplier || 1;
+    return (4 - p.morale) * mult;
+  }
+  it("morale ≥ 4 → no burnout debt", () => {
+    assertEq(burnoutDebt(mockPlayer({ morale: 4 })), 0);
+    assertEq(burnoutDebt(mockPlayer({ morale: 5 })), 0);
+    assertEq(burnoutDebt(mockPlayer({ morale: 10 })), 0);
+  });
+  it("morale 3 → +1 debt", () => {
+    assertEq(burnoutDebt(mockPlayer({ morale: 3 })), 1);
+  });
+  it("morale 0 → +4 debt (max slope)", () => {
+    assertEq(burnoutDebt(mockPlayer({ morale: 0 })), 4);
+  });
+  it("burnoutDebtMultiplier from vision doubles the slope", () => {
+    const p = mockPlayer({
+      morale: 1,
+      vision: { modifiers: { burnoutDebtMultiplier: 2 } },
+    });
+    // (4 - 1) * 2 = 6
+    assertEq(burnoutDebt(p), 6, "Crunch Culture v2 amplifies burnout 2×");
+  });
+});
