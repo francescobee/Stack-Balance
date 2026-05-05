@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v20";  // bump on each deploy
+const CACHE_VERSION = "sb-v21";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -100,6 +100,14 @@ const CACHE_VERSION = "sb-v20";  // bump on each deploy
 //                   debt scaling), growth_dashboard (Q3 data chains data_lake,
 //                   +1K MAU su Launch). Pool permanents 4 → 8 (incl.
 //                   personalization da S20.2). Phase 20 complete.
+// v21 (2026-05-04): S19.3 — Stress cards (pure morale-cost) + 3 synergies.
+//                   8 carte costo solo morale come safety-valve allo scarto:
+//                   pizza_sprint/brain_dump (Q1), last_minute_pitch/marathon-
+//                   _code/heroics (Q2), solo_launch/skeleton_crew/final_push
+//                   (Q3). Ratio ~1.0-1.5 vp/morale, sotto le carte normali
+//                   per non diventare dominanti. Synergies stress_free (easy,
+//                   9K), iron_will (medium, 10K), resilience (hard, 13K) —
+//                   coprono i 3 stili (evita / abbraccia / paradosso).
 const ASSETS = [
   "./",
   "./index.html",

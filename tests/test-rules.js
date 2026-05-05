@@ -464,6 +464,80 @@ describe("computeSynergies", () => {
       assert(out[0].points > 0, "single drawn synergy still scores");
     });
   });
+
+  // ── S19.3: stress-mechanic synergies ──
+  it("S19.3 stress_free: 0 morale-cost cards AND morale ≥ 6", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      // OK case: clean run, no stress, morale 7
+      const clean = mockPlayer({ morale: 7, played: [
+        mockCard({ id: "f1", cost: { budget: 2 }, type: "Feature" }),
+      ]});
+      // Bad: morale OK but stress card played
+      const stressed = mockPlayer({ morale: 7, played: [
+        mockCard({ id: "s1", cost: { morale: 2 }, type: "Feature" }),
+      ]});
+      // Bad: clean but morale too low
+      const lowMorale = mockPlayer({ morale: 5, played: [] });
+
+      assert(computeSynergies(clean).find(s => s.id === "stress_free").points > 0,
+        "stress_free fires on clean run");
+      assertEq(computeSynergies(stressed).find(s => s.id === "stress_free").points, 0,
+        "any morale-cost card breaks stress_free");
+      assertEq(computeSynergies(lowMorale).find(s => s.id === "stress_free").points, 0,
+        "morale < 6 fails the second req");
+    });
+  });
+
+  it("S19.3 iron_will: ≥ 4 stress cards", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const stressCard = (id) => mockCard({ id, cost: { morale: 1 }, type: "Feature" });
+      const at4 = mockPlayer({ played: [stressCard("a"), stressCard("b"),
+                                        stressCard("c"), stressCard("d")] });
+      const at3 = mockPlayer({ played: [stressCard("a"), stressCard("b"),
+                                        stressCard("c")] });
+      assert(computeSynergies(at4).find(s => s.id === "iron_will").points > 0,
+        "iron_will fires at exactly 4");
+      assertEq(computeSynergies(at3).find(s => s.id === "iron_will").points, 0,
+        "iron_will needs 4+");
+    });
+  });
+
+  it("S19.3 resilience: morale ≥ 7 AND ≥ 2 stress cards (paradox)", () => {
+    withState({ activeEvent: null, scenario: null }, () => {
+      const stressCard = (id) => mockCard({ id, cost: { morale: 1 }, type: "Feature" });
+      // The hard one: high morale despite playing stress
+      const resilient = mockPlayer({
+        morale: 7,
+        played: [stressCard("a"), stressCard("b")],
+      });
+      // Has stress but morale too low
+      const broken = mockPlayer({
+        morale: 5,
+        played: [stressCard("a"), stressCard("b")],
+      });
+      // High morale but no stress at all
+      const noStress = mockPlayer({ morale: 9, played: [] });
+      assert(computeSynergies(resilient).find(s => s.id === "resilience").points > 0,
+        "resilience: morale 7 + 2 stress cards");
+      assertEq(computeSynergies(broken).find(s => s.id === "resilience").points, 0,
+        "resilience: morale must be ≥ 7");
+      assertEq(computeSynergies(noStress).find(s => s.id === "resilience").points, 0,
+        "resilience: needs ≥ 2 stress cards");
+    });
+  });
+
+  it("S19.3 stress synergies count S19.2 mixed-cost cards too (inclusive)", () => {
+    // The "stress count" is `cost.morale > 0` — so cards like emergency_hire
+    // (morale: 1, budget: 5) also count, not just pure-morale-cost cards.
+    withState({ activeEvent: null, scenario: null }, () => {
+      const mixed = mockCard({ id: "emergency_hire", cost: { morale: 1, budget: 5 }, type: "Hiring" });
+      const pure  = mockCard({ id: "pizza_sprint", cost: { morale: 1 }, type: "Feature" });
+      const p = mockPlayer({ played: [mixed, pure, mixed, pure] });
+      const ironWill = computeSynergies(p).find(s => s.id === "iron_will");
+      assert(ironWill.points > 0,
+        "iron_will counts both mixed-cost (S19.2) and pure-cost (S19.3)");
+    });
+  });
 });
 
 // ─────────────────────────────────────────────────────────────

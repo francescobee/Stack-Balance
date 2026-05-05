@@ -130,6 +130,19 @@ const CATALOG_Q1 = [
     cost: { dati: 2, tempo: 1 },
     effect: { vp: 2, morale: 1 },
     desc: "Trasforma i dati in insight. +2K, +1 Morale. Spendi 2 Dati." },
+
+  // === S19.3 — Phase 19 stress cards (Q1, pure morale-cost) ===
+  // Pattern: nessun costo budget/tempo/talento → safety-valve quando non
+  // puoi permetterti altro, paghi solo morale. Ratio target ~1.0-1.5 vp/morale,
+  // sotto le carte normali (1.3-1.5 vp/budget) per non diventare dominanti.
+  { id: "pizza_sprint", name: "Pizza Sprint", dept: "eng", type: "Feature",
+    cost: { morale: 1 },
+    effect: { vp: 2 },
+    desc: "Cena in ufficio, una feature in più. +2K (-1 morale)." },
+  { id: "brain_dump", name: "Brain Dump Session", dept: "product", type: "Discovery",
+    cost: { morale: 2 },
+    effect: { dati: 2, vp: 1 },
+    desc: "Notte a fissare la lavagna. +2 Dati, +1K (-2 morale)." },
 ];
 
 // === Q2 BUILD: infrastructure, dev work, scaling, refactoring ===
@@ -284,6 +297,20 @@ const CATALOG_Q2 = [
     cost: { budget: 2, tempo: 2 },
     effect: { techDebt: -1 }, permanent: "incident_runbook",
     desc: "Procedure standard. -1🐞 + permanent: ignora burnout debt scaling." },
+
+  // === S19.3 — Phase 19 stress cards (Q2, pure morale-cost) ===
+  { id: "last_minute_pitch", name: "Last-Minute Pitch", dept: "product", type: "Funding",
+    cost: { morale: 2 },
+    effect: { budget: 3, techDebt: 1 },
+    desc: "Pitch improvvisato. +3 Budget, +1🐞 (-2 morale)." },
+  { id: "marathon_code", name: "Marathon Code Session", dept: "eng", type: "Feature",
+    cost: { morale: 2 },
+    effect: { vp: 2, dati: 1 },
+    desc: "Coding senza pause. +2K, +1 Dati (-2 morale)." },
+  { id: "heroics", name: "Heroics", dept: "eng", type: "BugFix",
+    cost: { morale: 3 },
+    effect: { techDebt: -2, vp: 1 },
+    desc: "Salvataggio in extremis. -2🐞, +1K (-3 morale)." },
 ];
 
 // === Q3 LAUNCH: marketing, scaling, optimization, sales ===
@@ -470,6 +497,20 @@ const CATALOG_Q3 = [
     chainFrom: ["data_lake"], chainDiscount: { budget: 2 },
     effect: { dati: 2, vp: 2 }, permanent: "growth_dashboard",
     desc: "Dashboard growth. +2 Dati, +2K + permanent: ogni Launch +1K MAU." },
+
+  // === S19.3 — Phase 19 stress cards (Q3, pure morale-cost) ===
+  { id: "solo_launch", name: "Solo Launch", dept: "product", type: "Launch",
+    cost: { morale: 3 },
+    effect: { vp: 4 },
+    desc: "Lancio in solo. +4K, niente più team-spirit (-3 morale)." },
+  { id: "skeleton_crew", name: "Skeleton Crew", dept: "eng", type: "Hiring",
+    cost: { morale: 2 },
+    effect: { talento: 1, techDebt: 1 },
+    desc: "Hire chiunque purché firmi. +1 Talento, +1🐞 (-2 morale)." },
+  { id: "final_push", name: "Final Push", dept: "product", type: "Feature",
+    cost: { morale: 4 },
+    effect: { vp: 5 },
+    desc: "Tutto sul rosso, tutto adesso. +5K (-4 morale)." },
 ];
 
 function getCatalog(quarter) {

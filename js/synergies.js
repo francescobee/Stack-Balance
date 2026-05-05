@@ -489,6 +489,61 @@ const SYNERGY_POOL = [
       return { requirements: reqs, active: reqs.every(r => r.met) };
     },
   },
+
+  // ───────────────────────────────────────────────────────────
+  // S19.3 — STRESS-MECHANIC SYNERGIES
+  // Counts ANY card with cost.morale > 0: includes S19.2 cards (mixed
+  // morale-cost) and S19.3 stress cards (pure morale-cost). Synergies
+  // span the spectrum: avoid stress (Stress-Free), embrace it (Iron
+  // Will), or pull off the paradox of stress + high morale (Resilience).
+  // ───────────────────────────────────────────────────────────
+  {
+    id: "stress_free", name: "Stress-Free", icon: "🌤️",
+    points: 9, tags: ["team", "morale", "lean"], difficulty: "easy",
+    detailInactive: "Sinergia: niente carte morale-cost, team riposato",
+    detailActive: (p) => `0 stress · morale ${p.morale}`,
+    check(p) {
+      const stressCount = p.played.filter(c => (c.cost && c.cost.morale) > 0).length;
+      const reqs = [
+        { label: "0 stress cards", current: stressCount, target: 0, met: stressCount === 0 },
+        { label: "Morale ≥ 6",     current: p.morale,    target: 6, met: p.morale     >= 6 },
+      ];
+      return { requirements: reqs, active: reqs.every(r => r.met) };
+    },
+  },
+  {
+    id: "iron_will", name: "Iron Will", icon: "💪",
+    points: 10, tags: ["team", "lean"], difficulty: "medium",
+    detailInactive: "Sinergia: stoicismo, gioca sotto pressione",
+    detailActive: (p) => {
+      const sc = p.played.filter(c => (c.cost && c.cost.morale) > 0).length;
+      return `${sc} stress cards giocate`;
+    },
+    check(p) {
+      const stressCount = p.played.filter(c => (c.cost && c.cost.morale) > 0).length;
+      const reqs = [
+        { label: "Stress cards ≥ 4", current: stressCount, target: 4, met: stressCount >= 4 },
+      ];
+      return { requirements: reqs, active: reqs[0].met };
+    },
+  },
+  {
+    id: "resilience", name: "Resilience", icon: "🧘",
+    points: 13, tags: ["team", "morale"], difficulty: "hard",
+    detailInactive: "Sinergia: morale alto nonostante lo stress",
+    detailActive: (p) => {
+      const sc = p.played.filter(c => (c.cost && c.cost.morale) > 0).length;
+      return `Morale ${p.morale} · ${sc} stress`;
+    },
+    check(p) {
+      const stressCount = p.played.filter(c => (c.cost && c.cost.morale) > 0).length;
+      const reqs = [
+        { label: "Morale ≥ 7",       current: p.morale,    target: 7, met: p.morale    >= 7 },
+        { label: "Stress cards ≥ 2", current: stressCount, target: 2, met: stressCount >= 2 },
+      ];
+      return { requirements: reqs, active: reqs.every(r => r.met) };
+    },
+  },
 ];
 
 // Lookup helper, used by deserializeState() in multiplayer.js
