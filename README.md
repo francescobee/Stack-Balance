@@ -2,11 +2,12 @@
 
 [![Tests](https://github.com/francescobee/Stack-Balance/actions/workflows/test.yml/badge.svg)](https://github.com/francescobee/Stack-Balance/actions/workflows/test.yml)
 
-Un boardgame in stile *7 Wonders* ambientato in una scale-up tech. Quattro
-manager (1 umano + 3 AI) draftano carte da una piramide condivisa stile
-Mahjong (4×6) per costruire la migliore app. Vince chi accumula più
-**utenti (K MAU)** alla fine del Q3 — o, in scenari speciali, chi sopravvive
-al mercato / chi raggiunge prima 40K MAU / chi è più efficiente.
+Un **drafting boardgame** ambientato in una scale-up tech. Quattro
+manager (1 umano + 3 AI) draftano carte da una piramide condivisa a
+strati (4×6) per costruire la migliore app. Vince chi accumula più
+**utenti (K MAU)** alla fine del Q3 — o, in scenari speciali, chi
+sopravvive al mercato / chi raggiunge per primo 40K MAU / chi è più
+efficiente.
 
 > **Editorial design** · parchment + Fraunces italic + Newsreader serif.
 > **Vanilla JS** · zero build step, zero librerie. Apri `index.html` e gioca.
@@ -26,21 +27,22 @@ al mercato / chi raggiunge prima 40K MAU / chi è più efficiente.
    - **🌅 Daily Run** → seed condiviso quotidiano (worldwide stesso pool)
    - **⚡ Weekly Challenge** → 1 partita/settimana con mutator esplicito + bonus XP
    - **🌐 Multiplayer** → P2P online o Hot Seat locale
-4. Pesca la tua **Vision Card** (1 di 3 random da pool di 16 — 8 base + 8 v2
+4. Pesca la tua **Vision Card** (1 di 3 random da pool di 17 — 9 base + 8 v2
    sbloccabili dopo 3 vittorie con la base).
-5. **Synergy Showcase** (S15): vedi le 5 sinergie pescate per questa partita
-   (su 24 totali). Ognuna è un obiettivo multi-condizione che vale 8-15K
-   MAU se completato.
+5. **Synergy Showcase**: vedi le 5 sinergie pescate per questa partita
+   (su 31 totali). Ognuna è un obiettivo multi-condizione che vale
+   8-15K MAU se completato.
 6. Per ogni quarter (Q1 Discovery → Q2 Build → Q3 Launch):
    - Pesca il tuo **OKR** (1 di 3 random).
    - Pesca 6 carte dalla piramide via **snake draft** (Tu→Marco→Alessia→Karim,
      poi reverse).
    - Tra Q1→Q2 e Q2→Q3 un **Market Event** cambia le regole.
 7. A fine Q3 (o early-end nei scenari **Acquisition**): **Investor Pitch**
-   + **VC Reaction** + classifica con **7 Awards** + **5 Synergies attive** +
-   conversione budget − tech debt.
-8. Post-game: il tuo **Founder Level** sale (XP per partita giocata + vinta +
-   K MAU + bonus daily/weekly). Cap a Lv 20.
+   con **Pitch Readiness** preview (le tue stats finali pesano la VC reaction)
+   + classifica con **7 Awards** + **5 Synergies attive** + conversione
+   budget − tech debt.
+8. Post-game: il tuo **Founder Level** sale (XP per partita giocata + vinta
+   + K MAU + bonus daily/weekly). Cap a Lv 20.
 
 > 💡 Premi `?` nel masthead in alto a destra durante il gioco per il riassunto
 > rapido delle regole. La masthead mostra anche badge per **Vision attiva**,
@@ -54,8 +56,11 @@ al mercato / chi raggiunge prima 40K MAU / chi è più efficiente.
 ```
 test/
 ├── index.html                # entry point — script tags in load order
+├── manifest.json             # PWA manifest (Phase 12.6)
+├── sw.js                     # service worker · cache-first · CACHE_VERSION bumped per deploy
+├── icons/icon.svg            # placeholder app icon (sostituibile)
 ├── README.md                 # questo file
-├── ROADMAP.md                # piano sviluppo a 8 fasi (tutte completate)
+├── ROADMAP.md                # piano core a 8 fasi (Phase 1-8 ✅, MVP)
 ├── CHANGELOG.md              # log dettagliato per session
 ├── CONTEXT.md                # handoff doc (orientation per nuove sessioni)
 │
@@ -65,47 +70,44 @@ test/
 │   └── player.css            # bacheca + assets + OKR + awards forecast
 │
 ├── js/                       # game logic — tutti vanilla JS classic scripts
-│   ├── data.js               # CATALOG_Q1/2/3 (83 carte) + OKR_POOL + EVENT_POOL + VC_POOL
-│   ├── visions.js            # 16 Vision Cards (8 base + 8 v2 sbloccabili) (S18.2)
-│   ├── scenarios.js          # 4 Scenarios — ognuno locka una win condition (S17)
-│   ├── synergies.js          # 24 sinergie, pesca 5/partita con flavour scenario (S15)
-│   ├── archetypes.js         # 5 AI archetypes layered su personas (S16)
-│   ├── win-conditions.js     # 4 regole vittoria (mau/survival/acquisition/efficiency) (S17)
-│   ├── weekly-challenges.js  # 6 weekly mutators rotated by ISO week (S18.3)
+│   ├── data.js               # CATALOG_Q1/2/3 (108 carte) + OKR_POOL + EVENT_POOL + VC_POOL
+│   ├── visions.js            # 17 Vision Cards (9 base + 8 v2 unlockable)
+│   ├── scenarios.js          # 4 Scenarios — ognuno locka una win condition
+│   ├── synergies.js          # 31 sinergie, pesca 5/partita con flavour scenario
+│   ├── archetypes.js         # 5 AI archetypes layered su personas
+│   ├── win-conditions.js     # 4 regole vittoria (mau/survival/acquisition/efficiency)
+│   ├── weekly-challenges.js  # 6 weekly mutators rotated by ISO week
 │   ├── util.js               # el(), shuffle, rng (seedable), showToast, viewport helpers
 │   ├── user.js               # profile + prefs + XP/Founder Level + visionStats + weeklyHistory
-│   ├── audio.js              # Web Audio API — 7 sintetizzati (incl. sndPassConfirm S13.3)
+│   ├── audio.js              # Web Audio API — sintetizzati (tone, chain, debt, pass, ...)
 │   ├── achievements.js       # achievements + check helpers (incl. Founder Lv + Weekly chains)
 │   ├── balance.js            # ⭐ TUTTE le costanti tunable (Object.freeze)
 │   ├── state.js              # newPlayer, NUM_PLAYERS, PYR_ROWS, log
-│   ├── rules.js              # adjustedCost, applyEffect, computeAwards, computeSynergies (4-pass)
+│   ├── rules.js              # adjustedCost, applyEffect, computeAwards, computeSynergies
+│   │                         # (4-pass modifier engine + pitchScore + pickWeightedVC)
 │   ├── ai.js                 # AI_PERSONAS + archetype overlay + decideAIPickFromPyramid
 │   ├── game.js               # startGame (single/daily/weekly), processNextPick, endOfQuarter
 │   ├── multiplayer.js        # P2P multiplayer via PeerJS (Phase 10)
 │   ├── hotseat.js            # Hot Seat / pass-and-play locale (Phase 11)
 │   │
 │   ├── render.js             # ⭐ orchestrator: render(), renderSplash, escapeHtml
-│   ├── render-pyramid.js     # board: renderPyramidCard, renderPyramid       (S8.1)
-│   ├── render-tableau.js     # bacheca: renderTableau                        (S8.1)
-│   ├── render-sidebar.js     # assets/OKR/awards/synergies/log panels        (S8.1)
+│   ├── render-pyramid.js     # board: renderPyramidCard, renderPyramid
+│   ├── render-tableau.js     # bacheca: renderTableau
+│   ├── render-sidebar.js     # assets/OKR/awards/synergies/log panels
 │   ├── render-masthead.js    # header + progress + byline + mobile turn-bar/resources strip
-│   ├── render-modals.js      # game-flow modali (incl. SynergyShowcase, WeeklyIntro)
+│   ├── render-modals.js      # game-flow modali (incl. SynergyShowcase, WeeklyIntro, FinalSequence)
 │   ├── render-profile.js     # profile + Founder Level + Vision Mastery + achievements
 │   ├── render-multiplayer.js # MP entry/lobby/join modali (Phase 10)
 │   ├── render-hotseat.js     # Hot Seat lobby + pass-screen modal (Phase 11)
-│   ├── render-card-detail.js # tap-to-detail fullscreen overlay (mobile, S12.3)
+│   ├── render-card-detail.js # tap-to-detail fullscreen overlay (mobile only)
 │   │
 │   └── main.js               # boot — chiama showProfileSetup o renderSplash
-│
-├── manifest.json             # PWA manifest (Phase 12.6)
-├── sw.js                     # service worker · cache-first · CACHE_VERSION bumped per deploy
-├── icons/icon.svg            # placeholder app icon (sostituibile)
 │
 └── tests/
     ├── test.html             # apri in browser per eseguire i test
     ├── runner.js             # describe/it/assert/assertEq/assertDeepEq
     ├── run-headless.js       # Node CLI runner (CI compatibile)
-    └── test-rules.js         # 58 test su rules/synergies/archetypes/win-conditions/...
+    └── test-rules.js         # 148 test su rules/synergies/archetypes/win-conditions/...
 ```
 
 ### Script load order (in `index.html`)
@@ -122,28 +124,26 @@ data → visions → scenarios → util → user → audio → achievements
 ```
 
 L'ordine *conta* per `balance.js` (deve precedere chi lo usa: state/rules/ai/game),
-`synergies.js` / `archetypes.js` / `win-conditions.js` / `weekly-challenges.js` (devono
-precedere `game.js` che li chiama in startGame), e `util.js` (deve precedere ogni
-`render-*.js` per `el()`/`showToast`). Tra i sub-moduli `render-*` l'ordine è libero.
+i 4 engine files (`synergies.js` / `archetypes.js` / `win-conditions.js` /
+`weekly-challenges.js`) (devono precedere `game.js` che li chiama in
+startGame), e `util.js` (deve precedere ogni `render-*.js` per
+`el()`/`showToast`). Tra i sub-moduli `render-*` l'ordine è libero.
 
 ---
 
-## 🎯 Profondità di gameplay (Phase 15-17)
+## 🎯 Profondità di gameplay
 
-Tre sistemi orthogonali aggiunti dopo il core gameplay per aumentare la
-**variety run-to-run** e dare profondità strategica senza nuove meccaniche
-di gioco.
+Il gameplay si articola attorno a **6 sistemi orthogonali** che si
+combinano per generare run-to-run variety:
 
-### Synergy pool (S15) — sinergie pescate per partita
+### Synergy pool — sinergie pescate per partita
 
-Le 4 sinergie hardcoded del core (Lean Op / Eng Excellence / Data Empire /
-Full Funding) sono diventate un **pool di 24 sinergie**, da cui se ne
-pescano 5 random a inizio partita. Pesca **flavorata dallo scenario**:
-Bear Market boosta tag `lean`/`frugal`, AI Hype boosta `data`/`ai`,
-Remote First boosta `morale`/`async`, etc.
+Pool di **31 sinergie**, da cui se ne pescano 5 random a inizio partita.
+Pesca **flavorata dallo scenario**: Bear Market boosta tag `lean`/`frugal`,
+AI Hype boosta `data`/`ai`, Remote First boosta `morale`/`async`, etc.
 
-- Tier mix: 4 hard (8-15K MAU, multi-condizione stretta) + 12 medium
-  (5-9K, condizioni accessibili) + 8 easy (3-6K, soglie semplici)
+- Tier mix: hard prestige (10-15K MAU, multi-condizione stretta), medium
+  (8-12K, condizioni accessibili), easy (5-9K, soglie semplici)
 - **Showcase modal** all'inizio della partita (post-Vision draft, pre-OKR)
   mostra le 5 pescate con icone + criteri + reward
 - A fine partita: ogni sinergia attiva contribuisce ai punti come gli
@@ -151,7 +151,7 @@ Remote First boosta `morale`/`async`, etc.
 - Il modifier engine ha un **4° pass** dedicato che valuta le sinergie
   active al game-end
 
-### AI archetypes (S16) — 15 stili di gioco AI
+### AI archetypes — 15 stili di gioco AI
 
 Ogni AI persona (Marco/Alessia/Karim) mantiene la sua dept-bias e i
 weights base, ma ora ottiene un **archetype layered on top** pescato a
@@ -159,7 +159,7 @@ inizio partita:
 
 | Archetype | Stile |
 |-----------|------|
-| **⚔️ Aggressor** | Punta MAU subito, Sabotage senza esitare, blocca spesso |
+| **⚔️ Aggressor** | Punta MAU subito, prende Sabotage senza esitare |
 | **💰 Hoarder** | Accumula budget/dati, raramente spende |
 | **🔥 Disruptor** | Crunch tollerante, debt high, vp aggressivo |
 | **🤖 Hype Master** | Insegue trend del Market Event corrente |
@@ -167,16 +167,15 @@ inizio partita:
 
 3 personas × 5 archetypes = **15 stili distinti**. L'archetype modifica:
 `weightMultipliers` per resource score, `cardTypeBias` (es. Aggressor +3
-su Sabotage), `blockModifier` per la probabilità di blocco, e
-`riskMultiplier` per la tolleranza al Tech Debt (Crunch cards).
+su Sabotage), `riskMultiplier` per la tolleranza al Tech Debt.
 
 L'archetype del rivale è visibile nella **byline-strip** sotto al ruolo
 (tag tratteggiato accanto al nome), così il giocatore può adattare la
 strategia di counter-pick.
 
-### Win conditions (S17) — vittoria scenario-locked
+### Win conditions — vittoria scenario-locked
 
-I 4 scenari ora **lockano una regola di vittoria diversa** (no chooser
+I 4 scenari **lockano una regola di vittoria diversa** (no chooser
 mid-game, è strutturale):
 
 | Scenario | Win Condition | Come si vince |
@@ -192,14 +191,92 @@ giocatore non dimentica il criterio attivo. La modale di end-game
 adatta il titolo (es. "Sei sopravvissuto al mercato" invece di "Promosso
 a CTO").
 
+### Morale come risorsa spendibile (Phase 19)
+
+Il morale non è solo una stat che si collezziona: alcune carte lo
+**chiedono come costo** (overtime/crunch culture). E sotto soglia ha
+conseguenze automatiche.
+
+- **Crunch cards** (Phase 19.2 + 19.3): 13 carte costano `morale` per
+  output (vp/dati/talento). Esempi: Pivot Sprint (Q1, morale 2 + tempo 1
+  → +3 dati +2K), Weekend Push (Q3, morale 3 + budget 1 → +6K +1🐞),
+  Ship at Any Cost (Q3, morale 2 + tempo 2 + talento 1 → +7K +3🐞).
+- **Stress cards** (Phase 19.3): 8 carte a costo *puro* morale, niente
+  budget/tempo/talento → safety-valve quando non puoi permetterti
+  altro. Esempi: Pizza Sprint (Q1, morale 1 → +2K), Final Push (Q3,
+  morale 4 → +8K).
+- **Recovery cards** (Phase 19.2): 3 carte per uscire dalla burnout
+  zone — Sabbatical Day, Mental Health Workshop, Culture Day.
+- **Burnout debt scaling**: a fine Q, se `morale < 4` → `+(4 - morale)`
+  techDebt automatico. A morale 0 = +4 debt. La Vision Crunch Culture
+  raddoppia lo slope.
+- **Sinergie morale-coupled**: Burnout Survivor (morale ≥ 6 + debt ≥ 5),
+  Workplace Utopia (morale ≥ 9 + 2+ recovery cards), + 3 stress synergies
+  in tensione (Stress Free anti-stress / Iron Will pro-stress / Resilience
+  paradox).
+
+### Dati come risorsa spendibile (Phase 20.2)
+
+Stesso pattern del morale, applicato ai dati. **6 carte data-spend**:
+User Survey Analysis (Q1), Data-Driven Decision (Q2), Personalization
+Engine (Q2 Tool con permanent), Targeted Ad Campaign (Q3 Launch),
+Predictive Model (Q3, ricicla 1 dato), Data Sale (Q3, dati 5 →
+budget 8).
+
+**2 sinergie in tensione**:
+- **Data Driven** (medium · 9pt) — `_dataSpent` ≥ 8 cumulativi → premia
+  uso attivo
+- **Insight Hoarder** (hard · 11pt) — dati finali ≥ 12 → premia
+  accumulo
+
+Forza scelta strategica: spendere o accumulare? Entrambe valid, diverse
+playstyle. **OKR Data Spender** (4pt): spendi ≥ 4 dati nel Q.
+
+### VC Pitch Quality (Phase 20.3)
+
+L'ultimo momento del gioco non è più puro RNG: la VC reaction è
+**weighted by stats finali** del leader.
+
+```
+pitchScore = (morale - 5)*2 + (dati - 5) - (debt - 3)*2 + tableau*0.5
+```
+
+A pitchScore alto → reazioni positive 3× più probabili. A pitchScore
+basso → negative favorite. Tutti i weight clamped a ≥ 1, quindi le
+black-swan sono ancora possibili (e narrativamente potenti).
+
+**Pitch Readiness panel** prima del VC reveal mostra le stats del leader
++ etichetta `STRONG / MIXED / WEAK` + hint contestuale. Trasparenza
+totale: il giocatore sa *perché* la VC ha reagito così.
+
+### Permanents (Tools)
+
+**8 tool permanents** che restano per tutta la partita una volta
+installati. Ognuno triggera un effetto passivo su carte successive:
+
+| Tool | Quando | Effetto |
+|------|--------|--------|
+| **CI/CD Pipeline** (eng) | Q2 | -1⏱ su Feature/Launch |
+| **Data Lake** (data) | Q2 | +1 dati extra su Feature/Launch/Discovery |
+| **Design System** (product) | Q2 | +1 morale su Hiring |
+| **Monitoring** (eng) | Q2 | Riduce tech debt subito + a fine Q |
+| **Personalization Engine** (data) | Q2 | +3K MAU base + permanent |
+| **Feature Flags** (eng) | Q2 | -1🐞 su Feature/Launch (rollouts graduali) |
+| **Incident Runbook** (eng) | Q2 | **Skip burnout debt scaling** (insurance) |
+| **Growth Dashboard** (data) | Q3 | +1K MAU su ogni Launch |
+
+Sinergia notabile: `Incident Runbook` + `Crunch Culture vision` =
+build "abbraccia il caos senza pagare" (high-risk strategy che diventa
+viable).
+
 ---
 
-## ⭐ Profilo · Founder Level · Vision Mastery (Phase 18.1-18.2)
+## ⭐ Profilo · Founder Level · Vision Mastery (Phase 18)
 
-Il profilo persistente in localStorage ora traccia **progressione
-long-term** oltre alle statistiche per partita.
+Il profilo persistente in localStorage traccia **progressione long-term**
+oltre alle statistiche per partita.
 
-### Founder Level (S18.1)
+### Founder Level
 
 Sistema XP / livelli a **20 livelli totali** (cap):
 
@@ -211,19 +288,20 @@ Sistema XP / livelli a **20 livelli totali** (cap):
 | Bonus Daily Run | +50 |
 | Bonus Weekly Challenge (vinta) | +80-150 (per challenge) |
 
-**Curva progressiva**: L1→L2 = 1000 XP, L2→L3 = 4000 XP, ..., L20 = 88000
-XP cumulativi. Toast "Level up!" al raggiungimento di una soglia.
+**Curva progressiva**: L1→L2 = 1000 XP, L2→L3 = 4000 XP, ..., L20 =
+88000 XP cumulativi. Toast "Level up!" al raggiungimento di una soglia.
 
 UI: chip **⭐ Founder Lv. N** + barra di progresso ("1200 / 3000 XP al
 Lv 5") nel pannello Profilo. Achievements specifici per milestone Lv 5
 / Lv 10 / Lv 20.
 
-### Vision Mastery (S18.2)
+### Vision Mastery
 
-Le 8 Vision originali (Founder Mode, Lean Startup, Tech First, Data
-Empire, Bootstrapped, B2B Veteran, Risk Taker, Open Source) hanno
-ognuna una **variante v2 sbloccabile** dopo **3 vittorie con la base**.
-Pool finale: **16 Vision** (8 base sempre + 8 v2 unlock-by-mastery).
+Le 9 Vision base (Founder Mode, Lean Startup, Tech First, Data Empire,
+Bootstrapped, B2B Veteran, Risk Taker, Open Source, Crunch Culture)
+hanno ognuna una **variante v2 sbloccabile** dopo **3 vittorie con
+quella base** (eccetto Crunch Culture, base aggiunta in Phase 19.2 senza
+v2 dedicata). Pool finale: **17 Vision** (9 base sempre + 8 v2 unlock-by-mastery).
 
 Le v2 amplificano le caratteristiche della base (es. Founder Mode v2
 porta morale ×1.3 e talento ×1.3 più aggressivo della base, in cambio
@@ -231,7 +309,7 @@ di +1 budget cost per Hiring). Sono pesate nel draft come carte
 "prestigiose" — appaiono nelle 3 opzioni con probability moderata se
 unlocked.
 
-UI: pannello **Vision Mastery** nel profilo con grid 16 Vision; le v2
+UI: pannello **Vision Mastery** nel profilo con grid 17 Vision; le v2
 mostrano lock icon + "X/3 wins to unlock". Draft modal flagga le v2 con
 badge `(v2)` e tooltip della differenza vs base.
 
@@ -286,7 +364,7 @@ su GitHub Pages.
    dal selector in lobby
 6. L'host clicca **Avvia partita →** quando pronto
 
-### Cosa funziona end-to-end (post-MVP)
+### Cosa funziona end-to-end
 
 - ✅ **Vision draft parallelo** — ogni human umano picca la propria Vision
   simultaneamente; AI auto-pickano
@@ -296,7 +374,7 @@ su GitHub Pages.
 - ✅ **Market News modal** — entrambi vedono lo stesso evento tra Q1↔Q2↔Q3
 - ✅ **Quarter-end milestone** — entrambi vedono dominanze + OKR + budget burn-down
 - ✅ **Investor Pitch + VC reaction** — pitch mirrorato sul guest con
-  auto-reveal del VC panel dopo 1.5s (cinematic effect)
+  Pitch Readiness preview + auto-reveal del VC panel dopo 1.5s
 - ✅ **Classifica finale** — ogni player vede i propri award e il proprio
   rank, con messaggio "🎉 Promosso a CTO" se ha vinto
 - ✅ **Profile + achievements per-player** — ogni client traccia il proprio
@@ -309,9 +387,6 @@ su GitHub Pages.
 
 ### Limitazioni MVP (by design)
 
-- 🚫 **Block & React disabilitato** in multiplayer (single-player lo conserva).
-  La sync di un timer 4s tra host e target client introdurrebbe edge case
-  troppo complessi per un MVP.
 - 🚫 **No host migration** — se l'host si disconnette, la partita finisce
 - 🚫 **No reconnect** — disconnessi non possono rejoinare partite in corso
 - 🚫 **No spectator mode** (esplicitamente fuori scope)
@@ -343,15 +418,14 @@ lo state che ricevono e mandano action requests. Il host valida ogni
 pick (anti-cheat naturale) e broadcasta il nuovo state autoritativo.
 
 Vedi [`MULTIPLAYER-ROADMAP.md`](MULTIPLAYER-ROADMAP.md) per dettagli
-architetturali completi e [`CHANGELOG.md`](CHANGELOG.md) entry `[S10.1-S10.6]`
-per la cronologia delle fix di sincronizzazione.
+architetturali completi.
 
 ### Setup deterministico (per dev)
 
 ```js
 // In console:
 localStorage.setItem("dev.forceVision", "tech_first");
-// Bypassa il modal Vision draft — utile per S9.8 playtest
+// Bypassa il modal Vision draft — utile per playtest specifici
 ```
 
 ---
@@ -360,8 +434,8 @@ localStorage.setItem("dev.forceVision", "tech_first");
 
 Per chi vuole giocare con amici fisicamente nello stesso luogo, il gioco
 supporta una modalità **Hot Seat**: 2-4 giocatori condividono **un unico
-PC**, si passano il mouse a turno tra una mossa e l'altra. Niente network,
-niente setup: party game classico.
+PC**, si passano il mouse a turno tra una mossa e l'altra. Niente
+network, niente setup: party game classico.
 
 ### Come iniziare
 
@@ -370,7 +444,7 @@ niente setup: party game classico.
    - 4 slot configurabili: ognuno **👤 Umano** o **🤖 AI**
    - Per umani: input nome (slot 1 default = nome del profilo)
    - Per AI: dropdown persona (Marco / Alessia / Karim — riusano le
-     personas di S5.1)
+     personas standard)
    - Selettore **scenario** (Standard sblocca dopo prima win, gli altri
      in base alla cronologia profilo)
    - Selettore **difficoltà AI** globale (Junior / Senior / Director)
@@ -400,6 +474,8 @@ niente setup: party game classico.
 │     #3 Alessia    8K MAU                │
 │     #4 Karim      5K MAU                │
 │                                         │
+│     Up next: [A] Alessia                │
+│                                         │
 │       [ Tocca a me, procedi → ]         │
 └─────────────────────────────────────────┘
 ```
@@ -425,13 +501,11 @@ sull'avatar + sound cue (se audio abilitato).
 | Network | WebRTC P2P | **Nessuno** |
 | Player setup | Lobby con room code | Lobby tavolo (4 slot) |
 | Privacy info | Ogni client vede il proprio | **Open table** (tutti vedono tutto) |
-| Block & React | 🚫 Disabled | 🚫 Disabled |
 | AI fillers | Auto sui posti vuoti | Configurabili per slot |
 | Profile tracking | Per-client | Solo slot 1 (per ora) |
 
 ### Limitazioni MVP
 
-- 🚫 **Block & React** disabilitato (consistente con P2P)
 - 🚫 **Multi-profile**: solo lo slot 1 traccia stats nel localStorage. Gli
   altri umani giocano "anonimi". V2 valuterà multi-profile.
 - 🚫 **Daily mode** non disponibile in Hot Seat (per ora)
@@ -448,27 +522,25 @@ Il desktop resta visivamente identico al pre-Phase-12.
 
 ### Highlight
 
-- **Pyramid responsive** (S12.2): su phone le carte diventano thumb
+- **Pyramid responsive**: su phone le carte diventano thumb
   ~52px×120px con dipartimento + nome + costo visibili. Tablet:
   layout desktop scalato ~70%.
-- **Tap-to-detail overlay** (S12.3): tap su qualsiasi carta apre un
-  modal fullscreen con dettaglio completo + bottoni espliciti
-  "🃏 Pesca" / "❌ Scarta" / "← Annulla". Pattern 7 Wonders Duel /
-  MTG Arena / Hearthstone.
-- **Modali responsive** (S12.4): tutte le modali (scenario, vision,
-  OKR, MP entry/lobby/join, Hot Seat lobby, market news, end-game)
-  adattate a 95vw, grid 2/3-col → 1-col, tap target ≥ 44px.
-- **Input mobile-friendly** (S12.4): `inputmode`, `autocapitalize`,
-  `enterkeyhint` su tutti i form. Font-size ≥ 16px per evitare
-  auto-zoom iOS al focus.
-- **Touch UX** (S12.5): no più sticky-hover dopo tap, press-feedback
-  `:active` su tutti i controlli, niente flash blu iOS.
+- **Tap-to-detail overlay**: tap su qualsiasi carta apre un modal
+  fullscreen con dettaglio completo + bottoni espliciti
+  "🃏 Pesca" / "❌ Scarta" / "← Annulla". Pattern industry-standard
+  di tap-to-detail con confirm step.
+- **Modali responsive**: tutte le modali (scenario, vision, OKR, MP
+  entry/lobby/join, Hot Seat lobby, market news, end-game) adattate a
+  95vw, grid 2/3-col → 1-col, tap target ≥ 44px.
+- **Input mobile-friendly**: `inputmode`, `autocapitalize`, `enterkeyhint`
+  su tutti i form. Font-size ≥ 16px per evitare auto-zoom iOS al focus.
+- **Touch UX**: no più sticky-hover dopo tap, press-feedback `:active`
+  su tutti i controlli, niente flash blu iOS.
 - **Portrait-lock**: phone in landscape mostra "📱 Ruota il telefono
   in verticale per giocare". Tablet/desktop landscape unaffected.
-- **PWA installabile** (S12.6): manifest + service worker. Add to Home
-  Screen su iOS/Android, single-player + Hot Seat **completamente
-  giocabili offline** dopo il primo load. P2P MP richiede ovviamente
-  la rete.
+- **PWA installabile**: manifest + service worker. Add to Home Screen
+  su iOS/Android, single-player + Hot Seat **completamente giocabili
+  offline** dopo il primo load. P2P MP richiede ovviamente la rete.
 
 ### Installare come app
 
@@ -483,7 +555,7 @@ Il desktop resta visivamente identico al pre-Phase-12.
    menu ⋮ → "Aggiungi a schermata Home"
 3. Apertura standalone
 
-### Limitazioni V1 (placeholder + follow-up)
+### Limitazioni V1
 
 - **Icona PWA**: V1 usa un placeholder SVG con monogramma "S&B".
   Sostituibile post-ship senza toccare manifest/SW.
@@ -491,10 +563,8 @@ Il desktop resta visivamente identico al pre-Phase-12.
   landscape dedicato è un follow-up futuro.
 - **Vibration / haptic feedback**: scartato per V1, valutiamo dopo.
 - **Push notifications**: non implementate (richiederebbero backend).
-- **Cache versioning**: il SW è attualmente a `sb-v14` (bump per deploy
+- **Cache versioning**: il SW è attualmente a `sb-v22` (bump per deploy
   che tocca CSS/JS user-visible — vedi storico nei commenti di `sw.js`).
-  Se la PWA installata mostra una versione vecchia: chiudi/riapri o
-  bump cache lato server.
 
 ### Tabella feature parity
 
@@ -516,12 +586,26 @@ Il desktop resta visivamente identico al pre-Phase-12.
 
 ## 🧪 Test harness
 
-Aprire `tests/test.html` in un browser. I test girano automaticamente al load
-e mostrano un report con:
+**148 test** che girano sia in browser (`tests/test.html`) sia da CLI
+(`node tests/run-headless.js`). I test coprono pure functions di
+`rules.js`, sinergie, archetypi, win conditions, weekly challenges,
+mechanic morale/dati, pitch quality, permanents.
+
+**Browser**: aprire `tests/test.html` in un browser. I test girano
+automaticamente al load e mostrano un report con:
 
 - **Banner verde** se passano tutti, rosso con conta dei fail altrimenti.
 - **Sezione per gruppo** (`describe`) con ✓/✗ per ogni `it()`.
 - Per i fail: dettaglio dell'assertion (atteso vs. ottenuto).
+
+**CLI** (per CI/Github Actions):
+```bash
+node tests/run-headless.js
+# → 148 tests · 148 pass · 0 fail
+```
+
+Il runner Node usa un DOM stub minimal per supportare i `el()` /
+`document.createElement` chiamati da alcune funzioni di rules.js.
 
 Aggiungere un nuovo test:
 
@@ -555,129 +639,25 @@ Apri **`js/data.js`** e aggiungi un oggetto al catalogo del Q appropriato
   id: "growth_hack",                            // unique id, snake_case
   name: "Growth Hack",                          // display name
   dept: "product",                              // "product" | "eng" | "data"
-  type: "Launch",                               // Discovery | Hiring | Feature | Tool | BugFix | Funding | Launch | Sabotage | Crunch | Training | Meeting
+  type: "Launch",                               // Discovery | Hiring | Feature | Tool | BugFix | Funding | Launch | Sabotage | Training | Meeting
   cost: { budget: 2, tempo: 1, talento: 1 },    // tutto opzionale; non specificato = 0
   effect: { vp: 4, dati: 1 },                   // vp = K MAU; tutte le risorse sono opzionali
   desc: "Hack di crescita virale. +4K utenti.",
 
   // Optional:
-  // permanent: "ci_cd",                        // installa permanent al play
+  // permanent: "feature_flags",                // installa permanent al play
   // chainFrom: ["lean_canvas"],                // se possiedi una di queste...
   // chainDiscount: { budget: 1 },              // ...sconto sul costo
 }
 ```
 
-> ⚠️ Il pool della piramide è 24 carte/Q. Se aggiungi carte, il `data.js`
-> ne pesca random `TOTAL_PICKS=24` a inizio Q (cards in eccesso ruotano
-> tra game e game). Pool attuale: **83 carte** (Q1 24 + Q2 27 + Q3 32),
-> ratio consumption ~87% — sweet spot tipo 7 Wonders Duel.
+> ⚠️ Il pool della piramide è 24 carte/Q. Pool attuale: **108 carte**
+> (Q1 29 + Q2 37 + Q3 42), ratio consumption ~67% — la piramide pesca
+> random `TOTAL_PICKS=24` a inizio Q, le carte in eccesso ruotano tra
+> game e game.
 
-I numeri di carta (`Nº NN`) e i lookup (`ALL_CARDS_BY_ID`, `CARD_META`) si
-ricostruiscono automaticamente al load — non serve sincronizzare nulla.
-
-### Aggiungere una **synergia** (S15)
-
-Apri **`js/synergies.js`** e aggiungi a `SYNERGY_POOL`:
-
-```js
-{
-  id: "growth_master",
-  name: "Growth Master",
-  icon: "📈",
-  points: 12,
-  tags: ["growth", "data", "vp"],          // pesca flavorata da scenario
-  difficulty: "hard",                       // easy | medium | hard
-  detailInactive: "Sinergia: launches + dati alti",
-  detailActive: () => "Macchina di crescita totale",
-  check(p) {
-    const launchCount = p.played.filter(c => c.type === "Launch").length;
-    const reqs = [
-      { label: "Launch ≥ 4", current: launchCount, target: 4, met: launchCount >= 4 },
-      { label: "Dati ≥ 8",   current: p.dati,      target: 8, met: p.dati >= 8 },
-    ];
-    return { requirements: reqs, active: reqs.every(r => r.met) };
-  },
-}
-```
-
-A inizio partita `drawSynergies()` ne pesca 5 random pesati per
-scenario (`tags` matchano `scenario.synergyFlavor`). Il rendering nel
-synergy-showcase modal e nel pannello sidebar è automatico.
-
-### Aggiungere un **AI archetype** (S16)
-
-Apri **`js/archetypes.js`** e aggiungi a `ARCHETYPE_POOL`:
-
-```js
-{
-  id: "specialist",
-  name: "Specialist",
-  icon: "🎓",
-  description: "Picca quasi solo Hiring di alto tier, evita Sabotage.",
-  weightMultipliers: { talento: 1.5, vp: 0.8 },     // moltiplica weights persona
-  cardTypeBias:      { Hiring: +4, Sabotage: -3 },  // +/- score per type
-  blockModifier: 0.6,                                // multipler probabilità blocco
-  riskMultiplier: 1.2,                               // >1 = più cauto su Crunch
-}
-```
-
-Gli archetypes vengono pescati a inizio partita (`drawArchetypes` →
-`assignArchetypesToAIs`) e applicati come overlay sopra i weights della
-persona. Il rendering del tag nella byline è automatico.
-
-### Aggiungere una **Win Condition** (S17)
-
-Apri **`js/win-conditions.js`** e aggiungi a `WIN_CONDITION_POOL`, poi
-linkalo a uno scenario via `winConditionId`:
-
-```js
-{
-  id: "morale_king",
-  name: "Morale Champion",
-  icon: "🚀",
-  description: "Vince chi finisce con il morale più alto.",
-  selectWinner(players) {
-    return [...players].sort((a, b) => b.morale - a.morale)[0];
-  },
-  endGameTitleYou: () => "🏆 Hai costruito il team più felice",
-  endGameTitleOther: (w) => `Vince ${w.name} con morale ${w.morale}`,
-  masthead: {
-    icon: "🚀",
-    label: "Morale King",
-    hint: (s) => `Morale tuo: ${s.players[s.localSlotIdx].morale}/10`,
-  },
-}
-```
-
-Poi in `js/scenarios.js` aggiungi `winConditionId: "morale_king"` allo
-scenario desiderato. Il modale end-game e il masthead badge si
-aggiornano automaticamente.
-
-### Aggiungere una **Weekly Challenge** (S18.3)
-
-Apri **`js/weekly-challenges.js`** e aggiungi a `WEEKLY_POOL`:
-
-```js
-{
-  id: "open_source_friday",
-  name: "Open Source Friday",
-  icon: "📦",
-  description: "Tool cards −2💰. Tutti gli avversari iniziano +2 dati.",
-  modifiers: {
-    costModifiersByType: { Tool: { budget: -2 } },
-    onQuarterStart(state) {
-      if (state.quarter === 1) {
-        state.players.forEach((p, i) => { if (i !== 0) p.dati += 2; });
-      }
-    },
-  },
-  winBonusXP: 100,
-  noteBeforeStart: "Hard mode: gli AI partono in vantaggio sul stack data.",
-}
-```
-
-La rotation è data dall'ISO week dell'anno (`isoWeekKey()` in
-`weekly-challenges.js`). 6 entries → 1 challenge per ~2 mesi.
+I numeri di carta (`Nº NN`) e i lookup (`ALL_CARDS_BY_ID`, `CARD_META`)
+si ricostruiscono automaticamente al load — non serve sincronizzare nulla.
 
 ### Aggiungere uno **scenario**
 
@@ -693,6 +673,7 @@ Apri **`js/scenarios.js`** e aggiungi un oggetto a `SCENARIO_POOL`:
   malus: "Tutti i Funding rendono metà",
   locked: true,
   minWinsToUnlock: 4,
+  winConditionId: "mau",                        // win condition attiva
   modifiers: {
     awardMultipliers: { stack: 2 },
     effectMultipliersByType: { Funding: { budget: 0.5 } },
@@ -707,17 +688,19 @@ I **modifier keys** disponibili (riusabili anche per Vision e Event):
 | `costModifiersByType` / `costModifiersByCardId` | Aggiunge/sottrae a `cost.{res}` per tipo o id |
 | `effectMultipliersByType` / `effectMultipliersByDept` | Moltiplica `effect.{res}` (round-half-to-even) |
 | `effectBonusByType` / `effectBonusByCardId` / `effectBonusByDept` | Somma a `effect.{res}` |
-| `awardMultipliers: { awardId: factor }` | Moltiplica i punti dell'award (`stack`, `funding`, `morale`, `talent`, `data`, `clean`, `bugcrush`, `lean_op`, `eng_exc`, `data_empire`, `full_funding`) |
+| `effectBonusByCondition` | Bonus condizionato (es. Crunch Culture: +1 vp se card ha morale-cost) |
+| `awardMultipliers: { awardId: factor }` | Moltiplica i punti dell'award |
 | `zeroResourceCosts: ["tempo"]` | Azzera quel resource cost globalmente |
 | `statCaps: { talento: 3 }` | Clampa la stat (post-applyEffect) |
 | `onQuarterStart(state)` | Callback alla startQuarter |
 | `excludeCardTypes` / `excludeCardIds` | (HUMAN ONLY) filtra dal pool |
 | `startingBudget` / `startingTalento` / `startingMorale` / `startingPermanents` | Patch state iniziale |
 | `debtPenaltyOffset` / `debtTempoLossOffset` | Modifica le formule di penalità debt |
+| `burnoutDebtMultiplier` | Amplifica burnout debt scaling (Crunch Culture) |
 
-Il modifier engine applica **3 pass** (Vision → Event → Scenario) in
-ordine, additivamente. Vedi `applyCostModifiers` / `applyEffectModifiers`
-in `js/rules.js`.
+Il modifier engine applica **4 pass** (Vision → Event → Scenario →
+Weekly Challenge) in ordine, additivamente. Vedi `applyCostModifiers` /
+`applyEffectModifiers` in `js/rules.js`.
 
 ### Aggiungere una **AI Persona**
 
@@ -782,6 +765,109 @@ Apri **`js/data.js`** e aggiungi a `EVENT_POOL`:
 },
 ```
 
+### Aggiungere una **synergia**
+
+Apri **`js/synergies.js`** e aggiungi a `SYNERGY_POOL`:
+
+```js
+{
+  id: "growth_master",
+  name: "Growth Master",
+  icon: "📈",
+  points: 12,
+  tags: ["growth", "data", "vp"],          // pesca flavorata da scenario
+  difficulty: "hard",                       // easy | medium | hard
+  detailInactive: "Sinergia: launches + dati alti",
+  detailActive: () => "Macchina di crescita totale",
+  check(p) {
+    const launchCount = p.played.filter(c => c.type === "Launch").length;
+    const reqs = [
+      { label: "Launch ≥ 4", current: launchCount, target: 4, met: launchCount >= 4 },
+      { label: "Dati ≥ 8",   current: p.dati,      target: 8, met: p.dati >= 8 },
+    ];
+    return { requirements: reqs, active: reqs.every(r => r.met) };
+  },
+}
+```
+
+A inizio partita `drawSynergies()` ne pesca 5 random pesati per
+scenario (`tags` matchano `scenario.synergyFlavor`). Il rendering nel
+synergy-showcase modal e nel pannello sidebar è automatico.
+
+### Aggiungere un **AI archetype**
+
+Apri **`js/archetypes.js`** e aggiungi a `ARCHETYPE_POOL`:
+
+```js
+{
+  id: "specialist",
+  name: "Specialist",
+  icon: "🎓",
+  description: "Picca quasi solo Hiring di alto tier, evita Sabotage.",
+  weightMultipliers: { talento: 1.5, vp: 0.8 },     // moltiplica weights persona
+  cardTypeBias:      { Hiring: +4, Sabotage: -3 },  // +/- score per type
+  riskMultiplier: 1.2,                               // >1 = più cauto su Crunch
+}
+```
+
+Gli archetypes vengono pescati a inizio partita (`drawArchetypes` →
+`assignArchetypesToAIs`) e applicati come overlay sopra i weights della
+persona. Il rendering del tag nella byline è automatico.
+
+### Aggiungere una **Win Condition**
+
+Apri **`js/win-conditions.js`** e aggiungi a `WIN_CONDITION_POOL`, poi
+linkalo a uno scenario via `winConditionId`:
+
+```js
+{
+  id: "morale_king",
+  name: "Morale Champion",
+  icon: "🚀",
+  description: "Vince chi finisce con il morale più alto.",
+  selectWinner(players) {
+    return [...players].sort((a, b) => b.morale - a.morale)[0];
+  },
+  endGameTitleYou: () => "🏆 Hai costruito il team più felice",
+  endGameTitleOther: (w) => `Vince ${w.name} con morale ${w.morale}`,
+  masthead: {
+    icon: "🚀",
+    label: "Morale King",
+    hint: (s) => `Morale tuo: ${s.players[s.localSlotIdx].morale}/10`,
+  },
+}
+```
+
+Poi in `js/scenarios.js` aggiungi `winConditionId: "morale_king"` allo
+scenario desiderato. Il modale end-game e il masthead badge si
+aggiornano automaticamente.
+
+### Aggiungere una **Weekly Challenge**
+
+Apri **`js/weekly-challenges.js`** e aggiungi a `WEEKLY_POOL`:
+
+```js
+{
+  id: "open_source_friday",
+  name: "Open Source Friday",
+  icon: "📦",
+  description: "Tool cards −2💰. Tutti gli avversari iniziano +2 dati.",
+  modifiers: {
+    costModifiersByType: { Tool: { budget: -2 } },
+    onQuarterStart(state) {
+      if (state.quarter === 1) {
+        state.players.forEach((p, i) => { if (i !== 0) p.dati += 2; });
+      }
+    },
+  },
+  winBonusXP: 100,
+  noteBeforeStart: "Hard mode: gli AI partono in vantaggio sul stack data.",
+}
+```
+
+La rotation è data dall'ISO week dell'anno (`isoWeekKey()` in
+`weekly-challenges.js`). 6 entries → 1 challenge per ~2 mesi.
+
 ### Aggiungere un **Achievement**
 
 Apri **`js/achievements.js`** e aggiungi a `ACHIEVEMENTS`:
@@ -817,7 +903,7 @@ vive in **`js/balance.js`** (`Object.freeze`d):
 BALANCE.QUARTER.BASE_TEMPO          // 5 — capacità tempo base per Q
 BALANCE.DEBT.Q_PENALTY_THRESHOLD    // 3 — debt sopra il quale paga MAU
 BALANCE.AWARDS.MORALE_TIERS         // [{threshold:9, points:12}, ...]
-BALANCE.AWARDS.SYNERGIES.LEAN_OP    // {points:10, MORALE_MIN:8, TALENT_MAX:4}
+BALANCE.SYNERGIES.PER_GAME          // 5 — sinergie pescate per partita
 BALANCE.AI.VP_WEIGHT                // 2.0 — fallback se la persona non lo override
 ```
 
@@ -847,11 +933,13 @@ Tutti i token CSS sono in `styles/main.css` (`:root`).
 - **[MOBILE-POLISH-ROADMAP.md](MOBILE-POLISH-ROADMAP.md)** — Phase 13 polish post-review
 - **[REPLAYABILITY-ROADMAP.md](REPLAYABILITY-ROADMAP.md)** — Phase 14 pool expansion
 - **[GAMEPLAY-ROADMAP.md](GAMEPLAY-ROADMAP.md)** — Phase 15-18 (synergies, archetypes, win conditions, founder level, vision variants, weekly)
+- **[MORALE-MECHANIC-ROADMAP.md](MORALE-MECHANIC-ROADMAP.md)** — Phase 19 morale come risorsa
+- **[GAMEPLAY-CLEANUP-ROADMAP.md](GAMEPLAY-CLEANUP-ROADMAP.md)** — Phase 20 (Block removal, dati spendable, VC pitch quality, permanents +3)
 
 ### Riferimenti continui
 
 - **[CHANGELOG.md](CHANGELOG.md)** — log dettagliato session-by-session
-  (da S1.1 a S18.3, ~50 entries con math, decisioni, file map per session).
+  (da S1.1 a S20.x, ~70 entries con math, decisioni, file map per session).
 - **[CONTEXT.md](CONTEXT.md)** — handoff doc per riprendere lo sviluppo
   dopo una pausa: architettura, gotchas, conventions, file map.
 - **[BALANCE-NOTES.md](BALANCE-NOTES.md)** — note di tuning balance per
@@ -863,37 +951,41 @@ Tutti i token CSS sono in `styles/main.css` (`:root`).
 
 ## 🧠 Architecture highlights
 
-- **Modifier engine** (S2.3 → S6.1 → S18.3): Vision (per-player) +
-  Event (per-Q) + Scenario (game-wide) + Weekly Challenge (game-wide,
-  S18.3) sono uniformemente schemi dichiarativi processati da
-  `applyCostModifiers` / `applyEffectModifiers` in **4 pass**.
-  Aggiungere un nuovo trigger = aggiungere una entry, niente codice
-  procedurale.
-- **Synergy engine** (S15): le sinergie sono drawn-at-game-start
-  (5 da pool di 24, flavorate per scenario) e valutate a end-game
+- **Modifier engine** (4-pass): Vision (per-player) + Event (per-Q) +
+  Scenario (game-wide) + Weekly Challenge (game-wide) sono uniformemente
+  schemi dichiarativi processati da `applyCostModifiers` /
+  `applyEffectModifiers`. Aggiungere un nuovo trigger = aggiungere una
+  entry, niente codice procedurale.
+- **Synergy engine**: le sinergie sono drawn-at-game-start
+  (5 da pool di 31, flavorate per scenario) e valutate a end-game
   via `computeSynergies(player, state)`. Pattern `requirements: [{label,
   current, target, met}]` per UI riusabile.
-- **AI archetype overlay** (S16): `archetypes.js` definisce 5 stili
+- **AI archetype overlay**: `archetypes.js` definisce 5 stili
   layered sui weights persona. `assignArchetypesToAIs(state)` chiamato
   in startGame applica `weightMultipliers` / `cardTypeBias` /
-  `blockModifier` / `riskMultiplier` ai 3 AI.
-- **Win condition pluggable** (S17): `state.winCondition` punta a una
+  `riskMultiplier` ai 3 AI.
+- **Win condition pluggable**: `state.winCondition` punta a una
   entry di `WIN_CONDITION_POOL`. `endGame()` chiama `selectWinner()` per
   determinare il vincitore; `earlyTermination()` permette acquisition
   win mid-Q.
-- **Snake draft**: `pickOrder = [0,1,2,3,3,2,1,0,...]` per 24 pick (ogni
-  player pesca 6 volte per Q).
+- **VC Pitch Quality**: `pitchScore(player)` + `pickWeightedVC(player)`
+  in `rules.js` rendono la VC reaction dipendente dalle stats finali
+  del leader, senza eliminare il black-swan possibile (min weight 1).
+- **Resource tracking**: oltre a budget/tempo/talento/dati/morale/techDebt
+  base, `_dataSpent` / `_quarterDataSpent` (Phase 20.2 dati synergies +
+  OKR) e `_chainsTriggeredThisQ` / `_quarterDiscards` (S9.3 OKR
+  dedicati) tracciano stati cumulativi senza inquinare lo schema base.
+- **Snake draft**: `pickOrder = [0,1,2,3,3,2,1,0,...]` per 24 pick
+  (ogni player pesca 6 volte per Q).
 - **Pyramid logic**: `isPickable(row, col)` true ⟺ tutte le slot sotto
   nella stessa colonna sono `taken`. `getDepth` calcola il "sliver" visivo.
-- **Block & React** (S3.2): `takeFromPyramid` non auto-flippa il reveal —
-  ritorna `toReveal` e il caller chiede al human (via `showBlockOverlay`)
-  o all'AI (via `aiSelectBlocker`) se vuole bloccarlo.
 - **Async modal pattern**: i draft (Vision, OKR) bloccano il flusso e
   chiamano `onComplete` quando il player ha scelto. Mai chiamare
   `render()` o `processNextPick()` prima del callback.
-- **Daily seed mode** (S6.3): `xorshift32` seedable RNG in `util.js`,
+- **Daily seed mode**: `xorshift32` seedable RNG in `util.js`,
   hash di `YYYY-MM-DD` come seed → due browser diversi che giocano la
-  daily lo stesso giorno ottengono la stessa piramide.
+  daily lo stesso giorno ottengono la stessa piramide. **Weekly mode**
+  usa lo stesso meccanismo con hash dell'ISO week.
 
 ---
 
