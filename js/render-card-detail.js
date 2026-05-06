@@ -139,6 +139,7 @@ function showCardDetailModal({ row, col, slot, isPickable, canAfford, onConfirm 
   if (adj.tempo) costParts.push(`⏱${adj.tempo}`);
   if (adj.talento) costParts.push(`🧠${adj.talento}`);
   if (adj.dati) costParts.push(`📊${adj.dati}`);
+  if (adj.morale) costParts.push(`🚀${adj.morale}`);
   const effParts = [];
   if (e.budget) effParts.push(`💰+${e.budget}`);
   if (e.tempo) effParts.push(`⏱+${e.tempo}`);

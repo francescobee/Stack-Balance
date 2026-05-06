@@ -16,7 +16,7 @@
 // se offline (mostra toast esistente "Servizio non disponibile").
 // =============================================================
 
-const CACHE_VERSION = "sb-v21";  // bump on each deploy
+const CACHE_VERSION = "sb-v22";  // bump on each deploy
 // v2 (2026-04-30): post-S12.6 hotfix — pyramid spacing/aspect ratio
 //                  rebalanced (board.css).
 // v3 (2026-04-30): user feedback iter 3 — full #app padding breakout
@@ -108,6 +108,11 @@ const CACHE_VERSION = "sb-v21";  // bump on each deploy
 //                   per non diventare dominanti. Synergies stress_free (easy,
 //                   9K), iron_will (medium, 10K), resilience (hard, 13K) —
 //                   coprono i 3 stili (evita / abbraccia / paradosso).
+// v22 (2026-05-04): fix(ui): morale cost not displayed on card thumbnails
+//                   (pyramid + card-detail). cost icons row included only
+//                   budget/tempo/talento/dati — pure morale-cost cards (S19.3
+//                   pizza_sprint et al.) appeared cost-less. Fixed both
+//                   render-pyramid.js and render-card-detail.js.
 const ASSETS = [
   "./",
   "./index.html",
